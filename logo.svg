@@ -1,0 +1,49 @@
+<svg xmlns="http://w3.org" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Глибокий фоновий онікс (Obsidian Dark) -->
+  <rect width="512" height="512" rx="112" fill="#05070b" />
+  
+  <defs>
+    <!-- Витончений преміальний градієнт (Titanium to Electric Indigo) -->
+    <linearGradient id="proBrandGrad" x1="15%" y1="15%" x2="85%" y2="85%">
+      <stop offset="0%" stop-color="#38bdf8" />    <!-- Sky Blue -->
+      <stop offset="45%" stop-color="#6366f1" />   <!-- Indigo -->
+      <stop offset="100%" stop-color="#a855f7" />  <!-- Purple -->
+    </linearGradient>
+
+    <!-- Тонкий контурний відблиск для дорогого об'єму -->
+    <linearGradient id="edgeGlint" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
+    </linearGradient>
+
+    <!-- Професійна м'яка тінь для шару -->
+    <filter id="topTierShadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000000" flood-opacity="0.75"/>
+    </filter>
+  </defs>
+
+  <!-- Преміальна геометрія літери S -->
+  <g filter="url(#topTierShadow)" fill="none" stroke="url(#proBrandGrad)" stroke-width="56" stroke-linecap="round" stroke-linejoin="round">
+    
+    <!-- Тіньовий/опорний шлях для глибини -->
+    <path d="M 346,156 
+             C 346,116 308,92 256,92 
+             C 176,92 142,150 142,216 
+             C 142,292 370,272 370,344 
+             C 370,412 320,420 256,420 
+             C 184,420 152,380 152,380" 
+          stroke-opacity="0.3"
+          stroke-width="60" />
+
+    <!-- Основний ідеальний контур S -->
+    <path d="M 346,150 
+             C 346,110 308,86 256,86 
+             C 176,86 142,144 142,210 
+             C 142,286 370,266 370,338 
+             C 370,406 320,414 256,414 
+             C 184,414 152,374 152,374" />
+  </g>
+
+  <!-- Архітектурний мікро-акцент (фокусна точка дизайну) -->
+  <circle cx="256" cy="250" r="10" fill="#ffffff" />
+</svg>
