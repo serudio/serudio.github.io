@@ -1,12 +1,10 @@
 import { useMemo, useState } from "react";
 import Box from "@mui/material/Box";
-import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
 import Grid from "@mui/material/Grid";
 import ButtonBase from "@mui/material/ButtonBase";
-import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
 
 // US gallons -> liters (3.78541) times km per mile (1.60934), collapsed
 // to the classic 235.215 constant used for MPG -> L/100km conversion.
@@ -19,27 +17,17 @@ function toLitersPer100Km(mpg: number): string {
   return (MPG_TO_L100KM_CONSTANT / mpg).toFixed(2);
 }
 
+// The converter widget itself. Rendered inside a page's
+// <ConverterPageLayout> (see src/pages/converters/), which owns the page
+// chrome (Seo, <h1>, back link, ad slot) — this component only owns the
+// interactive form.
 export default function FuelCalculator() {
   const [mpg, setMpg] = useState<string>(String(DEFAULT_MPG));
 
   const result = useMemo(() => toLitersPer100Km(parseFloat(mpg)), [mpg]);
 
   return (
-    <Paper elevation={0} sx={{ p: 3, borderRadius: 4, mb: 3 }}>
-      <Typography
-        variant="subtitle1"
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-          mb: 2,
-          fontWeight: 600,
-        }}
-      >
-        <LocalGasStationIcon fontSize="small" color="secondary" />
-        Конвертер витрати пального
-      </Typography>
-
+    <>
       <TextField
         type="number"
         fullWidth
@@ -122,6 +110,6 @@ export default function FuelCalculator() {
           </Grid>
         ))}
       </Grid>
-    </Paper>
+    </>
   );
 }

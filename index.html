@@ -8,9 +8,9 @@
     <meta name="robots" content="index, follow" />
     <meta name="google-site-verification" content="GAmVZrYJ96zd-lgRZy8cckjpQuHlv6maPywwdhtdoYg" />
 
-    <title>%VITE_DEFAULT_TITLE%</title>
-    <meta name="description" content="%VITE_DEFAULT_DESCRIPTION%" />
-    <link rel="canonical" href="%VITE_SITE_URL%/" />
+    <title>__DEFAULT_TITLE__</title>
+    <meta name="description" content="__DEFAULT_DESCRIPTION__" />
+    <link rel="canonical" href="__SITE_URL__/" />
 
     <!--
       SEO NOTE: this is a client-rendered React SPA. Non-JS crawlers and
@@ -22,26 +22,26 @@
       only. Full checklist: see CLAUDE.md, section "SEO".
     -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="%VITE_SITE_NAME%" />
-    <meta property="og:title" content="%VITE_DEFAULT_TITLE%" />
-    <meta property="og:description" content="%VITE_DEFAULT_DESCRIPTION%" />
-    <meta property="og:url" content="%VITE_SITE_URL%/" />
-    <meta property="og:image" content="%VITE_SITE_URL%/og-image.png" />
+    <meta property="og:site_name" content="__SITE_NAME__" />
+    <meta property="og:title" content="__DEFAULT_TITLE__" />
+    <meta property="og:description" content="__DEFAULT_DESCRIPTION__" />
+    <meta property="og:url" content="__SITE_URL__/" />
+    <meta property="og:image" content="__SITE_URL__/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="uk_UA" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="%VITE_DEFAULT_TITLE%" />
-    <meta name="twitter:description" content="%VITE_DEFAULT_DESCRIPTION%" />
-    <meta name="twitter:image" content="%VITE_SITE_URL%/og-image.png" />
+    <meta name="twitter:title" content="__DEFAULT_TITLE__" />
+    <meta name="twitter:description" content="__DEFAULT_DESCRIPTION__" />
+    <meta name="twitter:image" content="__SITE_URL__/og-image.png" />
 
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        "name": "%VITE_SITE_NAME%",
-        "url": "%VITE_SITE_URL%/"
+        "name": "__SITE_NAME__",
+        "url": "__SITE_URL__/"
       }
     </script>
   </head>
@@ -50,14 +50,14 @@
     <script type="module" src="/src/main.tsx"></script>
 
     <!--
-      ADSENSE NOTE: client/publisher id below comes from .env
-      (VITE_ADSENSE_CLIENT_ID) and must always match public/ads.txt.
-      Add real ad units with <AdSlot /> (src/components/AdSlot.tsx) —
-      never hand-roll another <ins class="adsbygoogle"> element or a
-      second loader script. Full checklist: see CLAUDE.md, section
-      "AdSense".
+      ADSENSE NOTE: client/publisher id below comes from
+      src/config/site.ts (ADSENSE_CLIENT_ID) and must always match
+      public/ads.txt. Add real ad units with <AdSlot /> (see
+      src/components/AdSlot.tsx) — never hand-roll another
+      <ins class="adsbygoogle"> element or a second loader script.
+      Full checklist: see CLAUDE.md, section "AdSense".
     -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=%VITE_ADSENSE_CLIENT_ID%"
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=__ADSENSE_CLIENT_ID__"
       crossorigin="anonymous"></script>
   </body>
 </html>
