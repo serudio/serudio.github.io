@@ -3,10 +3,16 @@ import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
+import Seo from '../components/Seo'
 
 export default function PrivacyPage() {
   return (
     <Container maxWidth="sm" disableGutters>
+      <Seo
+        title="Політика конфіденційності"
+        description="Політика конфіденційності serudio: як Google AdSense використовує файли cookie на цьому сайті."
+        path="/privacy"
+      />
       <Paper elevation={0} sx={{ p: { xs: 3, sm: 4 }, borderRadius: 5 }}>
         <Stack spacing={2}>
           <Typography variant="h5" component="h1" sx={{ borderBottom: '1px solid', borderColor: 'divider', pb: 2 }}>
