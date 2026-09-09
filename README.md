@@ -6,8 +6,21 @@ Personal GitHub Pages site — React + TypeScript + MUI.
 
 - [Vite](https://vitejs.dev/) + React 18 + TypeScript
 - [MUI](https://mui.com/) (Material UI) for components/theming
-- React Router for the `/` and `/privacy` routes
+- React Router for `/`, `/converters`, `/converters/<slug>`, and `/privacy`
+- `react-helmet-async` for per-route SEO tags
 - Deployed via GitHub Actions to GitHub Pages
+
+Read [CLAUDE.md](./CLAUDE.md) before adding a page or feature — it has
+the SEO / AdSense / custom-domain checklist that's easy to miss otherwise.
+
+## Adding a converter
+
+Add one entry to `src/data/converters.ts` (slug, name, title, description,
+a lazy-loaded `Page` component) and a page component under
+`src/pages/converters/` that wraps its widget in
+`<ConverterPageLayout>`. The `/converters` index, its route, and the
+sitemap all pick it up automatically — see `src/pages/converters/FuelConverterPage.tsx`
+for a working example.
 
 ## Development
 
