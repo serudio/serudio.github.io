@@ -43,6 +43,12 @@
       "shortDescription": "US MPG → L/100 km",
       "title": "Fuel consumption converter (MPG → L/100 km)",
       "seoDescription": "Online fuel consumption converter: instantly convert US MPG to liters per 100 km (L/100km), with a quick-pick table of popular values."
+    },
+    "keyboardLayout": {
+      "name": "Keyboard layout",
+      "shortDescription": "Fix text (EN ⇄ UA)",
+      "title": "Fix keyboard layout (EN ⇄ UA)",
+      "seoDescription": "Online tool that fixes text typed with the wrong keyboard layout: instantly converts gibberish typed in English layout back to Ukrainian, and vice versa."
     }
   },
   "fuelCalculator": {
@@ -50,6 +56,16 @@
     "unit": "US MPG",
     "resultUnit": "L/100 km",
     "quickPicks": "Quick picks (popular MPG)"
+  },
+  "keyboardLayoutCalculator": {
+    "inputPlaceholder": "Type the text that turned into gibberish...",
+    "outputLabel": "Fixed text",
+    "modeAuto": "Auto",
+    "modeEnToUa": "EN → UA",
+    "modeUaToEn": "UA → EN",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "emptyHint": "Type something above to see the fixed version."
   },
   "privacy": {
     "seoDescription": "serudio's privacy policy: how Google AdSense uses cookies on this site.",

@@ -47,4 +47,12 @@ export const converters: ConverterMeta[] = [
     seoDescriptionKey: 'converters.fuelConsumption.seoDescription',
     Page: lazy(() => import('../pages/converters/FuelConverterPage')),
   },
+  {
+    slug: 'keyboard-layout',
+    nameKey: 'converters.keyboardLayout.name',
+    descriptionKey: 'converters.keyboardLayout.shortDescription',
+    titleKey: 'converters.keyboardLayout.title',
+    seoDescriptionKey: 'converters.keyboardLayout.seoDescription',
+    Page: lazy(() => import('../pages/converters/KeyboardLayoutConverterPage')),
+  },
 ]
