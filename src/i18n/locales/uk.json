@@ -1,0 +1,73 @@
+{
+  "seo": {
+    "defaultTitle": "serudio | Особисті проєкти та інструменти",
+    "defaultDescription": "serudio — особисті проєкти: Todo Cloud, Book Rent, та онлайн-конвертери одиниць виміру."
+  },
+  "nav": {
+    "home": "Головна",
+    "converters": "Конвертери"
+  },
+  "home": {
+    "tagline": "Особисті проєкти та невеликі інструменти"
+  },
+  "redirect": {
+    "autoRedirect": "Автоматичне перенаправлення до головного проєкту",
+    "goNow": "Перейти зараз",
+    "cancel": "Скасувати",
+    "cancelled": "Перенаправлення скасовано. Оберіть проєкт зі списку нижче:"
+  },
+  "projects": {
+    "heading": "Мої проєкти",
+    "open": "Відкрити",
+    "todoCloud": {
+      "title": "Todo Cloud",
+      "description": "Менеджер завдань у вигляді хмари",
+      "badge": "Основний"
+    },
+    "bookRent": {
+      "title": "Book Rent",
+      "description": "Сервіс оренди та каталогізації книг"
+    }
+  },
+  "converters": {
+    "heading": "Конвертери",
+    "indexDescription": "Невеликі онлайн-інструменти для конвертації одиниць виміру.",
+    "seoDescription": "Безкоштовні онлайн-конвертери одиниць виміру: витрата пального та інші.",
+    "viewAll": "Переглянути всі",
+    "allConverters": "Усі конвертери",
+    "countOnlineConverter_one": "{{count}} онлайн-конвертер",
+    "countOnlineConverter_few": "{{count}} онлайн-конвертери",
+    "countOnlineConverter_many": "{{count}} онлайн-конвертерів",
+    "countOnlineConverter_other": "{{count}} онлайн-конвертери",
+    "andOthers": "та інші",
+    "fuelConsumption": {
+      "name": "Витрата пального",
+      "shortDescription": "US MPG → L/100 км",
+      "title": "Конвертер витрати пального (MPG → L/100 км)",
+      "seoDescription": "Онлайн конвертер витрати пального: переведіть US MPG у літри на 100 км (L/100 km) миттєво, з таблицею популярних значень."
+    }
+  },
+  "fuelCalculator": {
+    "placeholder": "Введіть значення...",
+    "unit": "US MPG",
+    "resultUnit": "L/100 km",
+    "quickPicks": "Швидкий пошук (популярні MPG)"
+  },
+  "privacy": {
+    "seoDescription": "Політика конфіденційності serudio: як Google AdSense використовує файли cookie на цьому сайті.",
+    "title": "Політика конфіденційності",
+    "intro": "Цей сайт використовує служби Google AdSense для відображення рекламних оголошень.",
+    "cookiesHeading": "Файли cookie та реклама Google",
+    "cookiesBody1": "Google як сторонній постачальник використовує файли cookie для показу оголошень на цьому сайті. Використання файлів cookie допомагає Google та його партнерам показувати рекламу на основі відвідувань користувачами цього або інших сайтів в Інтернеті.",
+    "cookiesBody2": "Користувачі можуть вимкнути персоналізовану рекламу, перейшовши в налаштування рекламних уподобань свого Google-акаунта.",
+    "backHome": "Повернутися на головну"
+  },
+  "footer": {
+    "privacyPolicy": "Політика конфіденційності"
+  },
+  "language": {
+    "label": "Мова",
+    "uk": "UA",
+    "en": "EN"
+  }
+}

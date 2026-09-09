@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import Container from '@mui/material/Container'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
@@ -30,6 +31,8 @@ export default function ConverterPageLayout({
   adSlotId = 'TODO-REPLACE-WITH-REAL-AD-SLOT-ID',
   children,
 }: ConverterPageLayoutProps) {
+  const { t } = useTranslation()
+
   return (
     <Container maxWidth="sm" disableGutters>
       <Seo title={title} description={seoDescription} path={path} />
@@ -41,7 +44,7 @@ export default function ConverterPageLayout({
           color="text.secondary"
           sx={{ display: 'inline-block', mb: 2 }}
         >
-          &larr; Усі конвертери
+          &larr; {t('converters.allConverters')}
         </Link>
         <Typography variant="h5" component="h1" sx={{ mb: 3 }}>
           {title}

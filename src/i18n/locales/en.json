@@ -1,0 +1,71 @@
+{
+  "seo": {
+    "defaultTitle": "serudio | Personal projects & tools",
+    "defaultDescription": "serudio — personal projects: Todo Cloud, Book Rent, and online unit converters."
+  },
+  "nav": {
+    "home": "Home",
+    "converters": "Converters"
+  },
+  "home": {
+    "tagline": "Personal projects and small tools"
+  },
+  "redirect": {
+    "autoRedirect": "Automatically redirecting to the main project",
+    "goNow": "Go now",
+    "cancel": "Cancel",
+    "cancelled": "Redirect cancelled. Choose a project from the list below:"
+  },
+  "projects": {
+    "heading": "My projects",
+    "open": "Open",
+    "todoCloud": {
+      "title": "Todo Cloud",
+      "description": "Cloud-based task manager",
+      "badge": "Main"
+    },
+    "bookRent": {
+      "title": "Book Rent",
+      "description": "Book rental & cataloging service"
+    }
+  },
+  "converters": {
+    "heading": "Converters",
+    "indexDescription": "Small online tools for unit conversion.",
+    "seoDescription": "Free online unit converters: fuel consumption and more.",
+    "viewAll": "View all",
+    "allConverters": "All converters",
+    "countOnlineConverter_one": "{{count}} online converter",
+    "countOnlineConverter_other": "{{count}} online converters",
+    "andOthers": "and others",
+    "fuelConsumption": {
+      "name": "Fuel consumption",
+      "shortDescription": "US MPG → L/100 km",
+      "title": "Fuel consumption converter (MPG → L/100 km)",
+      "seoDescription": "Online fuel consumption converter: instantly convert US MPG to liters per 100 km (L/100km), with a quick-pick table of popular values."
+    }
+  },
+  "fuelCalculator": {
+    "placeholder": "Enter a value...",
+    "unit": "US MPG",
+    "resultUnit": "L/100 km",
+    "quickPicks": "Quick picks (popular MPG)"
+  },
+  "privacy": {
+    "seoDescription": "serudio's privacy policy: how Google AdSense uses cookies on this site.",
+    "title": "Privacy Policy",
+    "intro": "This site uses Google AdSense services to display ads.",
+    "cookiesHeading": "Cookies & Google ads",
+    "cookiesBody1": "Google, as a third-party vendor, uses cookies to serve ads on this site. The use of cookies helps Google and its partners show ads based on users' visits to this or other sites on the Internet.",
+    "cookiesBody2": "Users may opt out of personalized advertising by visiting their Google Account's ad settings.",
+    "backHome": "Back to home"
+  },
+  "footer": {
+    "privacyPolicy": "Privacy Policy"
+  },
+  "language": {
+    "label": "Language",
+    "uk": "UA",
+    "en": "EN"
+  }
+}

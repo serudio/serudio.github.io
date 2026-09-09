@@ -3,8 +3,8 @@
 Personal site: React + TypeScript + MUI, built with Vite, deployed to
 GitHub Pages via GitHub Actions (`.github/workflows/deploy.yml`).
 
-Read this before adding a page, route, or feature — it covers three
-things that are easy to silently break: SEO, AdSense, and the eventual
+Read this before adding a page, route, or feature — it covers things
+that are easy to silently break: SEO, AdSense, i18n, and the eventual
 domain move.
 
 ## SEO
@@ -60,6 +60,39 @@ domain move.
   mechanism (a Google-certified CMP or Consent Mode) for personalized
   ads — not implemented yet. Flag this to the user before enabling
   personalized ads for EEA/UK visitors.
+
+## Internationalization
+
+- Two languages: Ukrainian (`uk`) and English (`en`), via i18next +
+  react-i18next. Every UI string is a key in
+  `src/i18n/locales/uk.json` / `en.json` — never hardcode literal
+  user-facing text in a component; add the key to **both** files (a
+  missing key silently falls back to `en`, or shows the raw key if `en`
+  is also missing it).
+- Default language: Ukrainian for Ukrainian-speaking visitors, English
+  for everyone else, detected from `navigator.language` (see
+  `src/i18n/index.ts`). This is a browser-setting heuristic, not real
+  geo-IP — there's no server here to do IP lookups, and a client-side
+  geo-IP call would mean a third-party network request for every
+  visitor. If defaulting by actual visitor location (e.g. Ukrainian for
+  anyone browsing from Ukraine regardless of browser language) turns out
+  to matter, that needs a geo-IP service — a separate, explicit decision
+  to make with the user, not something to add quietly.
+- An explicit choice via `<LanguageSwitcher />` is remembered in
+  `localStorage` and always wins over the auto-detected default after
+  that.
+- Converters store `nameKey`/`descriptionKey`/`titleKey`/`seoDescriptionKey`
+  in `src/data/converters.ts`, not literal strings — a new converter
+  needs matching keys under `converters.<slug>.*` in both locale files.
+- `index.html`'s static tags and `public/privacy.html` (the no-JS
+  fallback) are **Ukrainian only, always** — they're static files with
+  no visitor-specific rendering, so there's one fixed version. This is
+  the same non-JS-crawler caveat as in "SEO" above: search engines and
+  share-preview bots see this fixed Ukrainian version regardless of the
+  visitor's actual language. If serving genuinely different content per
+  language to crawlers ever matters, that means separate indexable URLs
+  per locale (e.g. `/en/...`) with hreflang tags — a real routing/SEO
+  project, not a small addition; flag it before starting.
 
 ## Domain
 

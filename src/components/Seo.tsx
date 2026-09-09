@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async'
-import { SITE_URL, SITE_NAME, DEFAULT_TITLE, DEFAULT_DESCRIPTION, LOCALE } from '../config/site'
+import { useTranslation } from 'react-i18next'
+import { SITE_URL, SITE_NAME } from '../config/site'
 
 interface SeoProps {
   /** Page-specific title. Omit to use the site default (home page). */
@@ -12,23 +13,30 @@ interface SeoProps {
   noIndex?: boolean
 }
 
+const OG_LOCALE_BY_LANGUAGE: Record<string, string> = {
+  uk: 'uk_UA',
+  en: 'en_US',
+}
+
 /**
  * Per-route <head> overrides, layered on top of index.html's static tags.
  *
  * IMPORTANT: this only patches the live DOM — react-helmet-async runs
  * client-side, so it never changes the static dist/index.html that
- * non-JS crawlers and social share bots read. It benefits real browsers
- * (tab title) and JS-rendering crawlers (Googlebot) only. Keep
- * index.html accurate for the home page independently. See CLAUDE.md,
- * section "SEO", before changing how this component is used.
+ * non-JS crawlers and social share bots read (and that file is always
+ * Ukrainian — see CLAUDE.md "Internationalization"). This benefits real
+ * browsers (tab title) and JS-rendering crawlers (Googlebot) only.
  */
 export default function Seo({ title, description, path = '/', noIndex }: SeoProps) {
-  const pageTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE
-  const pageDescription = description ?? DEFAULT_DESCRIPTION
+  const { t, i18n } = useTranslation()
+  const pageTitle = title ? `${title} | ${SITE_NAME}` : t('seo.defaultTitle')
+  const pageDescription = description ?? t('seo.defaultDescription')
   const url = `${SITE_URL}${path}`
+  const ogLocale = OG_LOCALE_BY_LANGUAGE[i18n.language] ?? OG_LOCALE_BY_LANGUAGE.en
 
   return (
     <Helmet>
+      <html lang={i18n.language} />
       <title>{pageTitle}</title>
       <meta name="description" content={pageDescription} />
       <link rel="canonical" href={url} />
@@ -36,7 +44,7 @@ export default function Seo({ title, description, path = '/', noIndex }: SeoProp
       <meta property="og:title" content={pageTitle} />
       <meta property="og:description" content={pageDescription} />
       <meta property="og:url" content={url} />
-      <meta property="og:locale" content={LOCALE} />
+      <meta property="og:locale" content={ogLocale} />
       <meta name="twitter:title" content={pageTitle} />
       <meta name="twitter:description" content={pageDescription} />
     </Helmet>

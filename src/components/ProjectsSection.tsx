@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Card from "@mui/material/Card";
@@ -10,15 +11,17 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { projects } from "../data/projects";
 
 export default function ProjectsSection() {
+  const { t } = useTranslation();
+
   return (
     <Box sx={{ mb: 3 }}>
       <Typography variant="h6" sx={{ mb: 2 }}>
-        Мої проєкти
+        {t("projects.heading")}
       </Typography>
       <Stack spacing={1.5}>
         {projects.map((project) => (
           <Card
-            key={project.title}
+            key={project.titleKey}
             variant="outlined"
             sx={{
               borderColor: project.featured ? "info.main" : "divider",
@@ -39,11 +42,11 @@ export default function ProjectsSection() {
               <Box>
                 <Stack direction="row" spacing={1} alignItems="center">
                   <Typography variant="subtitle1" fontWeight={600}>
-                    {project.title}
+                    {t(project.titleKey)}
                   </Typography>
-                  {project.badge && (
+                  {project.badgeKey && (
                     <Chip
-                      label={project.badge}
+                      label={t(project.badgeKey)}
                       size="small"
                       color="info"
                       variant="outlined"
@@ -51,7 +54,7 @@ export default function ProjectsSection() {
                   )}
                 </Stack>
                 <Typography variant="body2" color="text.secondary">
-                  {project.description}
+                  {t(project.descriptionKey)}
                 </Typography>
               </Box>
               <CardActions sx={{ p: 0 }}>
@@ -62,7 +65,7 @@ export default function ProjectsSection() {
                   endIcon={<OpenInNewIcon fontSize="small" />}
                   size="small"
                 >
-                  Відкрити
+                  {t("projects.open")}
                 </Button>
               </CardActions>
             </CardContent>

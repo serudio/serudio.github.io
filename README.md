@@ -8,19 +8,33 @@ Personal GitHub Pages site — React + TypeScript + MUI.
 - [MUI](https://mui.com/) (Material UI) for components/theming
 - React Router for `/`, `/converters`, `/converters/<slug>`, and `/privacy`
 - `react-helmet-async` for per-route SEO tags
+- `i18next` + `react-i18next` for Ukrainian/English (see "Internationalization" below)
 - Deployed via GitHub Actions to GitHub Pages
 
 Read [CLAUDE.md](./CLAUDE.md) before adding a page or feature — it has
-the SEO / AdSense / custom-domain checklist that's easy to miss otherwise.
+the SEO / AdSense / i18n / custom-domain checklist that's easy to miss
+otherwise.
 
 ## Adding a converter
 
-Add one entry to `src/data/converters.ts` (slug, name, title, description,
-a lazy-loaded `Page` component) and a page component under
-`src/pages/converters/` that wraps its widget in
+Add one entry to `src/data/converters.ts` (slug, `nameKey`/`descriptionKey`/
+`titleKey`/`seoDescriptionKey`, a lazy-loaded `Page` component), matching
+translation keys under `converters.<slug>.*` in both locale files, and a
+page component under `src/pages/converters/` that wraps its widget in
 `<ConverterPageLayout>`. The `/converters` index, its route, and the
 sitemap all pick it up automatically — see `src/pages/converters/FuelConverterPage.tsx`
 for a working example.
+
+## Internationalization
+
+Ukrainian and English, via i18next. Every string lives in
+`src/i18n/locales/uk.json` / `en.json` — add new keys to both. Default
+language is picked from the browser's own language setting (Ukrainian
+for `uk*`, English otherwise); a visitor's explicit choice via the
+header's language toggle is remembered in `localStorage`. See
+CLAUDE.md's "Internationalization" section for what this does and
+doesn't cover (in particular: static files and crawlers only ever see
+the Ukrainian version).
 
 ## Development
 

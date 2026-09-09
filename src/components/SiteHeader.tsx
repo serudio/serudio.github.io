@@ -1,15 +1,19 @@
+import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
 import Avatar from '@mui/material/Avatar'
 import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
 import Link from '@mui/material/Link'
 import { NavLink } from 'react-router-dom'
+import LanguageSwitcher from './LanguageSwitcher'
 
 const navLinkSx = {
   '&.active': { color: 'primary.main' },
 }
 
 export default function SiteHeader() {
+  const { t } = useTranslation()
+
   return (
     <Box
       sx={{
@@ -33,13 +37,14 @@ export default function SiteHeader() {
           </Typography>
         </Link>
       </Stack>
-      <Stack direction="row" spacing={2.5}>
+      <Stack direction="row" spacing={2.5} alignItems="center">
         <Link component={NavLink} to="/" underline="hover" color="text.secondary" sx={navLinkSx} end>
-          Головна
+          {t('nav.home')}
         </Link>
         <Link component={NavLink} to="/converters" underline="hover" color="text.secondary" sx={navLinkSx}>
-          Конвертери
+          {t('nav.converters')}
         </Link>
+        <LanguageSwitcher />
       </Stack>
     </Box>
   )

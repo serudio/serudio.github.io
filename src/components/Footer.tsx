@@ -1,9 +1,12 @@
+import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Link from '@mui/material/Link'
 import Typography from '@mui/material/Typography'
 
 export default function Footer() {
+  const { t } = useTranslation()
+
   return (
     <Box sx={{ pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
       <Stack
@@ -16,7 +19,7 @@ export default function Footer() {
           &copy; {new Date().getFullYear()} serudio
         </Typography>
         <Link href="/privacy" variant="caption" color="text.secondary" underline="hover">
-          Політика конфіденційності
+          {t('footer.privacyPolicy')}
         </Link>
       </Stack>
     </Box>

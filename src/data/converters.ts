@@ -2,15 +2,17 @@ import { lazy, type ComponentType } from 'react'
 
 export interface ConverterPageProps {
   slug: string
-  title: string
-  seoDescription: string
+  /** i18n key for the page's <h1>/SEO title. */
+  titleKey: string
+  /** i18n key for the page's meta description. */
+  seoDescriptionKey: string
 }
 
 export interface ConverterMeta extends ConverterPageProps {
-  /** Short human name, e.g. "Витрата пального" — used in nav/index cards. */
-  name: string
-  /** One-line description shown on the converters index page. */
-  description: string
+  /** i18n key for the short human name — used in nav/index cards. */
+  nameKey: string
+  /** i18n key for the one-line description shown on the converters index. */
+  descriptionKey: string
   /** The page component for this converter's route, lazy-loaded per route. */
   Page: ComponentType<ConverterPageProps>
 }
@@ -23,22 +25,26 @@ export interface ConverterMeta extends ConverterPageProps {
  * new entry here is automatically discoverable and indexable without
  * touching anything else.
  *
+ * All text is referenced by i18n key (see src/i18n/locales/*.json,
+ * "converters" section), not literal strings, so every converter is
+ * bilingual by construction — add the matching keys in both locale files
+ * for a new converter.
+ *
  * Each Page component receives its own metadata as props (see
  * ConverterPageProps) from App.tsx's route — it should NOT import this
  * file itself, to avoid a circular import between the registry and the
  * pages it lazy-loads.
  *
- * See CLAUDE.md, section "SEO", for the checklist a new converter page
- * still needs to satisfy (unique title/description, one <h1>, etc.).
+ * See CLAUDE.md, sections "SEO" and "Internationalization", for the
+ * checklist a new converter page still needs to satisfy.
  */
 export const converters: ConverterMeta[] = [
   {
     slug: 'fuel-consumption',
-    name: 'Витрата пального',
-    title: 'Конвертер витрати пального (MPG → L/100 км)',
-    description: 'US MPG → L/100 км',
-    seoDescription:
-      'Онлайн конвертер витрати пального: переведіть US MPG у літри на 100 км (L/100 km) миттєво, з таблицею популярних значень.',
+    nameKey: 'converters.fuelConsumption.name',
+    descriptionKey: 'converters.fuelConsumption.shortDescription',
+    titleKey: 'converters.fuelConsumption.title',
+    seoDescriptionKey: 'converters.fuelConsumption.seoDescription',
     Page: lazy(() => import('../pages/converters/FuelConverterPage')),
   },
 ]

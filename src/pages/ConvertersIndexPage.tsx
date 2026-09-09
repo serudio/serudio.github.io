@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import Container from '@mui/material/Container'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
@@ -11,19 +12,17 @@ import Seo from '../components/Seo'
 import { converters } from '../data/converters'
 
 export default function ConvertersIndexPage() {
+  const { t } = useTranslation()
+
   return (
     <Container maxWidth="sm" disableGutters>
-      <Seo
-        title="Конвертери"
-        description="Безкоштовні онлайн-конвертери одиниць виміру: витрата пального та інші."
-        path="/converters"
-      />
+      <Seo title={t('converters.heading')} description={t('converters.seoDescription')} path="/converters" />
       <Paper elevation={0} sx={{ p: { xs: 3, sm: 4 }, borderRadius: 5 }}>
         <Typography variant="h5" component="h1" sx={{ mb: 1 }}>
-          Конвертери
+          {t('converters.heading')}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Невеликі онлайн-інструменти для конвертації одиниць виміру.
+          {t('converters.indexDescription')}
         </Typography>
         <Stack spacing={1.5}>
           {converters.map((converter) => (
@@ -39,10 +38,10 @@ export default function ConvertersIndexPage() {
                 >
                   <Stack>
                     <Typography variant="subtitle1" fontWeight={600}>
-                      {converter.name}
+                      {t(converter.nameKey)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {converter.description}
+                      {t(converter.descriptionKey)}
                     </Typography>
                   </Stack>
                   <ArrowForwardIcon fontSize="small" color="action" />

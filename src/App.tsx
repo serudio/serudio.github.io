@@ -28,13 +28,13 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/converters" element={<ConvertersIndexPage />} />
-        {converters.map(({ slug, title, seoDescription, Page }) => (
+        {converters.map(({ slug, titleKey, seoDescriptionKey, Page }) => (
           <Route
             key={slug}
             path={`/converters/${slug}`}
             element={
               <Suspense fallback={null}>
-                <Page slug={slug} title={title} seoDescription={seoDescription} />
+                <Page slug={slug} titleKey={titleKey} seoDescriptionKey={seoDescriptionKey} />
               </Suspense>
             }
           />

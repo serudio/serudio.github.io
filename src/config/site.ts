@@ -11,6 +11,12 @@
  * also imports this file directly for robots.txt/sitemap.xml. So there
  * is exactly one place to edit these values.
  *
+ * DEFAULT_TITLE/DEFAULT_DESCRIPTION here are the static index.html
+ * fallback only (always Ukrainian — see CLAUDE.md
+ * "Internationalization"). The runtime app uses the translated
+ * `seo.defaultTitle`/`seo.defaultDescription` keys instead (see
+ * src/components/Seo.tsx) — keep the two in sync if the copy changes.
+ *
  * NOTE (domain): the site is on the default GitHub Pages domain today
  * (https://serudio.github.io). A custom domain is planned. When it's
  * ready, change SITE_URL below — that alone updates canonical URLs, Open
@@ -25,4 +31,3 @@ export const DEFAULT_TITLE = 'serudio | Особисті проєкти та і�
 export const DEFAULT_DESCRIPTION =
   'serudio — особисті проєкти: Todo Cloud, Book Rent, та онлайн-конвертери одиниць виміру.'
 export const ADSENSE_CLIENT_ID = 'ca-pub-7505878489573686'
-export const LOCALE = 'uk_UA'

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
@@ -11,6 +12,7 @@ const REDIRECT_URL = 'https://serudio.github.io/todo-cloud'
 const TOTAL_SECONDS = 60
 
 export default function RedirectHero() {
+  const { t } = useTranslation()
   const [secondsLeft, setSecondsLeft] = useState(TOTAL_SECONDS)
   const [cancelled, setCancelled] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -54,7 +56,7 @@ export default function RedirectHero() {
       {!cancelled ? (
         <>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-            Автоматичне перенаправлення до головного проєкту
+            {t('redirect.autoRedirect')}
           </Typography>
 
           <Box sx={{ position: 'relative', display: 'inline-flex', mb: 3 }}>
@@ -92,16 +94,16 @@ export default function RedirectHero() {
               endIcon={<ArrowForwardIcon />}
               href={REDIRECT_URL}
             >
-              Перейти зараз
+              {t('redirect.goNow')}
             </Button>
             <Button variant="outlined" color="inherit" onClick={handleCancel}>
-              Скасувати
+              {t('redirect.cancel')}
             </Button>
           </Stack>
         </>
       ) : (
         <Typography variant="body1" color="text.secondary">
-          Перенаправлення скасовано. Оберіть проєкт зі списку нижче:
+          {t('redirect.cancelled')}
         </Typography>
       )}
     </Paper>

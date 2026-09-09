@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Card from '@mui/material/Card'
@@ -10,12 +11,14 @@ import { Link as RouterLink } from 'react-router-dom'
 import { converters } from '../data/converters'
 
 export default function ConvertersTeaser() {
+  const { t } = useTranslation()
   const count = converters.length
+  const firstName = converters[0] ? t(converters[0].nameKey) : ''
 
   return (
     <Box sx={{ mb: 3 }}>
       <Typography variant="h6" sx={{ mb: 2 }}>
-        Конвертери
+        {t('converters.heading')}
       </Typography>
       <Card variant="outlined">
         <CardContent
@@ -31,11 +34,11 @@ export default function ConvertersTeaser() {
             <SwapHorizIcon color="secondary" />
             <Box>
               <Typography variant="subtitle1" fontWeight={600}>
-                {count} онлайн-{count === 1 ? 'конвертер' : 'конвертери'}
+                {t('converters.countOnlineConverter', { count })}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {converters[0]?.name}
-                {count > 1 ? ' та інші' : ''}
+                {firstName}
+                {count > 1 ? ` ${t('converters.andOthers')}` : ''}
               </Typography>
             </Box>
           </Stack>
@@ -45,7 +48,7 @@ export default function ConvertersTeaser() {
             endIcon={<ArrowForwardIcon fontSize="small" />}
             size="small"
           >
-            Переглянути всі
+            {t('converters.viewAll')}
           </Button>
         </CardContent>
       </Card>

@@ -1,22 +1,25 @@
 export interface Project {
-  title: string
-  description: string
+  /** i18n key for the project title. */
+  titleKey: string
+  /** i18n key for the one-line description. */
+  descriptionKey: string
   url: string
   featured?: boolean
-  badge?: string
+  /** i18n key for the small badge label, e.g. "Main". */
+  badgeKey?: string
 }
 
 export const projects: Project[] = [
   {
-    title: 'Todo Cloud',
-    description: 'Менеджер завдань у вигляді хмари',
+    titleKey: 'projects.todoCloud.title',
+    descriptionKey: 'projects.todoCloud.description',
     url: 'https://serudio.github.io/todo-cloud',
     featured: true,
-    badge: 'Основний',
+    badgeKey: 'projects.todoCloud.badge',
   },
   {
-    title: 'Book Rent',
-    description: 'Сервіс оренди та каталогізації книг',
+    titleKey: 'projects.bookRent.title',
+    descriptionKey: 'projects.bookRent.description',
     url: 'https://serudio.github.io/books',
   },
 ]

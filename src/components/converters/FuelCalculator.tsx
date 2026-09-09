@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
@@ -22,6 +23,7 @@ function toLitersPer100Km(mpg: number): string {
 // chrome (Seo, <h1>, back link, ad slot) — this component only owns the
 // interactive form.
 export default function FuelCalculator() {
+  const { t } = useTranslation();
   const [mpg, setMpg] = useState<string>(String(DEFAULT_MPG));
 
   const result = useMemo(() => toLitersPer100Km(parseFloat(mpg)), [mpg]);
@@ -33,10 +35,10 @@ export default function FuelCalculator() {
         fullWidth
         value={mpg}
         onChange={(e) => setMpg(e.target.value)}
-        placeholder="Введіть значення..."
+        placeholder={t("fuelCalculator.placeholder")}
         slotProps={{ htmlInput: { min: 0.1, step: 0.1 } }}
         InputProps={{
-          endAdornment: <InputAdornment position="end">US MPG</InputAdornment>,
+          endAdornment: <InputAdornment position="end">{t("fuelCalculator.unit")}</InputAdornment>,
         }}
         sx={{ mb: 2 }}
       />
@@ -57,7 +59,7 @@ export default function FuelCalculator() {
           {result}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          L/100 km
+          {t("fuelCalculator.resultUnit")}
         </Typography>
       </Box>
 
@@ -72,7 +74,7 @@ export default function FuelCalculator() {
           mb: 1.5,
         }}
       >
-        Швидкий пошук (популярні MPG)
+        {t("fuelCalculator.quickPicks")}
       </Typography>
 
       <Grid container spacing={1}>
