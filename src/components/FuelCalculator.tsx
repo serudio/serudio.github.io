@@ -1,34 +1,40 @@
-import { useMemo, useState } from 'react'
-import Box from '@mui/material/Box'
-import Paper from '@mui/material/Paper'
-import Typography from '@mui/material/Typography'
-import TextField from '@mui/material/TextField'
-import InputAdornment from '@mui/material/InputAdornment'
-import Grid from '@mui/material/Grid'
-import ButtonBase from '@mui/material/ButtonBase'
-import LocalGasStationIcon from '@mui/icons-material/LocalGasStation'
+import { useMemo, useState } from "react";
+import Box from "@mui/material/Box";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+import TextField from "@mui/material/TextField";
+import InputAdornment from "@mui/material/InputAdornment";
+import Grid from "@mui/material/Grid";
+import ButtonBase from "@mui/material/ButtonBase";
+import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
 
 // US gallons -> liters (3.78541) times km per mile (1.60934), collapsed
 // to the classic 235.215 constant used for MPG -> L/100km conversion.
-const MPG_TO_L100KM_CONSTANT = 235.215
-const DEFAULT_MPG = 24
-const QUICK_PICKS = [15, 20, 24, 30, 35, 40]
+const MPG_TO_L100KM_CONSTANT = 235.215;
+const DEFAULT_MPG = 24;
+const QUICK_PICKS = [18, 20, 21, 24, 27, 30, 33, 35, 38, 40];
 
 function toLitersPer100Km(mpg: number): string {
-  if (!mpg || mpg <= 0) return '0.00'
-  return (MPG_TO_L100KM_CONSTANT / mpg).toFixed(2)
+  if (!mpg || mpg <= 0) return "0.00";
+  return (MPG_TO_L100KM_CONSTANT / mpg).toFixed(2);
 }
 
 export default function FuelCalculator() {
-  const [mpg, setMpg] = useState<string>(String(DEFAULT_MPG))
+  const [mpg, setMpg] = useState<string>(String(DEFAULT_MPG));
 
-  const result = useMemo(() => toLitersPer100Km(parseFloat(mpg)), [mpg])
+  const result = useMemo(() => toLitersPer100Km(parseFloat(mpg)), [mpg]);
 
   return (
     <Paper elevation={0} sx={{ p: 3, borderRadius: 4, mb: 3 }}>
       <Typography
         variant="subtitle1"
-        sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, fontWeight: 600 }}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          mb: 2,
+          fontWeight: 600,
+        }}
       >
         <LocalGasStationIcon fontSize="small" color="secondary" />
         Конвертер витрати пального
@@ -49,13 +55,13 @@ export default function FuelCalculator() {
 
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          alignItems: 'baseline',
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "baseline",
           gap: 1,
           pt: 1.5,
-          borderTop: '1px dashed',
-          borderColor: 'divider',
+          borderTop: "1px dashed",
+          borderColor: "divider",
           mb: 3,
         }}
       >
@@ -70,11 +76,11 @@ export default function FuelCalculator() {
       <Typography
         variant="caption"
         sx={{
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          color: 'text.secondary',
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+          color: "text.secondary",
           fontWeight: 700,
-          display: 'block',
+          display: "block",
           mb: 1.5,
         }}
       >
@@ -87,25 +93,29 @@ export default function FuelCalculator() {
             <ButtonBase
               onClick={() => setMpg(String(value))}
               sx={{
-                width: '100%',
-                justifyContent: 'space-between',
+                width: "100%",
+                justifyContent: "space-between",
                 px: 1.75,
                 py: 1.25,
                 borderRadius: 2,
-                border: '1px solid',
-                borderColor: 'divider',
-                bgcolor: 'background.default',
-                transition: 'all 0.2s',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  bgcolor: 'rgba(99, 102, 241, 0.06)',
+                border: "1px solid",
+                borderColor: "divider",
+                bgcolor: "background.default",
+                transition: "all 0.2s",
+                "&:hover": {
+                  borderColor: "primary.main",
+                  bgcolor: "rgba(99, 102, 241, 0.06)",
                 },
               }}
             >
               <Typography variant="body2" color="text.secondary">
                 {value} MPG
               </Typography>
-              <Typography variant="body2" fontWeight={600} color="secondary.main">
+              <Typography
+                variant="body2"
+                fontWeight={600}
+                color="secondary.main"
+              >
                 {toLitersPer100Km(value)} L
               </Typography>
             </ButtonBase>
@@ -113,5 +123,5 @@ export default function FuelCalculator() {
         ))}
       </Grid>
     </Paper>
-  )
+  );
 }
