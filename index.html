@@ -4,55 +4,207 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>serudio | GitHub Pages</title>
-    <!-- Автоматичне перенаправлення на ваш проєкт через 5 секунд -->
-    <meta http-equiv="refresh" content="60;url=https://serudio.github.io/todo-cloud/">
     <style>
+        :root {
+            --primary-color: #0969da;
+            --primary-hover: #0c57d0;
+            --bg-color: #f6f8fa;
+            --card-bg: #ffffff;
+            --text-main: #24292f;
+            --text-muted: #57606a;
+            --border-color: #d0d7de;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f6f8fa;
-            color: #24292f;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
-            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
         }
+
         .container {
-            background-color: #ffffff;
+            background-color: var(--card-bg);
             padding: 40px;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            border: 1px solid #d0d7de;
-            max-width: 400px;
+            border: 1px solid var(--border-color);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
         }
+
         h1 {
             font-size: 24px;
+            margin-top: 0;
             margin-bottom: 8px;
         }
+
         p {
             font-size: 16px;
-            color: #57606a;
+            color: var(--text-muted);
             margin-bottom: 24px;
         }
+
+        /* Стилі для кругової анімації */
+        .timer-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .timer-svg {
+            transform: rotate(-90deg);
+            width: 120px;
+            height: 120px;
+        }
+
+        .timer-bg {
+            fill: none;
+            stroke: #eff1f3;
+            stroke-width: 6;
+        }
+
+        .timer-progress {
+            fill: none;
+            stroke: var(--primary-color);
+            stroke-width: 6;
+            stroke-linecap: round;
+            stroke-dasharray: 339.29; /* 2 * PI * r (r=54) */
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear;
+        }
+
+        .timer-text {
+            position: absolute;
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 32px;
+        }
+
         .btn {
             display: inline-block;
-            background-color: #0969da;
-            color: #ffffff;
             text-decoration: none;
             padding: 12px 24px;
             border-radius: 6px;
             font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: #f6f8fa;
+            color: #24292f;
+            border-color: var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #aeb5bc2e;
+        }
+
+        /* Секція проєктів */
+        .projects-section {
+            text-align: left;
+            border-top: 1px solid var(--border-color);
+            padding-top: 24px;
+        }
+
+        .projects-section h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: var(--text-main);
+        }
+
+        .project-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 12px;
             transition: background-color 0.2s;
         }
-        .btn:hover {
-            background-color: #0c57d0;
+
+        .project-card:hover {
+            background-color: #f6f8fa;
         }
-        .loader {
-            margin-top: 20px;
+
+        .project-card.featured {
+            border-color: #54aeff;
+            background-color: #f0f7ff;
+        }
+
+        .project-card.featured:hover {
+            background-color: #ddf0ff;
+        }
+
+        .project-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .project-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--text-main);
+        }
+
+        .project-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .badge {
+            background-color: #ddf4ff;
+            color: #0969da;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+            border: 1px solid rgba(9, 105, 218, 0.2);
+        }
+
+        .project-link {
+            color: var(--primary-color);
+            font-weight: 600;
             font-size: 14px;
-            color: #8c959f;
+            text-decoration: none;
+        }
+
+        .project-link:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -60,15 +212,83 @@
 
     <div class="container">
         <h1>Вітаємо на serudio.github.io</h1>
-        <p>Зараз вас буде автоматично перенаправлено до нашого головного проєкту.</p>
+        <p id="status-text">Автоматичне перенаправлення до головного проєкту</p>
         
-        <a class="btn" href="https://serudio.github.io/todo-cloud/">Перейти до Todo Cloud</a>
+        <!-- Круговий таймер -->
+        <div class="timer-container" id="timer-wrapper">
+            <svg class="timer-svg" viewBox="0 0 120 120">
+                <circle class="timer-bg" cx="60" cy="60" r="54"></circle>
+                <circle class="timer-progress" id="progress-circle" cx="60" cy="60" r="54"></circle>
+            </svg>
+            <div class="timer-text" id="countdown">60</div>
+        </div>
         
-        <div class="loader">Перенаправлення через 1 хв</div>
+        <!-- Кнопки керування -->
+        <div class="controls">
+            <a class="btn btn-primary" href="https://serudio.github.io/todo-cloud/">Перейти зараз</a>
+            <button class="btn btn-secondary" id="cancel-btn">Скасувати</button>
+        </div>
+
+        <!-- Секція всіх проєктів -->
+        <div class="projects-section">
+            <h2>Мої проєкти</h2>
+            
+            <!-- Основний проєкт -->
+            <div class="project-card featured">
+                <div class="project-info">
+                    <span class="project-title">Todo Cloud <span class="badge">Основний</span></span>
+                    <span class="project-desc">Хмарний менеджер завдань для вашої продуктивності</span>
+                </div>
+                <a class="project-link" href="https://serudio.github.io/todo-cloud/">Відкрити &rarr;</a>
+            </div>
+
+            <!-- Додатковий проєкт -->
+            <div class="project-card">
+                <div class="project-info">
+                    <span class="project-title">Book Rent</span>
+                    <span class="project-desc">Сервіс оренди та каталогізації книг</span>
+                </div>
+                <a class="project-link" href="https://serudio.github.io/books/">Відкрити &rarr;</a>
+            </div>
+        </div>
     </div>
-    <div class="container">
-        <a class="btn" href="https://serudio.github.io/books/">Books</a>
-    </div>
+
+    <script>
+        const targetUrl = "https://serudio.github.io/todo-cloud/";
+        let timeLeft = 60;
+        const totalTime = 60;
+        
+        const countdownElement = document.getElementById('countdown');
+        const progressCircle = document.getElementById('progress-circle');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const statusText = document.getElementById('status-text');
+        const timerWrapper = document.getElementById('timer-wrapper');
+
+        const r = 54;
+        const circumference = 2 * Math.PI * r;
+
+        const timer = setInterval(() => {
+            timeLeft--;
+            countdownElement.textContent = timeLeft;
+
+            // Оновлення кругової анімації
+            const offset = circumference - (timeLeft / totalTime) * circumference;
+            progressCircle.style.strokeDashoffset = offset;
+
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                window.location.href = targetUrl;
+            }
+        }, 1000);
+
+        // Обробник для кнопки скасування
+        cancelBtn.addEventListener('click', () => {
+            clearInterval(timer);
+            statusText.textContent = "Перенаправлення скасовано. Оберіть проєкт зі списку нижче:";
+            timerWrapper.style.display = "none";
+            cancelBtn.style.display = "none";
+        });
+    </script>
 
 </body>
 </html>
