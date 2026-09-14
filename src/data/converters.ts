@@ -55,4 +55,12 @@ export const converters: ConverterMeta[] = [
     seoDescriptionKey: 'converters.keyboardLayout.seoDescription',
     Page: lazy(() => import('../pages/converters/KeyboardLayoutConverterPage')),
   },
+  {
+    slug: 'deposit',
+    nameKey: 'converters.deposit.name',
+    descriptionKey: 'converters.deposit.shortDescription',
+    titleKey: 'converters.deposit.title',
+    seoDescriptionKey: 'converters.deposit.seoDescription',
+    Page: lazy(() => import('../pages/converters/DepositConverterPage')),
+  },
 ]

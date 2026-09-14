@@ -49,6 +49,12 @@
       "shortDescription": "Fix text (EN ⇄ UA)",
       "title": "Fix keyboard layout (EN ⇄ UA)",
       "seoDescription": "Online tool that fixes text typed with the wrong keyboard layout: instantly converts gibberish typed in English layout back to Ukrainian, and vice versa."
+    },
+    "deposit": {
+      "name": "Bank deposit",
+      "shortDescription": "Interest, compounding, final amount",
+      "title": "Bank deposit calculator (interest and compounding)",
+      "seoDescription": "Free online bank deposit calculator: work out the interest earned and the final payout for a fixed-rate deposit, with monthly, quarterly or annual capitalization and optional tax on interest."
     }
   },
   "fuelCalculator": {
@@ -66,6 +72,30 @@
     "copy": "Copy",
     "copied": "Copied!",
     "emptyHint": "Type something above to see the fixed version."
+  },
+  "depositCalculator": {
+    "amount": "Deposit amount",
+    "rate": "Annual rate",
+    "term": "Term",
+    "termUnit": "Term unit",
+    "termUnits": {
+      "months": "months",
+      "years": "years"
+    },
+    "compounding": "Interest capitalization",
+    "compoundingOptions": {
+      "end": "None — paid at the end",
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "annually": "Annually"
+    },
+    "tax": "Tax on interest",
+    "grossInterest": "Interest earned",
+    "taxWithheld": "Tax withheld",
+    "effectiveRate": "Effective annual rate",
+    "finalAmount": "You get at the end",
+    "noResult": "Enter an amount, a rate and a term",
+    "disclaimer": "An estimate for a fixed-rate deposit. Your bank may round differently, apply its own tax rate, or charge fees for early withdrawal."
   },
   "privacy": {
     "seoDescription": "serudio's privacy policy: how Google AdSense uses cookies on this site.",
