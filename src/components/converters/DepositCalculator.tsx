@@ -1,25 +1,26 @@
-import { useMemo, useState, type WheelEvent } from 'react'
-import { useTranslation } from 'react-i18next'
-import Box from '@mui/material/Box'
-import Stack from '@mui/material/Stack'
-import TextField from '@mui/material/TextField'
-import MenuItem from '@mui/material/MenuItem'
-import Typography from '@mui/material/Typography'
-import InputAdornment from '@mui/material/InputAdornment'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
+import { Fragment, useMemo, useState, type WheelEvent } from "react";
+import { useTranslation } from "react-i18next";
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
+import Typography from "@mui/material/Typography";
+import InputAdornment from "@mui/material/InputAdornment";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 import {
   COMPOUNDING_OPTIONS,
   calculateDeposit,
   type Compounding,
+  type DepositPeriod,
   type TermUnit,
-} from '../../lib/deposit'
+} from "../../lib/deposit";
 
-const TERM_UNITS: TermUnit[] = ['months', 'years']
+const TERM_UNITS: TermUnit[] = ["months", "years"];
 
 /**
  * A focused <input type="number"> treats the wheel as "nudge the value",
@@ -28,8 +29,8 @@ const TERM_UNITS: TermUnit[] = ['months', 'years']
  * form. Drop focus instead and let the page scroll.
  */
 function stopWheelEdit(event: WheelEvent<HTMLDivElement>) {
-  const target = event.target as HTMLElement
-  if (document.activeElement === target) target.blur()
+  const target = event.target as HTMLElement;
+  if (document.activeElement === target) target.blur();
 }
 
 /**
@@ -37,8 +38,21 @@ function stopWheelEdit(event: WheelEvent<HTMLDivElement>) {
  * the schedule falls back to months (see UNCAPITALIZED_PERIODS_PER_YEAR
  * in lib/deposit.ts), so 'end' is labelled monthly too.
  */
-function periodKey(compounding: Compounding): 'monthly' | 'quarterly' | 'annually' {
-  return compounding === 'end' ? 'monthly' : compounding
+function periodKey(
+  compounding: Compounding,
+): "monthly" | "quarterly" | "annually" {
+  return compounding === "end" ? "monthly" : compounding;
+}
+
+/** Splits a schedule into consecutive years, preserving row order. */
+function groupByYears(schedule: DepositPeriod[]) {
+  const years: { year: number; rows: DepositPeriod[] }[] = [];
+  for (const row of schedule) {
+    const current = years[years.length - 1];
+    if (current?.year === row.year) current.rows.push(row);
+    else years.push({ year: row.year, rows: [row] });
+  }
+  return years;
 }
 
 // The converter widget itself. Rendered inside a page's
@@ -46,14 +60,14 @@ function periodKey(compounding: Compounding): 'monthly' | 'quarterly' | 'annuall
 // chrome (Seo, <h1>, back link, ad slot) — this component only owns the
 // interactive form.
 export default function DepositCalculator() {
-  const { t, i18n } = useTranslation()
-  const [amount, setAmount] = useState('100000')
-  const [rate, setRate] = useState('14')
-  const [term, setTerm] = useState('12')
-  const [termUnit, setTermUnit] = useState<TermUnit>('months')
-  const [compounding, setCompounding] = useState<Compounding>('monthly')
-  const [tax, setTax] = useState('0')
-  const [topUp, setTopUp] = useState('0')
+  const { t, i18n } = useTranslation();
+  const [amount, setAmount] = useState("1000");
+  const [rate, setRate] = useState("14");
+  const [term, setTerm] = useState("10");
+  const [termUnit, setTermUnit] = useState<TermUnit>("months");
+  const [compounding, setCompounding] = useState<Compounding>("monthly");
+  const [tax, setTax] = useState("0");
+  const [topUp, setTopUp] = useState("1000");
 
   const result = useMemo(
     () =>
@@ -67,7 +81,7 @@ export default function DepositCalculator() {
         topUp: parseFloat(topUp),
       }),
     [amount, rate, term, termUnit, compounding, tax, topUp],
-  )
+  );
 
   // Group digits the way the current language does (uk uses spaces,
   // en uses commas) rather than hardcoding one convention.
@@ -78,12 +92,25 @@ export default function DepositCalculator() {
         maximumFractionDigits: 2,
       }),
     [i18n.language],
-  )
+  );
 
-  const percentAdornment = <InputAdornment position="end">%</InputAdornment>
-  const period = periodKey(compounding)
-  const hasTax = result !== null && result.tax > 0
-  const hasTopUps = result !== null && result.totalContributed > parseFloat(amount)
+  const percentAdornment = <InputAdornment position="end">%</InputAdornment>;
+  const period = periodKey(compounding);
+  const hasTax = result !== null && result.tax > 0;
+  const hasTopUps =
+    result !== null && result.totalContributed > parseFloat(amount);
+  // Over a term longer than a year, a flat run of "quarter 7, quarter 8"
+  // gives no sense of where you are, so break the rows into years. With
+  // annual capitalization every row is already a year — nothing to group.
+  const groupByYear =
+    result !== null &&
+    result.periodsPerYear > 1 &&
+    result.schedule.length > result.periodsPerYear;
+  const years = useMemo(
+    () => (result === null ? [] : groupByYears(result.schedule)),
+    [result],
+  );
+  const columnCount = 4 + (hasTopUps ? 1 : 0) + (hasTax ? 1 : 0);
 
   return (
     <>
@@ -91,21 +118,21 @@ export default function DepositCalculator() {
         type="number"
         fullWidth
         value={amount}
-        label={t('depositCalculator.amount')}
+        label={t("depositCalculator.amount")}
         onChange={(e) => setAmount(e.target.value)}
-        slotProps={{ htmlInput: { min: 0, step: 'any' } }}
+        slotProps={{ htmlInput: { min: 0, step: "any" } }}
         onWheel={stopWheelEdit}
         sx={{ mb: 2 }}
       />
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2 }}>
         <TextField
           type="number"
           fullWidth
           value={rate}
-          label={t('depositCalculator.rate')}
+          label={t("depositCalculator.rate")}
           onChange={(e) => setRate(e.target.value)}
-          slotProps={{ htmlInput: { min: 0, step: 'any' } }}
+          slotProps={{ htmlInput: { min: 0, step: "any" } }}
           onWheel={stopWheelEdit}
           InputProps={{ endAdornment: percentAdornment }}
         />
@@ -113,16 +140,16 @@ export default function DepositCalculator() {
           type="number"
           fullWidth
           value={term}
-          label={t('depositCalculator.term')}
+          label={t("depositCalculator.term")}
           onChange={(e) => setTerm(e.target.value)}
-          slotProps={{ htmlInput: { min: 0, step: 'any' } }}
+          slotProps={{ htmlInput: { min: 0, step: "any" } }}
           onWheel={stopWheelEdit}
         />
         <TextField
           select
           fullWidth
           value={termUnit}
-          label={t('depositCalculator.termUnit')}
+          label={t("depositCalculator.termUnit")}
           onChange={(e) => setTermUnit(e.target.value as TermUnit)}
         >
           {TERM_UNITS.map((unit) => (
@@ -133,12 +160,12 @@ export default function DepositCalculator() {
         </TextField>
       </Stack>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2 }}>
         <TextField
           select
           fullWidth
           value={compounding}
-          label={t('depositCalculator.compounding')}
+          label={t("depositCalculator.compounding")}
           onChange={(e) => setCompounding(e.target.value as Compounding)}
         >
           {COMPOUNDING_OPTIONS.map((option) => (
@@ -151,9 +178,9 @@ export default function DepositCalculator() {
           type="number"
           fullWidth
           value={tax}
-          label={t('depositCalculator.tax')}
+          label={t("depositCalculator.tax")}
           onChange={(e) => setTax(e.target.value)}
-          slotProps={{ htmlInput: { min: 0, max: 100, step: 'any' } }}
+          slotProps={{ htmlInput: { min: 0, max: 100, step: "any" } }}
           onWheel={stopWheelEdit}
           InputProps={{ endAdornment: percentAdornment }}
         />
@@ -163,60 +190,64 @@ export default function DepositCalculator() {
         type="number"
         fullWidth
         value={topUp}
-        label={t('depositCalculator.topUp')}
+        label={t("depositCalculator.topUp")}
         helperText={t(`depositCalculator.topUpFrequency.${period}`)}
         onChange={(e) => setTopUp(e.target.value)}
-        slotProps={{ htmlInput: { min: 0, step: 'any' } }}
+        slotProps={{ htmlInput: { min: 0, step: "any" } }}
         onWheel={stopWheelEdit}
         sx={{ mb: 3 }}
       />
 
       {result === null ? (
-        <Box sx={{ pt: 2, borderTop: '1px dashed', borderColor: 'divider' }}>
-          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'right' }}>
-            {t('depositCalculator.noResult')}
+        <Box sx={{ pt: 2, borderTop: "1px dashed", borderColor: "divider" }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ textAlign: "right" }}
+          >
+            {t("depositCalculator.noResult")}
           </Typography>
         </Box>
       ) : (
         <>
-          <Box sx={{ pt: 2, borderTop: '1px dashed', borderColor: 'divider' }}>
+          <Box sx={{ pt: 2, borderTop: "1px dashed", borderColor: "divider" }}>
             <Stack spacing={1}>
               {hasTopUps && (
                 <SummaryRow
-                  label={t('depositCalculator.totalContributed')}
+                  label={t("depositCalculator.totalContributed")}
                   value={money.format(result.totalContributed)}
                 />
               )}
               <SummaryRow
-                label={t('depositCalculator.grossInterest')}
+                label={t("depositCalculator.grossInterest")}
                 value={money.format(result.grossInterest)}
               />
               {hasTax && (
                 <SummaryRow
-                  label={t('depositCalculator.taxWithheld')}
+                  label={t("depositCalculator.taxWithheld")}
                   value={`-${money.format(result.tax)}`}
                 />
               )}
               <SummaryRow
-                label={t('depositCalculator.effectiveRate')}
+                label={t("depositCalculator.effectiveRate")}
                 value={`${result.effectiveAnnualRatePercent.toFixed(2)} %`}
               />
             </Stack>
 
             <Box
               sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'baseline',
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
                 gap: 2,
                 mt: 2,
                 pt: 2,
-                borderTop: '1px solid',
-                borderColor: 'divider',
+                borderTop: "1px solid",
+                borderColor: "divider",
               }}
             >
               <Typography variant="body2" color="text.secondary">
-                {t('depositCalculator.finalAmount')}
+                {t("depositCalculator.finalAmount")}
               </Typography>
               <Typography variant="h6" color="info.main" fontWeight={700}>
                 {money.format(result.finalAmount)}
@@ -225,10 +256,17 @@ export default function DepositCalculator() {
           </Box>
 
           <Typography variant="subtitle2" sx={{ mt: 4, mb: 1 }}>
-            {t('depositCalculator.schedule.heading')}
+            {t("depositCalculator.schedule.heading")}
           </Typography>
 
-          <TableContainer sx={{ maxHeight: 380, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+          <TableContainer
+            sx={{
+              maxHeight: 380,
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 2,
+            }}
+          >
             <Table
               size="small"
               stickyHeader
@@ -236,58 +274,140 @@ export default function DepositCalculator() {
                 // Six columns have to fit a narrow card, so trade cell
                 // padding for column count; the container still scrolls
                 // sideways if a very large amount overflows anyway.
-                '& .MuiTableCell-root': { px: 1, py: 0.75, fontSize: '0.75rem' },
-                '& .MuiTableBody-root .MuiTableCell-root': { whiteSpace: 'nowrap' },
+                "& .MuiTableCell-root": {
+                  px: 1,
+                  py: 0.75,
+                  fontSize: "0.75rem",
+                },
+                "& .MuiTableBody-root .MuiTableCell-root": {
+                  whiteSpace: "nowrap",
+                },
               }}
             >
               <TableHead>
                 <TableRow>
-                  <TableCell>{t(`depositCalculator.schedule.period.${period}`)}</TableCell>
-                  <TableCell align="right">{t('depositCalculator.schedule.opening')}</TableCell>
-                  {hasTopUps && <TableCell align="right">{t('depositCalculator.schedule.topUp')}</TableCell>}
-                  <TableCell align="right">{t('depositCalculator.schedule.income')}</TableCell>
-                  {hasTax && <TableCell align="right">{t('depositCalculator.schedule.netIncome')}</TableCell>}
-                  <TableCell align="right">{t('depositCalculator.schedule.closing')}</TableCell>
+                  <TableCell>
+                    {t(`depositCalculator.schedule.period.${period}`)}
+                  </TableCell>
+                  <TableCell align="right">
+                    {t("depositCalculator.schedule.opening")}
+                  </TableCell>
+                  {hasTopUps && (
+                    <TableCell align="right">
+                      {t("depositCalculator.schedule.topUp")}
+                    </TableCell>
+                  )}
+                  <TableCell align="right">
+                    {t("depositCalculator.schedule.income")}
+                  </TableCell>
+                  {hasTax && (
+                    <TableCell align="right">
+                      {t("depositCalculator.schedule.netIncome")}
+                    </TableCell>
+                  )}
+                  <TableCell align="right">
+                    {t("depositCalculator.schedule.closing")}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {result.schedule.map((row) => (
-                  <TableRow key={row.index} hover>
-                    <TableCell>
-                      {row.index}
-                      {row.fraction < 1 && '*'}
-                    </TableCell>
-                    <TableCell align="right">{money.format(row.openingBalance)}</TableCell>
-                    {hasTopUps && <TableCell align="right">{money.format(row.topUp)}</TableCell>}
-                    <TableCell align="right">{money.format(row.grossInterest)}</TableCell>
-                    {hasTax && <TableCell align="right">{money.format(row.netInterest)}</TableCell>}
-                    <TableCell align="right" sx={{ fontWeight: 600 }}>
-                      {money.format(row.closingBalance)}
-                    </TableCell>
-                  </TableRow>
+                {years.map(({ year, rows }) => (
+                  <Fragment key={year}>
+                    {groupByYear && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={columnCount}
+                          sx={{
+                            bgcolor: "background.default",
+                            color: "text.secondary",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                          }}
+                        >
+                          {/* The cell spans the full table width, so on a
+                              narrow screen its label would scroll out of
+                              sight just as the sideways scroll makes the
+                              year context most useful — pin it instead. */}
+                          <Box
+                            component="span"
+                            sx={{
+                              position: "sticky",
+                              left: 8,
+                              display: "inline-block",
+                            }}
+                          >
+                            {t("depositCalculator.schedule.year", { year })}
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {rows.map((row) => (
+                      <TableRow key={row.index} hover>
+                        <TableCell>
+                          {groupByYear ? row.indexInYear : row.index}
+                          {row.fraction < 1 && "*"}
+                        </TableCell>
+                        <TableCell align="right">
+                          {money.format(row.openingBalance)}
+                        </TableCell>
+                        {hasTopUps && (
+                          <TableCell align="right">
+                            {money.format(row.topUp)}
+                          </TableCell>
+                        )}
+                        <TableCell align="right">
+                          {money.format(row.grossInterest)}
+                        </TableCell>
+                        {hasTax && (
+                          <TableCell align="right">
+                            {money.format(row.netInterest)}
+                          </TableCell>
+                        )}
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>
+                          {money.format(row.closingBalance)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </Fragment>
                 ))}
               </TableBody>
             </Table>
           </TableContainer>
 
           {result.schedule.some((row) => row.fraction < 1) && (
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-              {t('depositCalculator.schedule.partialPeriodNote')}
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mt: 1 }}
+            >
+              {t("depositCalculator.schedule.partialPeriodNote")}
             </Typography>
           )}
         </>
       )}
 
-      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 3 }}>
-        {t('depositCalculator.disclaimer')}
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: "block", mt: 3 }}
+      >
+        {t("depositCalculator.disclaimer")}
       </Typography>
     </>
-  )
+  );
 }
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 2 }}>
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "baseline",
+        gap: 2,
+      }}
+    >
       <Typography variant="body2" color="text.secondary">
         {label}
       </Typography>
@@ -295,5 +415,5 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
         {value}
       </Typography>
     </Box>
-  )
+  );
 }

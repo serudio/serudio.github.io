@@ -105,6 +105,7 @@
     "disclaimer": "An estimate for a fixed-rate deposit. Your bank may round differently, apply its own tax rate, or charge fees for early withdrawal.",
     "schedule": {
       "heading": "Period by period",
+      "year": "Year {{year}}",
       "period": {
         "monthly": "Month",
         "quarterly": "Quarter",

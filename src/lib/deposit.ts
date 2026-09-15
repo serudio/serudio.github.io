@@ -66,8 +66,12 @@ export interface DepositInput {
 
 /** One period of the deposit — a single row of the breakdown table. */
 export interface DepositPeriod {
-  /** 1-based period number. */
+  /** 1-based period number, counted across the whole term. */
   index: number
+  /** 1-based year of the term this period falls in. */
+  year: number
+  /** 1-based period number within that year (e.g. quarter 1-4). */
+  indexInYear: number
   /** Balance this period started with, before the top-up. */
   openingBalance: number
   /** Top-up paid in at the start of this period (0 for the first). */
@@ -89,6 +93,11 @@ export interface DepositPeriod {
 }
 
 export interface DepositResult {
+  /**
+   * Schedule rows per year — 12, 4 or 1 depending on capitalization, and
+   * 12 when interest isn't capitalized at all.
+   */
+  periodsPerYear: number
   /** Initial deposit plus every top-up — the money you put in. */
   totalContributed: number
   /** Interest earned over the whole term, before tax. */
@@ -163,6 +172,7 @@ export function calculateDeposit({
   const finalAmount = schedule[schedule.length - 1].closingBalance
 
   return {
+    periodsPerYear,
     totalContributed,
     grossInterest,
     tax,
@@ -255,6 +265,8 @@ function buildSchedule({
 
     schedule.push({
       index,
+      year: Math.floor((index - 1) / periodsPerYear) + 1,
+      indexInYear: ((index - 1) % periodsPerYear) + 1,
       openingBalance,
       topUp: periodTopUp,
       grossInterest,
