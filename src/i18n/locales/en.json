@@ -90,12 +90,33 @@
       "annually": "Annually"
     },
     "tax": "Tax on interest",
+    "topUp": "Regular top-up",
+    "topUpFrequency": {
+      "monthly": "Paid in every month, from the 2nd",
+      "quarterly": "Paid in every quarter, from the 2nd",
+      "annually": "Paid in every year, from the 2nd"
+    },
+    "totalContributed": "Total paid in",
     "grossInterest": "Interest earned",
     "taxWithheld": "Tax withheld",
     "effectiveRate": "Effective annual rate",
     "finalAmount": "You get at the end",
     "noResult": "Enter an amount, a rate and a term",
-    "disclaimer": "An estimate for a fixed-rate deposit. Your bank may round differently, apply its own tax rate, or charge fees for early withdrawal."
+    "disclaimer": "An estimate for a fixed-rate deposit. Your bank may round differently, apply its own tax rate, or charge fees for early withdrawal.",
+    "schedule": {
+      "heading": "Period by period",
+      "period": {
+        "monthly": "Month",
+        "quarterly": "Quarter",
+        "annually": "Year"
+      },
+      "opening": "Amount before",
+      "topUp": "Top-up",
+      "income": "Income",
+      "netIncome": "After tax",
+      "closing": "Total",
+      "partialPeriodNote": "* A partial period — the term does not divide evenly into whole capitalization periods, so this row covers only part of one and earns interest accordingly."
+    }
   },
   "privacy": {
     "seoDescription": "serudio's privacy policy: how Google AdSense uses cookies on this site.",

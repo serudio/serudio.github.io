@@ -1,21 +1,21 @@
-import type { ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
-import Container from '@mui/material/Container'
-import Paper from '@mui/material/Paper'
-import Typography from '@mui/material/Typography'
-import Link from '@mui/material/Link'
-import { Link as RouterLink } from 'react-router-dom'
-import Seo from '../Seo'
-import AdSlot from '../AdSlot'
+import type { ReactNode } from "react";
+// import { useTranslation } from "react-i18next";
+import Container from "@mui/material/Container";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+// import Link from "@mui/material/Link";
+// import { Link as RouterLink } from "react-router-dom";
+import Seo from "../Seo";
+import AdSlot from "../AdSlot";
 
 interface ConverterPageLayoutProps {
-  title: string
-  seoDescription: string
+  title: string;
+  seoDescription: string;
   /** Full route path, e.g. '/converters/fuel-consumption'. */
-  path: string
+  path: string;
   /** AdSense ad unit slot id for this converter page (see AdSlot.tsx). */
-  adSlotId?: string
-  children: ReactNode
+  adSlotId?: string;
+  children: ReactNode;
 }
 
 /**
@@ -28,16 +28,16 @@ export default function ConverterPageLayout({
   title,
   seoDescription,
   path,
-  adSlotId = 'TODO-REPLACE-WITH-REAL-AD-SLOT-ID',
+  adSlotId = "TODO-REPLACE-WITH-REAL-AD-SLOT-ID",
   children,
 }: ConverterPageLayoutProps) {
-  const { t } = useTranslation()
+  // const { t } = useTranslation();
 
   return (
     <Container maxWidth="sm" disableGutters>
       <Seo title={title} description={seoDescription} path={path} />
       <Paper elevation={0} sx={{ p: { xs: 3, sm: 4 }, borderRadius: 5 }}>
-        <Link
+        {/* <Link
           component={RouterLink}
           to="/converters"
           variant="body2"
@@ -45,7 +45,7 @@ export default function ConverterPageLayout({
           sx={{ display: 'inline-block', mb: 2 }}
         >
           &larr; {t('converters.allConverters')}
-        </Link>
+        </Link> */}
         <Typography variant="h5" component="h1" sx={{ mb: 3 }}>
           {title}
         </Typography>
@@ -53,5 +53,5 @@ export default function ConverterPageLayout({
         <AdSlot slotId={adSlotId} />
       </Paper>
     </Container>
-  )
+  );
 }
