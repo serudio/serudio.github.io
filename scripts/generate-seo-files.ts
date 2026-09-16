@@ -15,8 +15,37 @@ const root = path.resolve(__dirname, '..')
 // drives the app's routing and the /converters index — add a converter
 // there and it shows up here automatically.
 const staticRoutes = ['/', '/converters', '/privacy']
+
+// The other projects (see src/data/projects.ts) are separate repos, but
+// GitHub Pages serves them under this same origin, so this sitemap is
+// allowed to list them — and it's the only sitemap that does, since
+// neither project ships one of its own.
+//
+// Trailing slashes are deliberate: GitHub Pages 301-redirects
+// /todo-cloud to /todo-cloud/, and a sitemap should name the URL that
+// actually answers rather than one that redirects.
+//
+// See CLAUDE.md, section "SEO".
+const projectRoutes = [
+  '/todo-cloud/',
+  '/books/',
+  // todo-cloud's own sections, listed at the site owner's request.
+  //
+  // Heads-up for whoever edits this next: these are hash routes (the app
+  // uses them because GitHub Pages has no SPA rewrite), and search
+  // engines discard the fragment when canonicalizing — so both of these
+  // are likely to be folded into /todo-cloud/ above rather than indexed
+  // as pages of their own, and may show up in Search Console as
+  // duplicates. That's expected, not a bug in this script. Making them
+  // genuinely indexable would mean giving todo-cloud real paths
+  // (/todo-cloud/lists) plus a 404.html SPA fallback, and a public
+  // crawlable state for screens that currently need a login.
+  '/todo-cloud/#/lists',
+  '/todo-cloud/#/points',
+]
+
 const converterRoutes = converters.map((c) => `/converters/${c.slug}`)
-const routes = [...staticRoutes, ...converterRoutes]
+const routes = [...staticRoutes, ...projectRoutes, ...converterRoutes]
 
 const robots = `User-agent: *
 Allow: /
