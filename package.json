@@ -8,6 +8,7 @@
     "dev": "vite",
     "prebuild": "tsx scripts/generate-seo-files.ts",
     "build": "tsc -b && vite build",
+    "postbuild": "tsx scripts/generate-route-pages.ts",
     "preview": "vite preview",
     "lint": "eslint .",
     "generate:og-image": "node scripts/generate-og-image.mjs"

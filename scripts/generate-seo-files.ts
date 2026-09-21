@@ -29,19 +29,14 @@ const staticRoutes = ["/", "/converters", "/privacy"];
 const projectRoutes = [
   "/todo-cloud/",
   "/books/",
-  // todo-cloud's own sections, listed at the site owner's request.
-  //
-  // Heads-up for whoever edits this next: these are hash routes (the app
-  // uses them because GitHub Pages has no SPA rewrite), and search
-  // engines discard the fragment when canonicalizing — so both of these
-  // are likely to be folded into /todo-cloud/ above rather than indexed
-  // as pages of their own, and may show up in Search Console as
-  // duplicates. That's expected, not a bug in this script. Making them
-  // genuinely indexable would mean giving todo-cloud real paths
-  // (/todo-cloud/lists) plus a 404.html SPA fallback, and a public
-  // crawlable state for screens that currently need a login.
-  "/todo-cloud/lists",
-  "/todo-cloud/points",
+  // NOT listed: /todo-cloud/lists and /todo-cloud/points. Those paths
+  // return 404 — todo-cloud routes by hash (#/lists) and, like this site
+  // did before scripts/generate-route-pages.ts, has no file behind a
+  // plain path. A sitemap that lists 404s gets those URLs rejected and
+  // loses credibility for every other URL in it. They can come back once
+  // the todo-cloud repo serves real paths AND shows those screens
+  // something other than a sign-in wall, since there's nothing for a
+  // crawler to index behind the login either.
 ];
 
 const converterRoutes = converters.map((c) => `/converters/${c.slug}`);
