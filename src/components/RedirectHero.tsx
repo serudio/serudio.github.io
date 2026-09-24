@@ -7,8 +7,14 @@ import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import CircularProgress from '@mui/material/CircularProgress'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
+import { SITE_URL } from '../config/site'
 
-const REDIRECT_URL = 'https://serudio.github.io/todo-cloud'
+// Built from SITE_URL rather than hardcoded so a custom domain carries it
+// (see CLAUDE.md, "Domain"), and with the trailing slash GitHub Pages
+// actually serves — /todo-cloud 301-redirects to /todo-cloud/, and this
+// is the home page's own outgoing link, so the slashless form is what
+// search engines kept re-discovering.
+const REDIRECT_URL = `${SITE_URL}/todo-cloud/`
 const TOTAL_SECONDS = 60
 
 export default function RedirectHero() {
