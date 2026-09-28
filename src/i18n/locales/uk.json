@@ -27,6 +27,14 @@
     "bookRent": {
       "title": "Book Rent",
       "description": "Сервіс оренди та каталогізації книг"
+    },
+    "todoCloudLists": {
+      "title": "Списки",
+      "description": "Списки «за і проти» та порівняння в Todo Cloud"
+    },
+    "todoCloudPoints": {
+      "title": "Нагороди",
+      "description": "Бали та цілі в Todo Cloud"
     }
   },
   "converters": {
@@ -132,6 +140,12 @@
   },
   "footer": {
     "privacyPolicy": "Політика конфіденційності"
+  },
+  "theme": {
+    "label": "Тема",
+    "system": "Як у системі",
+    "light": "Світла",
+    "dark": "Темна"
   },
   "language": {
     "label": "Мова",

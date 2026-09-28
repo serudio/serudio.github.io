@@ -34,4 +34,21 @@ export const projects: Project[] = [
     descriptionKey: 'projects.bookRent.description',
     url: `${SITE_URL}/books/`,
   },
+  // Shortcuts into Todo Cloud's own sections. These use hash routes
+  // because that app routes by fragment (GitHub Pages has no SPA
+  // rewrite, so /todo-cloud/lists is a hard 404) — they work as links,
+  // but search engines strip the fragment and fold them back into
+  // /todo-cloud/, which is also what that app's canonical tag says. So
+  // they're navigation for visitors, not extra indexable pages, and
+  // deliberately absent from the sitemap.
+  {
+    titleKey: 'projects.todoCloudLists.title',
+    descriptionKey: 'projects.todoCloudLists.description',
+    url: `${SITE_URL}/todo-cloud/#/lists`,
+  },
+  {
+    titleKey: 'projects.todoCloudPoints.title',
+    descriptionKey: 'projects.todoCloudPoints.description',
+    url: `${SITE_URL}/todo-cloud/#/points`,
+  },
 ]

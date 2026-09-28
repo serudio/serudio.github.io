@@ -27,6 +27,14 @@
     "bookRent": {
       "title": "Book Rent",
       "description": "Book rental & cataloging service"
+    },
+    "todoCloudLists": {
+      "title": "Lists",
+      "description": "Pros-and-cons and comparison lists in Todo Cloud"
+    },
+    "todoCloudPoints": {
+      "title": "Rewards",
+      "description": "Points and goals in Todo Cloud"
     }
   },
   "converters": {
@@ -130,6 +138,12 @@
   },
   "footer": {
     "privacyPolicy": "Privacy Policy"
+  },
+  "theme": {
+    "label": "Theme",
+    "system": "Follow system",
+    "light": "Light",
+    "dark": "Dark"
   },
   "language": {
     "label": "Language",
