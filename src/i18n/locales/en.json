@@ -55,7 +55,7 @@
     "deposit": {
       "name": "Bank deposit",
       "shortDescription": "Interest, compounding, final amount",
-      "title": "Bank deposit calculator (interest and compounding)",
+      "title": "Bank deposit calculator",
       "seoDescription": "Free online bank deposit calculator: work out the interest earned and the final payout for a fixed-rate deposit, with monthly, quarterly or annual capitalization and optional tax on interest."
     }
   },
@@ -89,6 +89,7 @@
       "end": "None — paid at the end",
       "monthly": "Monthly",
       "quarterly": "Quarterly",
+      "semiannually": "Every six months",
       "annually": "Annually"
     },
     "tax": "Tax on interest",
@@ -96,21 +97,34 @@
     "topUpFrequency": {
       "monthly": "Paid in every month, from the 2nd",
       "quarterly": "Paid in every quarter, from the 2nd",
+      "semiannually": "Paid in every six months, from the 2nd",
       "annually": "Paid in every year, from the 2nd"
     },
+    "inflation": "Expected inflation",
+    "inflationHint": "Per year — restates the result in today’s money",
+    "reset": "Reset",
     "totalContributed": "Total paid in",
     "grossInterest": "Interest earned",
     "taxWithheld": "Tax withheld",
     "effectiveRate": "Effective annual rate",
+    "realHeading": "In today’s money",
+    "realContributed": "Paid in",
+    "realInterest": "Real income",
+    "realRate": "Real annual rate",
+    "realFinalAmount": "Payout is worth",
     "finalAmount": "You get at the end",
     "noResult": "Enter an amount, a rate and a term",
     "disclaimer": "An estimate for a fixed-rate deposit. Your bank may round differently, apply its own tax rate, or charge fees for early withdrawal.",
     "schedule": {
       "heading": "Period by period",
       "year": "Year {{year}}",
+      "yearTotal": "Year total",
+      "collapseAll": "Collapse all",
+      "expandAll": "Expand all",
       "period": {
         "monthly": "Month",
         "quarterly": "Quarter",
+        "semiannually": "Half-year",
         "annually": "Year"
       },
       "opening": "Amount before",
