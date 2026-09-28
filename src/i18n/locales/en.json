@@ -10,12 +10,6 @@
   "home": {
     "tagline": "Personal projects and small tools"
   },
-  "redirect": {
-    "autoRedirect": "Automatically redirecting to the main project",
-    "goNow": "Go now",
-    "cancel": "Cancel",
-    "cancelled": "Redirect cancelled. Choose a project from the list below:"
-  },
   "projects": {
     "heading": "My projects",
     "open": "Open",

@@ -5,7 +5,6 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CardActions from "@mui/material/CardActions";
 import Stack from "@mui/material/Stack";
-import Chip from "@mui/material/Chip";
 import Button from "@mui/material/Button";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { projects } from "../data/projects";
@@ -15,21 +14,12 @@ export default function ProjectsSection() {
 
   return (
     <Box sx={{ mb: 3 }}>
-      <Typography variant="h6" sx={{ mb: 2 }}>
+      {/* <Typography variant="h6" sx={{ mb: 2 }}>
         {t("projects.heading")}
-      </Typography>
+      </Typography> */}
       <Stack spacing={1.5}>
         {projects.map((project) => (
-          <Card
-            key={project.titleKey}
-            variant="outlined"
-            sx={{
-              borderColor: project.featured ? "info.main" : "divider",
-              backgroundColor: project.featured
-                ? "rgba(56, 189, 248, 0.06)"
-                : "background.paper",
-            }}
-          >
+          <Card key={project.titleKey} variant="outlined">
             <CardContent
               sx={{
                 display: "flex",
@@ -44,14 +34,6 @@ export default function ProjectsSection() {
                   <Typography variant="subtitle1" fontWeight={600}>
                     {t(project.titleKey)}
                   </Typography>
-                  {project.badgeKey && (
-                    <Chip
-                      label={t(project.badgeKey)}
-                      size="small"
-                      color="info"
-                      variant="outlined"
-                    />
-                  )}
                 </Stack>
                 <Typography variant="body2" color="text.secondary">
                   {t(project.descriptionKey)}

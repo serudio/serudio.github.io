@@ -1,24 +1,23 @@
-import { Suspense } from 'react'
-import { Routes, Route } from 'react-router-dom'
-import Box from '@mui/material/Box'
-import Container from '@mui/material/Container'
-import SiteHeader from './components/SiteHeader'
-import HomePage from './pages/HomePage'
-import ConvertersIndexPage from './pages/ConvertersIndexPage'
-import PrivacyPage from './pages/PrivacyPage'
-import { converters } from './data/converters'
+import { Suspense } from "react";
+import { Routes, Route } from "react-router-dom";
+import Box from "@mui/material/Box";
+import Container from "@mui/material/Container";
+import SiteHeader from "./components/SiteHeader";
+import HomePage from "./pages/HomePage";
+import ConvertersIndexPage from "./pages/ConvertersIndexPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import { converters } from "./data/converters";
 
 export default function App() {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
         gap: 3,
-        py: { xs: 4, sm: 6 },
-        px: 2,
+        p: 2,
       }}
     >
       <Container maxWidth="sm" disableGutters>
@@ -34,7 +33,11 @@ export default function App() {
             path={`/converters/${slug}`}
             element={
               <Suspense fallback={null}>
-                <Page slug={slug} titleKey={titleKey} seoDescriptionKey={seoDescriptionKey} />
+                <Page
+                  slug={slug}
+                  titleKey={titleKey}
+                  seoDescriptionKey={seoDescriptionKey}
+                />
               </Suspense>
             }
           />
@@ -42,5 +45,5 @@ export default function App() {
         <Route path="/privacy" element={<PrivacyPage />} />
       </Routes>
     </Box>
-  )
+  );
 }
