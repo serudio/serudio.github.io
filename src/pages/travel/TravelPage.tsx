@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -18,7 +18,6 @@ import IconButton from '@mui/material/IconButton'
 import Link from '@mui/material/Link'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
-import TextField from '@mui/material/TextField'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
@@ -47,16 +46,13 @@ function formatRange(trip: TravelTrip): string {
  * database enforces the same thing independently (migration 0011).
  */
 export default function TravelPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const [trips, setTrips] = useState<TravelTrip[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const [creating, setCreating] = useState(false)
-  const [name, setName] = useState('')
-  const [startsOn, setStartsOn] = useState('')
-  const [endsOn, setEndsOn] = useState('')
-  const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<TravelTrip | null>(null)
 
   const refresh = useCallback(async () => {
@@ -78,19 +74,21 @@ export default function TravelPage() {
     void refresh()
   }, [refresh])
 
+  /**
+   * Starting a trip asks nothing: it copies the default list and opens
+   * it. The name is today's date, which is enough to tell past trips
+   * apart, and the list itself is the thing you came to edit.
+   */
   const handleCreate = async () => {
-    setSaving(true)
+    setCreating(true)
     try {
-      await createTripFromTemplate({ name, startsOn, endsOn })
-      setCreating(false)
-      setName('')
-      setStartsOn('')
-      setEndsOn('')
-      await refresh()
+      const tripId = await createTripFromTemplate({
+        name: new Date().toLocaleDateString(i18n.language),
+      })
+      navigate(`/travel/t/${tripId}`)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught))
-    } finally {
-      setSaving(false)
+      setCreating(false)
     }
   }
 
@@ -179,7 +177,8 @@ export default function TravelPage() {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={() => setCreating(true)}
+              onClick={() => void handleCreate()}
+              disabled={creating}
               sx={{ my: 2 }}
             >
               {t('travel.newTrip')}
@@ -239,53 +238,6 @@ export default function TravelPage() {
 
         <Footer />
       </Paper>
-
-      <Dialog open={creating} onClose={() => setCreating(false)} fullWidth maxWidth="xs">
-        <DialogTitle>{t('travel.newTrip')}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label={t('travel.tripName')}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              fullWidth
-              required
-              autoFocus
-            />
-            <Stack direction="row" spacing={2}>
-              <TextField
-                label={t('travel.startsOn')}
-                type="date"
-                value={startsOn}
-                onChange={(event) => setStartsOn(event.target.value)}
-                InputLabelProps={{ shrink: true }}
-                fullWidth
-              />
-              <TextField
-                label={t('travel.endsOn')}
-                type="date"
-                value={endsOn}
-                onChange={(event) => setEndsOn(event.target.value)}
-                InputLabelProps={{ shrink: true }}
-                fullWidth
-              />
-            </Stack>
-            <Typography variant="caption" color="text.secondary">
-              {t('travel.createdFromDefault')}
-            </Typography>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreating(false)}>{t('travel.cancel')}</Button>
-          <Button
-            variant="contained"
-            onClick={() => void handleCreate()}
-            disabled={!name.trim() || saving}
-          >
-            {t('travel.create')}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       <Dialog open={confirmDelete !== null} onClose={() => setConfirmDelete(null)}>
         <DialogTitle>{t('travel.deleteTripTitle')}</DialogTitle>
