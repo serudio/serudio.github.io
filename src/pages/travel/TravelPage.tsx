@@ -50,6 +50,9 @@ export default function TravelPage() {
   const navigate = useNavigate()
   const [trips, setTrips] = useState<TravelTrip[]>([])
   const [loading, setLoading] = useState(true)
+  // Same reason as the trip page: refetching after a delete must not
+  // blank the list out and read as the page blinking.
+  const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [creating, setCreating] = useState(false)
@@ -67,6 +70,7 @@ export default function TravelPage() {
       setError(caught instanceof Error ? caught.message : String(caught))
     } finally {
       setLoading(false)
+      setLoaded(true)
     }
   }, [])
 
@@ -168,7 +172,7 @@ export default function TravelPage() {
           </Alert>
         )}
 
-        {loading ? (
+        {loading && !loaded ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
             <CircularProgress />
           </Box>

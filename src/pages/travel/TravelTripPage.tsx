@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { alpha } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
@@ -78,6 +79,10 @@ export default function TravelTripPage() {
   const [items, setItems] = useState<TravelItem[]>([])
   const [notes, setNotes] = useState<TravelNote[]>([])
   const [loading, setLoading] = useState(true)
+  // Only the first load gets the spinner. Refetching after an edit used
+  // to flip `loading` back on, which unmounted the whole list and read
+  // as the page blinking on every click.
+  const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [newItemText, setNewItemText] = useState<Record<string, string>>({})
@@ -112,6 +117,7 @@ export default function TravelTripPage() {
       setError(caught instanceof Error ? caught.message : String(caught))
     } finally {
       setLoading(false)
+      setLoaded(true)
     }
   }, [tripId])
 
@@ -119,6 +125,8 @@ export default function TravelTripPage() {
     void refresh()
   }, [refresh])
 
+  /** For structural edits — adding, removing — where ids come back from
+   *  the server and a refetch is the honest way to stay in step. */
   const run = async (action: () => Promise<void>) => {
     try {
       await action()
@@ -126,6 +134,19 @@ export default function TravelTripPage() {
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught))
     }
+  }
+
+  /**
+   * For ticking things off. Applies the change locally first so the row
+   * responds immediately, then writes it. Only a failure costs a
+   * refetch, which also puts the row back the way the server has it.
+   */
+  const optimistic = (apply: () => void, write: () => Promise<void>) => {
+    apply()
+    void write().catch((caught) => {
+      setError(caught instanceof Error ? caught.message : String(caught))
+      void refresh()
+    })
   }
 
   // Only sections that actually have items in this trip are shown: the
@@ -147,7 +168,7 @@ export default function TravelTripPage() {
   const packed = items.filter((item) => item.packed).length
   const progress = items.length > 0 ? Math.round((packed / items.length) * 100) : 0
 
-  if (loading) {
+  if (loading && !loaded) {
     return (
       <Container maxWidth="lg">
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -227,7 +248,17 @@ export default function TravelTripPage() {
               <Checkbox
                 size="small"
                 checked={note.done}
-                onChange={() => void run(() => updateNote(note.id, { done: !note.done }))}
+                onChange={() =>
+                  optimistic(
+                    () =>
+                      setNotes((previous) =>
+                        previous.map((row) =>
+                          row.id === note.id ? { ...row, done: !row.done } : row,
+                        ),
+                      ),
+                    () => updateNote(note.id, { done: !note.done }),
+                  )
+                }
                 sx={{ p: 0.5 }}
               />
               <Typography
@@ -243,7 +274,12 @@ export default function TravelTripPage() {
               <IconButton
                 size="small"
                 sx={{ p: 0.5 }}
-                onClick={() => void run(() => deleteNote(note.id))}
+                onClick={() =>
+                  optimistic(
+                    () => setNotes((previous) => previous.filter((row) => row.id !== note.id)),
+                    () => deleteNote(note.id),
+                  )
+                }
               >
                 <DeleteIcon fontSize="small" />
               </IconButton>
@@ -290,12 +326,18 @@ export default function TravelTripPage() {
               display: 'inline-block',
               width: '100%',
               mb: 2,
+              p: 1.5,
+              borderRadius: 2,
+              // The chosen colour tints the whole section rather than
+              // marking it with a dot. Low alpha on both fill and edge
+              // so the same hex stays readable on a dark ground and a
+              // light one — a solid fill would work on neither.
+              bgcolor: alpha(color, 0.1),
+              border: '1px solid',
+              borderColor: alpha(color, 0.35),
             }}
           >
             <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
-              <Box
-                sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: color, flexShrink: 0 }}
-              />
               <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
                 {category.name}
               </Typography>
@@ -321,7 +363,17 @@ export default function TravelTripPage() {
                 <Checkbox
                   size="small"
                   checked={item.packed}
-                  onChange={() => void run(() => updateItem(item.id, { packed: !item.packed }))}
+                  onChange={() =>
+                    optimistic(
+                      () =>
+                        setItems((previous) =>
+                          previous.map((row) =>
+                            row.id === item.id ? { ...row, packed: !row.packed } : row,
+                          ),
+                        ),
+                      () => updateItem(item.id, { packed: !item.packed }),
+                    )
+                  }
                   sx={{ p: 0.5 }}
                 />
                 <Typography
@@ -337,7 +389,13 @@ export default function TravelTripPage() {
                 <IconButton
                   size="small"
                   sx={{ p: 0.5 }}
-                  onClick={() => void run(() => deleteItem(item.id))}
+                  onClick={() =>
+                    optimistic(
+                      () =>
+                        setItems((previous) => previous.filter((row) => row.id !== item.id)),
+                      () => deleteItem(item.id),
+                    )
+                  }
                 >
                   <DeleteIcon fontSize="small" />
                 </IconButton>
@@ -377,7 +435,17 @@ export default function TravelTripPage() {
                 <Checkbox
                   size="small"
                   checked={item.packed}
-                  onChange={() => void run(() => updateItem(item.id, { packed: !item.packed }))}
+                  onChange={() =>
+                    optimistic(
+                      () =>
+                        setItems((previous) =>
+                          previous.map((row) =>
+                            row.id === item.id ? { ...row, packed: !row.packed } : row,
+                          ),
+                        ),
+                      () => updateItem(item.id, { packed: !item.packed }),
+                    )
+                  }
                   sx={{ p: 0.5 }}
                 />
                 <Typography variant="body2" sx={{ flexGrow: 1 }}>
@@ -386,7 +454,13 @@ export default function TravelTripPage() {
                 <IconButton
                   size="small"
                   sx={{ p: 0.5 }}
-                  onClick={() => void run(() => deleteItem(item.id))}
+                  onClick={() =>
+                    optimistic(
+                      () =>
+                        setItems((previous) => previous.filter((row) => row.id !== item.id)),
+                      () => deleteItem(item.id),
+                    )
+                  }
                 >
                   <DeleteIcon fontSize="small" />
                 </IconButton>
