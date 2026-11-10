@@ -175,7 +175,11 @@
     "hideDone": "Сховати зібране",
     "markPerson": "Позначити як людину",
     "unmarkPerson": "Не людина",
-    "dismissSection": "Сховати порожній розділ"
+    "dismissSection": "Сховати порожній розділ",
+    "refillFromDefault_one": "Додати {{count}} річ зі списку за замовчуванням",
+    "refillFromDefault_few": "Додати {{count}} речі зі списку за замовчуванням",
+    "refillFromDefault_many": "Додати {{count}} речей зі списку за замовчуванням",
+    "refillFromDefault_other": "Додати {{count}} речей зі списку за замовчуванням"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",

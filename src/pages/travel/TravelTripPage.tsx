@@ -28,6 +28,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import BookmarkAddOutlinedIcon from '@mui/icons-material/BookmarkAddOutlined'
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline'
 import CloseIcon from '@mui/icons-material/Close'
+import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd'
 import Collapse from '@mui/material/Collapse'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Switch from '@mui/material/Switch'
@@ -272,6 +273,28 @@ export default function TravelTripPage() {
     for (const item of items) {
       if (!item.categoryId) continue
       if (known.has(`${item.categoryId}|${item.text.trim().toLowerCase()}`)) continue
+      result.set(item.categoryId, [...(result.get(item.categoryId) ?? []), item])
+    }
+    return result
+  }, [templateId, templateItems, items])
+
+  /**
+   * The mirror of newToDefault: per section, what the default list has
+   * that this trip does not. Deleting something you turned out to need,
+   * or starting a section from scratch, both end here — the default is
+   * the thing worth copying back from.
+   */
+  const missingFromTrip = useMemo(() => {
+    if (!templateId) return new Map<string, TravelItem[]>()
+
+    const here = new Set(
+      items.map((item) => `${item.categoryId ?? ''}|${item.text.trim().toLowerCase()}`),
+    )
+
+    const result = new Map<string, TravelItem[]>()
+    for (const item of templateItems) {
+      if (!item.categoryId) continue
+      if (here.has(`${item.categoryId}|${item.text.trim().toLowerCase()}`)) continue
       result.set(item.categoryId, [...(result.get(item.categoryId) ?? []), item])
     }
     return result
@@ -852,6 +875,32 @@ export default function TravelTripPage() {
             <BookmarkAddOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
             {t('travel.keepInDefault', {
               count: newToDefault.get(menu.categoryId)?.length ?? 0,
+            })}
+          </MenuItem>
+        )}
+
+        {menu && (missingFromTrip.get(menu.categoryId)?.length ?? 0) > 0 && (
+          <MenuItem
+            onClick={() => {
+              const categoryId = menu.categoryId
+              const missing = missingFromTrip.get(categoryId) ?? []
+              setMenu(null)
+              if (tripId) {
+                void run(() =>
+                  addItems(
+                    tripId,
+                    // Only what is absent: the comparison above already
+                    // dropped anything this trip has, so adding the same
+                    // section twice tops it up rather than doubling it.
+                    missing.map((item) => ({ text: item.text, categoryId })),
+                  ),
+                )
+              }
+            }}
+          >
+            <PlaylistAddIcon fontSize="small" sx={{ mr: 1 }} />
+            {t('travel.refillFromDefault', {
+              count: missingFromTrip.get(menu.categoryId)?.length ?? 0,
             })}
           </MenuItem>
         )}
