@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { alpha } from '@mui/material/styles'
+import { alpha, useTheme } from '@mui/material/styles'
+import useMediaQuery from '@mui/material/useMediaQuery'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
@@ -20,7 +21,6 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
-import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import PaletteIcon from '@mui/icons-material/Palette'
@@ -300,6 +300,41 @@ export default function TravelTripPage() {
     )
     return { used, loose }
   }, [categories, items, hideDone, emptied, query, personFilter])
+
+  const theme = useTheme()
+  const wide = useMediaQuery(theme.breakpoints.up('md'))
+  const medium = useMediaQuery(theme.breakpoints.up('sm'))
+  const columnCount = wide ? 3 : medium ? 2 : 1
+
+  /**
+   * Sections dealt into fixed columns, shortest column first.
+   *
+   * Weighted by how many items a section has, never by how tall it is
+   * on screen: a collapsed section weighs exactly what an open one
+   * does, so folding it cannot send its neighbours to another column.
+   * The columns go unbalanced for as long as something is folded, which
+   * is the price of nothing moving — and the better trade, since a
+   * fold is a deliberate act whose result should be predictable.
+   */
+  const columns = useMemo(() => {
+    const dealt: (typeof sections.used)[] = Array.from(
+      { length: columnCount },
+      () => [],
+    )
+    const weights = new Array<number>(columnCount).fill(0)
+
+    for (const section of sections.used) {
+      let lightest = 0
+      for (let index = 1; index < columnCount; index += 1) {
+        if (weights[index] < weights[lightest]) lightest = index
+      }
+      dealt[lightest].push(section)
+      // The header and the add-an-item field cost about two rows.
+      weights[lightest] += section.entries.length + 2
+    }
+
+    return dealt
+  }, [sections, columnCount])
 
   /**
    * Per section, the items this trip has that the default list does not.
@@ -650,15 +685,6 @@ export default function TravelTripPage() {
             }}
             placeholder={t('travel.newSection')}
             aria-label={t('travel.newSection')}
-            // Two text inputs in one bar, so each carries the icon for
-            // what it does — a magnifier that narrows, a plus that adds.
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <AddIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
             sx={{ minWidth: 180 }}
           />
 
@@ -843,18 +869,17 @@ export default function TravelTripPage() {
           </Collapse>
         </Box>
 
-        {/* Packing, by section, flowed into columns. CSS columns rather
-            than a grid: sections vary a lot in length, and columns pack
-            them by height instead of letting one short section hold
-            open a tall row. */}
-        <Box
-          sx={{
-            columnCount: { xs: 1, sm: 2, md: 3 },
-            columnGap: 3,
-            mb: 2,
-          }}
-        >
-        {sections.used.map(({ category, color, entries, done }) => {
+        {/* Packing, by section, in columns dealt here rather than by
+            CSS. `column-count` re-balances the whole flow whenever any
+            section's height changes, so folding one section re-dealt
+            every other one and sections jumped between columns under
+            the pointer. These columns are packed by item count, which a
+            fold does not change — so opening and closing a section
+            moves nothing but that section. */}
+        <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start', mb: 2 }}>
+        {columns.map((column, columnIndex) => (
+        <Box key={columnIndex} sx={{ flex: 1, minWidth: 0 }}>
+        {column.map(({ category, color, entries, done }) => {
           // A match inside a folded section would be invisible, so a
           // search opens everything for as long as it lasts.
           const open = searching ? true : (sectionOpen[category.id] ?? !done)
@@ -863,12 +888,6 @@ export default function TravelTripPage() {
           <Box
             key={category.id}
             sx={{
-              // Keep a section whole rather than splitting its items
-              // across a column break.
-              breakInside: 'avoid',
-              WebkitColumnBreakInside: 'avoid',
-              display: 'inline-block',
-              width: '100%',
               mb: 2,
               p: 1.5,
               borderRadius: 2,
@@ -1072,6 +1091,8 @@ export default function TravelTripPage() {
           </Box>
           )
         })}
+        </Box>
+        ))}
         </Box>
 
         {sections.loose.length > 0 && (
