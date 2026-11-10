@@ -175,7 +175,11 @@
     "refillFromDefault_one": "Add {{count}} item from default list",
     "refillFromDefault_other": "Add {{count}} items from default list",
     "keepInDefaultNone": "Default list already has these",
-    "refillFromDefaultNone": "Nothing extra in the default list"
+    "refillFromDefaultNone": "Nothing extra in the default list",
+    "searchItems": "Search this list",
+    "everyone": "Everyone",
+    "whose": "Belongs to",
+    "nobody": "No one"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",

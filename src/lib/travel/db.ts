@@ -21,6 +21,8 @@ export interface TravelCategory {
   color: string | null
   /** A section naming someone rather than a kind of thing. */
   isPerson: boolean
+  /** The person section this one belongs to, if any. */
+  personId: string | null
   sortOrder: number
 }
 
@@ -135,7 +137,7 @@ export async function deleteTrip(id: string) {
 export async function getCategories(): Promise<TravelCategory[]> {
   const { data, error } = await client()
     .from('travel_categories')
-    .select('id, name, color, is_person, sort_order')
+    .select('id, name, color, is_person, person_id, sort_order')
     .order('sort_order', { ascending: true })
     .abortSignal(signal())
   if (error) throw error
@@ -145,6 +147,7 @@ export async function getCategories(): Promise<TravelCategory[]> {
     name: row.name as string,
     color: row.color as string | null,
     isPerson: (row.is_person as boolean) ?? false,
+    personId: (row.person_id as string | null) ?? null,
     sortOrder: row.sort_order as number,
   }))
 }
@@ -172,12 +175,13 @@ export async function createCategory(input: {
 
 export async function updateCategory(
   id: string,
-  input: { name?: string; color?: string | null; isPerson?: boolean },
+  input: { name?: string; color?: string | null; isPerson?: boolean; personId?: string | null },
 ) {
   const patch: Record<string, unknown> = {}
   if (input.name !== undefined) patch.name = input.name.trim()
   if (input.color !== undefined) patch.color = input.color
   if (input.isPerson !== undefined) patch.is_person = input.isPerson
+  if (input.personId !== undefined) patch.person_id = input.personId
   const { error } = await client().from('travel_categories').update(patch).eq('id', id)
   if (error) throw error
 }
@@ -386,6 +390,7 @@ export async function ensureTemplateTrip(): Promise<string> {
         name: group.name,
         color: group.color,
         isPerson: false,
+        personId: null,
         sortOrder: categories.length,
       })
     }

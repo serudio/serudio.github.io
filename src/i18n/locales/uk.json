@@ -181,7 +181,11 @@
     "refillFromDefault_many": "Додати {{count}} речей зі списку за замовчуванням",
     "refillFromDefault_other": "Додати {{count}} речей зі списку за замовчуванням",
     "keepInDefaultNone": "У списку за замовчуванням вже все це є",
-    "refillFromDefaultNone": "У списку за замовчуванням немає нічого нового"
+    "refillFromDefaultNone": "У списку за замовчуванням немає нічого нового",
+    "searchItems": "Пошук у списку",
+    "everyone": "Усі",
+    "whose": "Чий розділ",
+    "nobody": "Нічий"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",

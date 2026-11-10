@@ -13,6 +13,7 @@ import IconButton from '@mui/material/IconButton'
 import LinearProgress from '@mui/material/LinearProgress'
 import Link from '@mui/material/Link'
 import Menu from '@mui/material/Menu'
+import Divider from '@mui/material/Divider'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
@@ -29,6 +30,8 @@ import BookmarkAddOutlinedIcon from '@mui/icons-material/BookmarkAddOutlined'
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline'
 import CloseIcon from '@mui/icons-material/Close'
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd'
+import SearchIcon from '@mui/icons-material/Search'
+import InputAdornment from '@mui/material/InputAdornment'
 import Collapse from '@mui/material/Collapse'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Switch from '@mui/material/Switch'
@@ -154,6 +157,12 @@ export default function TravelTripPage() {
   // was no way back if the deletion was a mistake. They stay until
   // dismissed, or until the page is loaded afresh.
   const [emptied, setEmptied] = useState<string[]>([])
+  const [query, setQuery] = useState('')
+  // Whose things to show. Null is everyone's.
+  const [personFilter, setPersonFilter] = useState<string | null>(null)
+  // The item being renamed, and the text so far. Editing in place beats
+  // a dialog for a one-line change.
+  const [editingItem, setEditingItem] = useState<{ id: string; text: string } | null>(null)
 
   // Naming a trip is optional and after the fact: creating one asks
   // nothing, so the details are edited here once there is something to
@@ -226,9 +235,25 @@ export default function TravelTripPage() {
   // category list is account-wide, and an empty heading for a section
   // this trip does not use is noise.
   const sections = useMemo(() => {
+    const needle = query.trim().toLowerCase()
+    // A section whose own name matches keeps all of its items: you
+    // searched for the section, not for something inside it.
+    const matches = (item: TravelItem, categoryName: string) =>
+      !needle ||
+      categoryName.toLowerCase().includes(needle) ||
+      item.text.toLowerCase().includes(needle)
+
     const used = categories
+      .filter(
+        (category) =>
+          !personFilter ||
+          category.id === personFilter ||
+          category.personId === personFilter,
+      )
       .map((category, index) => {
-        const all = items.filter((item) => item.categoryId === category.id)
+        const all = items
+          .filter((item) => item.categoryId === category.id)
+          .filter((item) => matches(item, category.name))
         const entries = doneLast(
           hideDone ? all.filter((item) => !item.packed) : all,
           (item) => item.packed,
@@ -243,18 +268,24 @@ export default function TravelTripPage() {
           done: all.length > 0 && all.every((item) => item.packed),
         }
       })
-      .filter((section) => section.entries.length > 0 || emptied.includes(section.category.id))
+      .filter(
+        (section) =>
+          section.entries.length > 0 ||
+          (!needle && emptied.includes(section.category.id)),
+      )
       // A packed section is finished business: out of the way of the
       // ones still being worked through, and folded shut.
       .sort((a, b) => Number(a.done) - Number(b.done))
 
-    const looseAll = items.filter((item) => !item.categoryId)
+    const looseAll = items
+      .filter((item) => !item.categoryId)
+      .filter((item) => matches(item, ''))
     const loose = doneLast(
       hideDone ? looseAll.filter((item) => !item.packed) : looseAll,
       (item) => item.packed,
     )
     return { used, loose }
-  }, [categories, items, hideDone, emptied])
+  }, [categories, items, hideDone, emptied, query, personFilter])
 
   /**
    * Per section, the items this trip has that the default list does not.
@@ -262,6 +293,11 @@ export default function TravelTripPage() {
    * shared between the trip and the template — so "Шкарпетки" under
    * Clothes matches, and the same word under Hike does not.
    */
+  const people = useMemo(
+    () => categories.filter((category) => category.isPerson),
+    [categories],
+  )
+
   const newToDefault = useMemo(() => {
     if (!templateId) return new Map<string, TravelItem[]>()
 
@@ -299,6 +335,45 @@ export default function TravelTripPage() {
     }
     return result
   }, [templateId, templateItems, items])
+
+  /**
+   * Creating a section. An empty one would not render, so it opens with
+   * its own name as the first item — something to rename rather than a
+   * blank box. Shared by the Add button and the Enter key.
+   */
+  const addSection = () => {
+    const name = newSection.trim()
+    if (!name || !tripId) return
+
+    void run(async () => {
+      const categoryId = await createCategory({
+        name,
+        color: PALETTE[categories.length % PALETTE.length],
+        sortOrder: categories.length,
+      })
+      await addItems(tripId, [{ text: name, categoryId }])
+      setNewSection('')
+    })
+  }
+
+  /** Commits a rename, or quietly drops it if nothing changed. */
+  const commitItemEdit = () => {
+    if (!editingItem) return
+    const { id, text } = editingItem
+    const original = items.find((row) => row.id === id)
+    setEditingItem(null)
+
+    const trimmed = text.trim()
+    if (!trimmed || !original || trimmed === original.text) return
+
+    optimistic(
+      () =>
+        setItems((previous) =>
+          previous.map((row) => (row.id === id ? { ...row, text: trimmed } : row)),
+        ),
+      () => updateItem(id, { text: trimmed }),
+    )
+  }
 
   const packed = items.filter((item) => item.packed).length
   const progress = items.length > 0 ? Math.round((packed / items.length) * 100) : 0
@@ -404,6 +479,60 @@ export default function TravelTripPage() {
             />
           </Box>
         )}
+
+        {people.length > 0 && (
+          <Stack
+            direction="row"
+            useFlexGap
+            flexWrap="wrap"
+            spacing={1}
+            sx={{ rowGap: 1, mb: 2 }}
+          >
+            <Chip
+              size="small"
+              label={t('travel.everyone')}
+              clickable
+              variant={personFilter === null ? 'filled' : 'outlined'}
+              color={personFilter === null ? 'primary' : 'default'}
+              onClick={() => setPersonFilter(null)}
+            />
+            {people.map((person) => (
+              <Chip
+                key={person.id}
+                size="small"
+                icon={<PersonOutlineIcon />}
+                label={person.name}
+                clickable
+                variant={personFilter === person.id ? 'filled' : 'outlined'}
+                onClick={() =>
+                  setPersonFilter((previous) => (previous === person.id ? null : person.id))
+                }
+                sx={
+                  personFilter === person.id && person.color
+                    ? { bgcolor: alpha(person.color, 0.3) }
+                    : undefined
+                }
+              />
+            ))}
+          </Stack>
+        )}
+
+        <TextField
+          fullWidth
+          size="small"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={t('travel.searchItems')}
+          aria-label={t('travel.searchItems')}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ mb: 3 }}
+        />
 
         {/* Before leaving — tasks, not luggage. */}
         <Box
@@ -519,7 +648,9 @@ export default function TravelTripPage() {
           }}
         >
         {sections.used.map(({ category, color, entries, done }) => {
-          const open = sectionOpen[category.id] ?? !done
+          // A match inside a folded section would be invisible, so a
+          // search opens everything for as long as it lasts.
+          const open = query.trim() ? true : (sectionOpen[category.id] ?? !done)
 
           return (
           <Box
@@ -571,6 +702,14 @@ export default function TravelTripPage() {
               >
                 {category.name}
               </Typography>
+              {category.personId && (
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label={categories.find((row) => row.id === category.personId)?.name ?? ''}
+                  sx={{ height: 20, fontSize: 11 }}
+                />
+              )}
               {entries.length === 0 && (
                 <Tooltip title={t('travel.dismissSection')}>
                   <IconButton
@@ -625,16 +764,39 @@ export default function TravelTripPage() {
                   }
                   sx={{ p: 0.5 }}
                 />
-                <Typography
-                  variant="body2"
-                  sx={{
-                    flexGrow: 1,
-                    textDecoration: item.packed ? 'line-through' : 'none',
-                    color: item.packed ? 'text.disabled' : 'text.primary',
-                  }}
-                >
-                  {item.text}
-                </Typography>
+                {editingItem?.id === item.id ? (
+                  <TextField
+                    size="small"
+                    variant="standard"
+                    autoFocus
+                    fullWidth
+                    value={editingItem.text}
+                    onChange={(event) =>
+                      setEditingItem({ id: item.id, text: event.target.value })
+                    }
+                    onBlur={commitItemEdit}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') commitItemEdit()
+                      // Escape abandons the change; blur would otherwise
+                      // commit it on the way out.
+                      if (event.key === 'Escape') setEditingItem(null)
+                    }}
+                    sx={{ flexGrow: 1 }}
+                  />
+                ) : (
+                  <Typography
+                    variant="body2"
+                    onClick={() => setEditingItem({ id: item.id, text: item.text })}
+                    sx={{
+                      flexGrow: 1,
+                      cursor: 'text',
+                      textDecoration: item.packed ? 'line-through' : 'none',
+                      color: item.packed ? 'text.disabled' : 'text.primary',
+                    }}
+                  >
+                    {item.text}
+                  </Typography>
+                )}
                 <IconButton
                   size="small"
                   sx={{ p: 0.5 }}
@@ -740,23 +902,14 @@ export default function TravelTripPage() {
             value={newSection}
             placeholder={t('travel.newSection')}
             onChange={(event) => setNewSection(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') addSection()
+            }}
           />
           <Button
             startIcon={<AddIcon />}
             disabled={!newSection.trim() || !tripId}
-            onClick={() =>
-              void run(async () => {
-                const categoryId = await createCategory({
-                  name: newSection,
-                  color: PALETTE[categories.length % PALETTE.length],
-                  sortOrder: categories.length,
-                })
-                // A section with no items would not render, so it starts
-                // with its own name as the first thing to replace.
-                await addItems(tripId!, [{ text: newSection.trim(), categoryId }])
-                setNewSection('')
-              })
-            }
+            onClick={addSection}
           >
             {t('travel.add')}
           </Button>
@@ -912,6 +1065,42 @@ export default function TravelTripPage() {
                 })}
           </MenuItem>
         )}
+
+        {people.length > 0 &&
+          menu &&
+          !categories.find((row) => row.id === menu.categoryId)?.isPerson && [
+            <MenuItem key="whose" disabled sx={{ opacity: 1 }}>
+              <PersonOutlineIcon fontSize="small" sx={{ mr: 1 }} />
+              {t('travel.whose')}
+            </MenuItem>,
+            <MenuItem
+              key="nobody"
+              selected={!categories.find((row) => row.id === menu.categoryId)?.personId}
+              onClick={() => {
+                const categoryId = menu.categoryId
+                setMenu(null)
+                void run(() => updateCategory(categoryId, { personId: null }))
+              }}
+            >
+              {t('travel.nobody')}
+            </MenuItem>,
+            ...people.map((person) => (
+              <MenuItem
+                key={person.id}
+                selected={
+                  categories.find((row) => row.id === menu.categoryId)?.personId === person.id
+                }
+                onClick={() => {
+                  const categoryId = menu.categoryId
+                  setMenu(null)
+                  void run(() => updateCategory(categoryId, { personId: person.id }))
+                }}
+              >
+                {person.name}
+              </MenuItem>
+            )),
+            <Divider key="whose-end" />,
+          ]}
 
         <MenuItem
           onClick={() => {
