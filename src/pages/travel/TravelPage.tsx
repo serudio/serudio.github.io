@@ -31,11 +31,7 @@ import {
   getTrips,
   type TravelTrip,
 } from '../../lib/travel/db'
-
-function formatRange(trip: TravelTrip): string {
-  if (!trip.startsOn && !trip.endsOn) return ''
-  return [trip.startsOn, trip.endsOn].filter(Boolean).join(' — ')
-}
+import { formatTripDates } from '../../lib/travel/formatDate'
 
 /**
  * The account's trips: the one being packed for, the default list it is
@@ -122,9 +118,9 @@ export default function TravelPage() {
               </Typography>
               {subtitle && <Chip size="small" variant="outlined" label={subtitle} />}
             </Stack>
-            {formatRange(trip) && (
+            {formatTripDates(trip, i18n.resolvedLanguage ?? i18n.language) && (
               <Typography variant="body2" color="text.secondary">
-                {formatRange(trip)}
+                {formatTripDates(trip, i18n.resolvedLanguage ?? i18n.language)}
               </Typography>
             )}
           </CardContent>

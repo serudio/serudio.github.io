@@ -49,6 +49,7 @@ import Seo from '../../components/Seo'
 import Footer from '../../components/Footer'
 import { useDeclarePageChrome } from '../../components/pageChrome'
 import { exportCsv, exportList } from '../../lib/travel/exportList'
+import { formatTripDates } from '../../lib/travel/formatDate'
 import { SITE_URL } from '../../config/site'
 import { ROW_HOVER } from './rowStyles'
 import {
@@ -814,7 +815,7 @@ export default function TravelTripPage() {
 
         {(trip?.startsOn || trip?.endsOn) && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {[trip?.startsOn, trip?.endsOn].filter(Boolean).join(' — ')}
+            {trip && formatTripDates(trip, i18n.resolvedLanguage ?? i18n.language)}
           </Typography>
         )}
 
