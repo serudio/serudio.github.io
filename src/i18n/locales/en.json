@@ -209,7 +209,9 @@
     "csvItem": "Item",
     "csvPacked": "Packed",
     "addedToNewTrip": "Started a new trip and added “{{section}}”.",
-    "addAllFromDefault": "Add everything"
+    "addAllFromDefault": "Add everything",
+    "startTripHeading": "Start a trip",
+    "presetSize": "{{sections}} sections, {{items}} items"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",

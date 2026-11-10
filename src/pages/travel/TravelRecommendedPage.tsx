@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import Accordion from '@mui/material/Accordion'
 import AccordionDetails from '@mui/material/AccordionDetails'
 import AccordionSummary from '@mui/material/AccordionSummary'
@@ -29,10 +30,12 @@ import {
 } from '../../data/travel/recommended'
 import {
   addRecommendedSet,
+  createTrip,
   createTripFromTemplate,
   ensureTemplateTrip,
   getTrips,
 } from '../../lib/travel/db'
+import { setsForPreset, tripPresets, type TripPreset } from '../../data/travel/tripPresets'
 import { useDeclarePageChrome } from '../../components/pageChrome'
 
 /**
@@ -44,6 +47,7 @@ import { useDeclarePageChrome } from '../../components/pageChrome'
  */
 export default function TravelRecommendedPage() {
   const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
 
   useDeclarePageChrome({ backTo: '/travel', backLabel: t('travel.backToTravel'), width: 'md' })
   const { session } = useAuth()
@@ -83,6 +87,29 @@ export default function TravelRecommendedPage() {
       name: new Date().toLocaleDateString(i18n.language),
     })
     return { id, created: true }
+  }
+
+  /**
+   * Starts a trip holding exactly what the preset names.
+   *
+   * Not seeded from the default list as well: "start with these lists"
+   * should put those lists there and nothing else, and the trip's own
+   * "From default" adds the rest in one click if that is wanted.
+   */
+  const startTrip = async (preset: TripPreset) => {
+    setBusy(`preset:${preset.key}`)
+    try {
+      const tripId = await createTrip({ name: preset.name })
+      // One at a time: each set is its own section, and addRecommendedSet
+      // reuses a section of that name rather than making a second.
+      for (const set of setsForPreset(preset)) {
+        await addRecommendedSet(tripId, set)
+      }
+      navigate(`/travel/t/${tripId}`)
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error))
+      setBusy(null)
+    }
   }
 
   const addTo = async (set: RecommendedSet, target: 'trip' | 'template') => {
@@ -146,6 +173,50 @@ export default function TravelRecommendedPage() {
           <Alert severity="info" sx={{ mb: 3 }}>
             {t('travel.signInToAdd')}
           </Alert>
+        )}
+
+        {/* Whole trips, above the sections they are built from: the
+            catalogue answers "what else might I need", and this answers
+            "I am going to the sea, give me a list". Hidden while
+            searching, which is a question about sections. */}
+        {session && !query.trim() && (
+          <Box sx={{ mb: 4 }}>
+            <Typography
+              variant="caption"
+              sx={{
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: 'text.secondary',
+                fontWeight: 700,
+                display: 'block',
+                mb: 1,
+              }}
+            >
+              {t('travel.startTripHeading')}
+            </Typography>
+
+            <Stack direction="row" useFlexGap flexWrap="wrap" sx={{ gap: 1 }}>
+              {tripPresets.map((preset) => {
+                const sets = setsForPreset(preset)
+                const items = sets.reduce((total, set) => total + set.items.length, 0)
+                return (
+                  <Button
+                    key={preset.key}
+                    variant="outlined"
+                    disabled={busy !== null}
+                    onClick={() => void startTrip(preset)}
+                    sx={{ textTransform: 'none', textAlign: 'left', flexDirection: 'column',
+                          alignItems: 'flex-start', px: 1.5, py: 1 }}
+                  >
+                    <Typography variant="subtitle2">{preset.name}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {preset.hint} · {t('travel.presetSize', { sections: sets.length, items })}
+                    </Typography>
+                  </Button>
+                )
+              })}
+            </Stack>
+          </Box>
         )}
 
         {RECOMMENDED_GROUPS.map((group) => {

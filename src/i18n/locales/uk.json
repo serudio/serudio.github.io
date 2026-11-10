@@ -215,7 +215,9 @@
     "csvItem": "Річ",
     "csvPacked": "Зібрано",
     "addedToNewTrip": "Створено нову подорож і додано «{{section}}».",
-    "addAllFromDefault": "Додати все"
+    "addAllFromDefault": "Додати все",
+    "startTripHeading": "Почати подорож",
+    "presetSize": "{{sections}} розділів, {{items}} речей"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",
