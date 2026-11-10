@@ -434,6 +434,48 @@ export async function createTripFromTemplate(input: {
   return tripId
 }
 
+/* --------------------------------------------------------------- activity */
+
+export interface TravelActivity {
+  id: string
+  kind:
+    | 'item.added'
+    | 'item.removed'
+    | 'item.renamed'
+    | 'note.added'
+    | 'note.removed'
+    | 'note.renamed'
+  subject: string
+  detail: string | null
+  createdAt: string
+}
+
+/**
+ * What has changed on a trip, newest first.
+ *
+ * Written by database triggers (migration 0016), not from here — there
+ * is no corresponding write function on purpose, and the table grants
+ * the client select only.
+ */
+export async function getActivity(tripId: string, limit = 100): Promise<TravelActivity[]> {
+  const { data, error } = await client()
+    .from('travel_activity')
+    .select('id, kind, subject, detail, created_at')
+    .eq('trip_id', tripId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+    .abortSignal(signal())
+  if (error) throw error
+
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    kind: row.kind as TravelActivity['kind'],
+    subject: row.subject as string,
+    detail: (row.detail as string | null) ?? null,
+    createdAt: row.created_at as string,
+  }))
+}
+
 /* ---------------------------------------------------------------- sharing */
 
 export interface SharedTrip {

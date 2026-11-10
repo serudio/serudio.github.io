@@ -221,7 +221,21 @@
     "sortAz": "Сортувати за абеткою",
     "sortManual": "Повернути свій порядок",
     "renameSection": "Перейменувати розділ",
-    "createdOn": "створено {{date}}"
+    "createdOn": "створено {{date}}",
+    "activity": "Історія змін",
+    "activityEmpty": "Поки що порожньо.",
+    "activityKinds": {
+      "item": {
+        "added": "додано «{{subject}}»",
+        "removed": "видалено «{{subject}}»",
+        "renamed": "«{{detail}}» → «{{subject}}»"
+      },
+      "note": {
+        "added": "додано завдання «{{subject}}»",
+        "removed": "видалено завдання «{{subject}}»",
+        "renamed": "завдання «{{detail}}» → «{{subject}}»"
+      }
+    }
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",

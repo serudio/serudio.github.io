@@ -215,7 +215,21 @@
     "sortAz": "Sort A–Z",
     "sortManual": "Back to your own order",
     "renameSection": "Rename section",
-    "createdOn": "created {{date}}"
+    "createdOn": "created {{date}}",
+    "activity": "History",
+    "activityEmpty": "Nothing yet.",
+    "activityKinds": {
+      "item": {
+        "added": "added “{{subject}}”",
+        "removed": "removed “{{subject}}”",
+        "renamed": "“{{detail}}” → “{{subject}}”"
+      },
+      "note": {
+        "added": "added task “{{subject}}”",
+        "removed": "removed task “{{subject}}”",
+        "renamed": "task “{{detail}}” → “{{subject}}”"
+      }
+    }
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",

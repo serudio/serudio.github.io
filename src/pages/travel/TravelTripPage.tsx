@@ -50,6 +50,7 @@ import Footer from '../../components/Footer'
 import { useDeclarePageChrome } from '../../components/pageChrome'
 import { exportCsv, exportList } from '../../lib/travel/exportList'
 import { formatTimestamp, formatTripDates } from '../../lib/travel/formatDate'
+import HistoryIcon from '@mui/icons-material/History'
 import { SITE_URL } from '../../config/site'
 import { ROW_HOVER } from './rowStyles'
 import {
@@ -62,6 +63,7 @@ import {
   deleteNote,
   getCategories,
   getItems,
+  getActivity,
   getNotes,
   getTrips,
   removeCategoryFromTrip,
@@ -69,6 +71,7 @@ import {
   updateItem,
   updateNote,
   updateTrip,
+  type TravelActivity,
   type TravelCategory,
   type TravelItem,
   type TravelNote,
@@ -246,6 +249,10 @@ export default function TravelTripPage() {
   const [copied, setCopied] = useState(false)
   const [listCopied, setListCopied] = useState(false)
   const [exportMenu, setExportMenu] = useState<HTMLElement | null>(null)
+  // Fetched when the panel is opened rather than with the page: it is
+  // the one thing here nobody looks at most visits.
+  const [activity, setActivity] = useState<TravelActivity[] | null>(null)
+  const [activityOpen, setActivityOpen] = useState(false)
   const [draftName, setDraftName] = useState('')
   const [draftStarts, setDraftStarts] = useState('')
   const [draftEnds, setDraftEnds] = useState('')
@@ -670,6 +677,16 @@ export default function TravelTripPage() {
     URL.revokeObjectURL(url)
   }
 
+  const openActivity = () => {
+    setActivityOpen(true)
+    if (!tripId) return
+    void getActivity(tripId)
+      .then(setActivity)
+      .catch((caught) =>
+        setError(caught instanceof Error ? caught.message : String(caught)),
+      )
+  }
+
   const copyList = () => {
     if (!trip) return
     setExportMenu(null)
@@ -792,6 +809,16 @@ export default function TravelTripPage() {
               {t('travel.downloadCsv')}
             </MenuItem>
           </Menu>
+
+          <Tooltip title={t('travel.activity')}>
+            <IconButton
+              size="small"
+              aria-label={t('travel.activity')}
+              onClick={openActivity}
+            >
+              <HistoryIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
 
           <Tooltip title={t('travel.share')}>
             <IconButton
@@ -1434,6 +1461,56 @@ export default function TravelTripPage() {
           </Button>
         </Stack>
       </Popover>
+
+      {/* What changed, newest first. Written by triggers in migration
+          0016, so it holds edits made through a share link too. */}
+      <Dialog
+        open={activityOpen}
+        onClose={() => setActivityOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>{t('travel.activity')}</DialogTitle>
+        <DialogContent dividers>
+          {activity === null ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : activity.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              {t('travel.activityEmpty')}
+            </Typography>
+          ) : (
+            activity.map((entry) => (
+              <Stack
+                key={entry.id}
+                direction="row"
+                sx={{ alignItems: 'baseline', gap: 1, py: 0.25 }}
+              >
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ flexShrink: 0, minWidth: 68 }}
+                >
+                  {formatTimestamp(
+                    entry.createdAt,
+                    i18n.resolvedLanguage ?? i18n.language,
+                  )}
+                </Typography>
+                <Typography variant="body2">
+                  {t(`travel.activityKinds.${entry.kind}`, {
+                    subject: entry.subject,
+                    detail: entry.detail ?? '',
+                  })}
+                </Typography>
+              </Stack>
+            ))
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setActivityOpen(false)}>{t('travel.close')}</Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={confirmRemove !== null} onClose={() => setConfirmRemove(null)}>
         <DialogTitle>{t('travel.removeSectionTitle')}</DialogTitle>
