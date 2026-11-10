@@ -154,6 +154,7 @@
     "addedToDefault": "“{{section}}” added to your default list.",
     "noCurrentTrip": "No current trip — create one first.",
     "groups": {
+      "trip": "Kind of trip",
       "basics": "Basics",
       "people": "Who is going",
       "activity": "Activity",

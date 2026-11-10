@@ -23,6 +23,9 @@ import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import PaletteIcon from '@mui/icons-material/Palette'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import Collapse from '@mui/material/Collapse'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -58,6 +61,20 @@ const PALETTE = [
   '#0ea5e9', '#64748b',
 ]
 
+/**
+ * Done sinks to the bottom, and within each half the saved order holds.
+ * Sorting here rather than in the database keeps it a view concern: the
+ * row's sort_order still means the order you arranged it in, and ticking
+ * something off does not rewrite the list for every other device.
+ *
+ * Array.sort is stable, so equal rows keep their relative order.
+ */
+function doneLast<T extends { sortOrder: number }>(rows: T[], isDone: (row: T) => boolean): T[] {
+  return [...rows].sort(
+    (a, b) => Number(isDone(a)) - Number(isDone(b)) || a.sortOrder - b.sortOrder,
+  )
+}
+
 /** A section with no colour of its own still needs to render as something. */
 function colorFor(category: TravelCategory, index: number): string {
   return category.color ?? PALETTE[index % PALETTE.length]
@@ -89,6 +106,10 @@ export default function TravelTripPage() {
   const [newNote, setNewNote] = useState('')
   const [newSection, setNewSection] = useState('')
   const [menu, setMenu] = useState<{ anchor: HTMLElement; categoryId: string } | null>(null)
+  // Sections the visitor has opened back up after finishing them. A
+  // finished section folds itself away; this remembers the ones they
+  // want kept open regardless.
+  const [reopened, setReopened] = useState<Record<string, boolean>>({})
 
   // Naming a trip is optional and after the fact: creating one asks
   // nothing, so the details are edited here once there is something to
@@ -154,14 +175,27 @@ export default function TravelTripPage() {
   // this trip does not use is noise.
   const sections = useMemo(() => {
     const used = categories
-      .map((category, index) => ({
-        category,
-        color: colorFor(category, index),
-        entries: items.filter((item) => item.categoryId === category.id),
-      }))
+      .map((category, index) => {
+        const entries = doneLast(
+          items.filter((item) => item.categoryId === category.id),
+          (item) => item.packed,
+        )
+        return {
+          category,
+          color: colorFor(category, index),
+          entries,
+          done: entries.length > 0 && entries.every((item) => item.packed),
+        }
+      })
       .filter((section) => section.entries.length > 0)
+      // A packed section is finished business: out of the way of the
+      // ones still being worked through, and folded shut.
+      .sort((a, b) => Number(a.done) - Number(b.done))
 
-    const loose = items.filter((item) => !item.categoryId)
+    const loose = doneLast(
+      items.filter((item) => !item.categoryId),
+      (item) => item.packed,
+    )
     return { used, loose }
   }, [categories, items])
 
@@ -243,7 +277,7 @@ export default function TravelTripPage() {
           <Typography variant="caption" color="text.secondary" fontWeight={700}>
             {t('travel.beforeLeaving').toUpperCase()}
           </Typography>
-          {notes.map((note) => (
+          {doneLast(notes, (note) => note.done).map((note) => (
             <Stack key={note.id} direction="row" sx={{ alignItems: 'center' }}>
               <Checkbox
                 size="small"
@@ -315,7 +349,10 @@ export default function TravelTripPage() {
             mb: 2,
           }}
         >
-        {sections.used.map(({ category, color, entries }) => (
+        {sections.used.map(({ category, color, entries, done }) => {
+          const open = !done || reopened[category.id] === true
+
+          return (
           <Box
             key={category.id}
             sx={{
@@ -338,7 +375,30 @@ export default function TravelTripPage() {
             }}
           >
             <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
-              <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
+              {done && (
+                <IconButton
+                  size="small"
+                  sx={{ p: 0.25 }}
+                  aria-label={category.name}
+                  aria-expanded={open}
+                  onClick={() =>
+                    setReopened((previous) => ({
+                      ...previous,
+                      [category.id]: !open,
+                    }))
+                  }
+                >
+                  {open ? (
+                    <ExpandMoreIcon fontSize="small" />
+                  ) : (
+                    <ChevronRightIcon fontSize="small" />
+                  )}
+                </IconButton>
+              )}
+              <Typography
+                variant="subtitle2"
+                sx={{ flexGrow: 1, opacity: done ? 0.7 : 1 }}
+              >
                 {category.name}
               </Typography>
               <Chip
@@ -358,6 +418,7 @@ export default function TravelTripPage() {
               </Tooltip>
             </Stack>
 
+            <Collapse in={open} unmountOnExit>
             {entries.map((item) => (
               <Stack key={item.id} direction="row" sx={{ alignItems: 'center' }}>
                 <Checkbox
@@ -421,8 +482,10 @@ export default function TravelTripPage() {
                 }
               }}
             />
+            </Collapse>
           </Box>
-        ))}
+          )
+        })}
         </Box>
 
         {sections.loose.length > 0 && (
