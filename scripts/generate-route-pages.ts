@@ -175,6 +175,11 @@ const pages: RoutePage[] = [
     description: translate(converter.seoDescriptionKey),
   })),
   {
+    route: '/travel/recommended',
+    title: translate('travel.recommendedTitle'),
+    description: translate('travel.recommendedSeoDescription'),
+  },
+  {
     route: '/quotes',
     title: translate('quotes.title'),
     description: translate('quotes.seoDescription'),

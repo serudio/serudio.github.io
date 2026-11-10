@@ -1,0 +1,414 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Link as RouterLink, useParams } from 'react-router-dom'
+import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Checkbox from '@mui/material/Checkbox'
+import Chip from '@mui/material/Chip'
+import CircularProgress from '@mui/material/CircularProgress'
+import Container from '@mui/material/Container'
+import IconButton from '@mui/material/IconButton'
+import LinearProgress from '@mui/material/LinearProgress'
+import Link from '@mui/material/Link'
+import Menu from '@mui/material/Menu'
+import MenuItem from '@mui/material/MenuItem'
+import Paper from '@mui/material/Paper'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
+import Tooltip from '@mui/material/Tooltip'
+import Typography from '@mui/material/Typography'
+import AddIcon from '@mui/icons-material/Add'
+import DeleteIcon from '@mui/icons-material/Delete'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
+import PaletteIcon from '@mui/icons-material/Palette'
+import Seo from '../../components/Seo'
+import Footer from '../../components/Footer'
+import {
+  addItems,
+  addNotes,
+  createCategory,
+  deleteItem,
+  deleteNote,
+  getCategories,
+  getItems,
+  getNotes,
+  getTrips,
+  removeCategoryFromTrip,
+  updateCategory,
+  updateItem,
+  updateNote,
+  type TravelCategory,
+  type TravelItem,
+  type TravelNote,
+  type TravelTrip,
+} from '../../lib/travel/db'
+
+/** Offered when recolouring a section. Same family as the site's palette. */
+const PALETTE = [
+  '#6366f1', '#38bdf8', '#a855f7', '#ec4899', '#ef4444',
+  '#f97316', '#f59e0b', '#84cc16', '#16a34a', '#14b8a6',
+  '#0ea5e9', '#64748b',
+]
+
+/** A section with no colour of its own still needs to render as something. */
+function colorFor(category: TravelCategory, index: number): string {
+  return category.color ?? PALETTE[index % PALETTE.length]
+}
+
+/**
+ * One trip: what to do before leaving, and what to pack, by section.
+ *
+ * The default list is a trip too (is_template), so this same page edits
+ * it — "add a section to the default" and "add it to this trip" are the
+ * same screen with a different id.
+ */
+export default function TravelTripPage() {
+  const { t } = useTranslation()
+  const { tripId } = useParams<{ tripId: string }>()
+
+  const [trip, setTrip] = useState<TravelTrip | null>(null)
+  const [categories, setCategories] = useState<TravelCategory[]>([])
+  const [items, setItems] = useState<TravelItem[]>([])
+  const [notes, setNotes] = useState<TravelNote[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const [newItemText, setNewItemText] = useState<Record<string, string>>({})
+  const [newNote, setNewNote] = useState('')
+  const [newSection, setNewSection] = useState('')
+  const [menu, setMenu] = useState<{ anchor: HTMLElement; categoryId: string } | null>(null)
+
+  const refresh = useCallback(async () => {
+    if (!tripId) return
+    setLoading(true)
+    try {
+      const [trips, cats, its, nts] = await Promise.all([
+        getTrips(),
+        getCategories(),
+        getItems(tripId),
+        getNotes(tripId),
+      ])
+      setTrip(trips.find((candidate) => candidate.id === tripId) ?? null)
+      setCategories(cats)
+      setItems(its)
+      setNotes(nts)
+      setError(null)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught))
+    } finally {
+      setLoading(false)
+    }
+  }, [tripId])
+
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
+
+  const run = async (action: () => Promise<void>) => {
+    try {
+      await action()
+      await refresh()
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught))
+    }
+  }
+
+  // Only sections that actually have items in this trip are shown: the
+  // category list is account-wide, and an empty heading for a section
+  // this trip does not use is noise.
+  const sections = useMemo(() => {
+    const used = categories
+      .map((category, index) => ({
+        category,
+        color: colorFor(category, index),
+        entries: items.filter((item) => item.categoryId === category.id),
+      }))
+      .filter((section) => section.entries.length > 0)
+
+    const loose = items.filter((item) => !item.categoryId)
+    return { used, loose }
+  }, [categories, items])
+
+  const packed = items.filter((item) => item.packed).length
+  const progress = items.length > 0 ? Math.round((packed / items.length) * 100) : 0
+
+  if (loading) {
+    return (
+      <Container maxWidth="sm">
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress />
+        </Box>
+      </Container>
+    )
+  }
+
+  return (
+    <Container maxWidth="sm" disableGutters>
+      <Seo title={trip?.name ?? t('travel.title')} path={`/travel/t/${tripId ?? ''}`} noIndex />
+      <Paper elevation={0} sx={{ p: { xs: 2.5, sm: 3 } }}>
+        <Link
+          component={RouterLink}
+          to="/travel"
+          variant="body2"
+          color="text.secondary"
+          sx={{ display: 'inline-block', mb: 2 }}
+        >
+          &larr; {t('travel.backToTravel')}
+        </Link>
+
+        <Typography variant="h5" component="h1" sx={{ mb: 1 }}>
+          {trip?.name ?? t('travel.title')}
+        </Typography>
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
+
+        {items.length > 0 && (
+          <Box sx={{ mb: 3 }}>
+            <Stack direction="row" sx={{ justifyContent: 'space-between', mb: 0.5 }}>
+              <Typography variant="caption" color="text.secondary">
+                {t('travel.packedCount', { packed, total: items.length })}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {progress}%
+              </Typography>
+            </Stack>
+            <LinearProgress variant="determinate" value={progress} sx={{ borderRadius: 1 }} />
+          </Box>
+        )}
+
+        {/* Before leaving — tasks, not luggage. */}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="caption" color="text.secondary" fontWeight={700}>
+            {t('travel.beforeLeaving').toUpperCase()}
+          </Typography>
+          {notes.map((note) => (
+            <Stack key={note.id} direction="row" sx={{ alignItems: 'center' }}>
+              <Checkbox
+                size="small"
+                checked={note.done}
+                onChange={() => void run(() => updateNote(note.id, { done: !note.done }))}
+              />
+              <Typography
+                variant="body2"
+                sx={{
+                  flexGrow: 1,
+                  textDecoration: note.done ? 'line-through' : 'none',
+                  color: note.done ? 'text.disabled' : 'text.primary',
+                }}
+              >
+                {note.text}
+              </Typography>
+              <IconButton size="small" onClick={() => void run(() => deleteNote(note.id))}>
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Stack>
+          ))}
+          <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+            <TextField
+              size="small"
+              fullWidth
+              value={newNote}
+              placeholder={t('travel.addNote')}
+              onChange={(event) => setNewNote(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && newNote.trim() && tripId) {
+                  void run(async () => {
+                    await addNotes(tripId, [newNote])
+                    setNewNote('')
+                  })
+                }
+              }}
+            />
+          </Stack>
+        </Box>
+
+        {/* Packing, by section. */}
+        {sections.used.map(({ category, color, entries }) => (
+          <Box key={category.id} sx={{ mb: 3 }}>
+            <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
+              <Box
+                sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: color, flexShrink: 0 }}
+              />
+              <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
+                {category.name}
+              </Typography>
+              <Chip
+                size="small"
+                variant="outlined"
+                label={`${entries.filter((item) => item.packed).length}/${entries.length}`}
+              />
+              <Tooltip title={t('travel.sectionActions')}>
+                <IconButton
+                  size="small"
+                  onClick={(event) =>
+                    setMenu({ anchor: event.currentTarget, categoryId: category.id })
+                  }
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+
+            {entries.map((item) => (
+              <Stack key={item.id} direction="row" sx={{ alignItems: 'center' }}>
+                <Checkbox
+                  size="small"
+                  checked={item.packed}
+                  onChange={() => void run(() => updateItem(item.id, { packed: !item.packed }))}
+                />
+                <Typography
+                  variant="body2"
+                  sx={{
+                    flexGrow: 1,
+                    textDecoration: item.packed ? 'line-through' : 'none',
+                    color: item.packed ? 'text.disabled' : 'text.primary',
+                  }}
+                >
+                  {item.text}
+                </Typography>
+                <IconButton size="small" onClick={() => void run(() => deleteItem(item.id))}>
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Stack>
+            ))}
+
+            <TextField
+              size="small"
+              fullWidth
+              sx={{ mt: 1 }}
+              value={newItemText[category.id] ?? ''}
+              placeholder={t('travel.addItem')}
+              onChange={(event) =>
+                setNewItemText((previous) => ({ ...previous, [category.id]: event.target.value }))
+              }
+              onKeyDown={(event) => {
+                const text = newItemText[category.id] ?? ''
+                if (event.key === 'Enter' && text.trim() && tripId) {
+                  void run(async () => {
+                    await addItems(tripId, [{ text, categoryId: category.id }])
+                    setNewItemText((previous) => ({ ...previous, [category.id]: '' }))
+                  })
+                }
+              }}
+            />
+          </Box>
+        ))}
+
+        {sections.loose.length > 0 && (
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              {t('travel.uncategorised')}
+            </Typography>
+            {sections.loose.map((item) => (
+              <Stack key={item.id} direction="row" sx={{ alignItems: 'center' }}>
+                <Checkbox
+                  size="small"
+                  checked={item.packed}
+                  onChange={() => void run(() => updateItem(item.id, { packed: !item.packed }))}
+                />
+                <Typography variant="body2" sx={{ flexGrow: 1 }}>
+                  {item.text}
+                </Typography>
+                <IconButton size="small" onClick={() => void run(() => deleteItem(item.id))}>
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Stack>
+            ))}
+          </Box>
+        )}
+
+        {/* Your own section, alongside the recommended ones. */}
+        <Stack direction="row" spacing={1} sx={{ mb: 3 }}>
+          <TextField
+            size="small"
+            fullWidth
+            value={newSection}
+            placeholder={t('travel.newSection')}
+            onChange={(event) => setNewSection(event.target.value)}
+          />
+          <Button
+            startIcon={<AddIcon />}
+            disabled={!newSection.trim() || !tripId}
+            onClick={() =>
+              void run(async () => {
+                const categoryId = await createCategory({
+                  name: newSection,
+                  color: PALETTE[categories.length % PALETTE.length],
+                  sortOrder: categories.length,
+                })
+                // A section with no items would not render, so it starts
+                // with its own name as the first thing to replace.
+                await addItems(tripId!, [{ text: newSection.trim(), categoryId }])
+                setNewSection('')
+              })
+            }
+          >
+            {t('travel.add')}
+          </Button>
+        </Stack>
+
+        <Button
+          size="small"
+          component={RouterLink}
+          to="/travel/recommended"
+          startIcon={<AddIcon />}
+        >
+          {t('travel.addFromRecommended')}
+        </Button>
+
+        <Footer />
+      </Paper>
+
+      <Menu
+        open={menu !== null}
+        anchorEl={menu?.anchor ?? null}
+        onClose={() => setMenu(null)}
+      >
+        <MenuItem disabled sx={{ opacity: 1 }}>
+          <PaletteIcon fontSize="small" sx={{ mr: 1 }} />
+          {t('travel.sectionColor')}
+        </MenuItem>
+        <Box sx={{ px: 2, pb: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75, maxWidth: 200 }}>
+          {PALETTE.map((color) => (
+            <Box
+              key={color}
+              role="button"
+              aria-label={color}
+              onClick={() => {
+                const categoryId = menu?.categoryId
+                setMenu(null)
+                if (categoryId) void run(() => updateCategory(categoryId, { color }))
+              }}
+              sx={{
+                width: 22,
+                height: 22,
+                borderRadius: '50%',
+                bgcolor: color,
+                cursor: 'pointer',
+                border: '2px solid transparent',
+                '&:hover': { borderColor: 'text.primary' },
+              }}
+            />
+          ))}
+        </Box>
+        <MenuItem
+          onClick={() => {
+            const categoryId = menu?.categoryId
+            setMenu(null)
+            if (categoryId && tripId) {
+              void run(() => removeCategoryFromTrip(tripId, categoryId))
+            }
+          }}
+        >
+          <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+          {t('travel.removeSection')}
+        </MenuItem>
+      </Menu>
+    </Container>
+  )
+}

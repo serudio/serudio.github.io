@@ -9,6 +9,9 @@ import PrivacyPage from "./pages/PrivacyPage";
 import SignInPage from "./pages/SignInPage";
 import BooksPage from "./pages/books/BooksPage";
 import QuotesPage from "./pages/quotes/QuotesPage";
+import TravelPage from "./pages/travel/TravelPage";
+import TravelTripPage from "./pages/travel/TravelTripPage";
+import TravelRecommendedPage from "./pages/travel/TravelRecommendedPage";
 import QuotePage from "./pages/quotes/QuotePage";
 import QuotesAdminPage from "./pages/quotes/QuotesAdminPage";
 import BooksAdminPage from "./pages/books/BooksAdminPage";
@@ -64,6 +67,26 @@ export default function App() {
           }
         />
         <Route path="/quotes/:slug" element={<QuotePage />} />
+        {/* Travel. The recommended catalogue is public; a packing list
+            is private data, so the rest sits behind RequireAuth — and
+            the database enforces the same thing (migration 0011). */}
+        <Route path="/travel/recommended" element={<TravelRecommendedPage />} />
+        <Route
+          path="/travel"
+          element={
+            <RequireAuth>
+              <TravelPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/travel/t/:tripId"
+          element={
+            <RequireAuth>
+              <TravelTripPage />
+            </RequireAuth>
+          }
+        />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/signin" element={<SignInPage />} />
 

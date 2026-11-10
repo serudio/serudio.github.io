@@ -28,12 +28,14 @@ function SectionHeading({ children }: { children: string }) {
     <Typography
       variant="caption"
       sx={{
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
+        // Lowercase: 0.05em tracking suits small caps, but reads as gaps
+        // in lowercase, so the letter spacing comes down with it.
+        textTransform: 'lowercase',
+        letterSpacing: '0.02em',
         color: 'text.secondary',
-        fontWeight: 700,
+        fontWeight: 600,
         display: 'block',
-        mb: 1,
+        mb: 1.25,
       }}
     >
       {children}

@@ -19,7 +19,7 @@ const root = path.resolve(__dirname, "..");
 // an AdSense thin-content review is open invites exactly the finding we
 // are trying to clear. They still exist, answer 200 and are reachable by
 // crawlers through links from /quotes — they are just not advertised.
-const staticRoutes = ["/", "/converters", "/privacy", "/books/", "/quotes"];
+const staticRoutes = ["/", "/converters", "/privacy", "/books/", "/quotes", "/travel/recommended"];
 
 // todo-cloud is still a separate repo that GitHub Pages serves under
 // this same origin, so this sitemap is the only one that lists it.

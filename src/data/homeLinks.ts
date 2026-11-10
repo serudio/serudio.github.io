@@ -11,7 +11,7 @@ import { projects } from './projects'
  * `id` is also the key the usage counter stores (see src/lib/usage.ts),
  * so it must stay stable: changing one resets that link's history.
  */
-export type HomeLinkGroup = 'projects' | 'converters' | 'quotes'
+export type HomeLinkGroup = 'projects' | 'converters' | 'travel' | 'quotes'
 
 export interface HomeLink {
   id: string
@@ -24,13 +24,21 @@ export interface HomeLink {
   href?: string
 }
 
-export const HOME_LINK_GROUPS: HomeLinkGroup[] = ['projects', 'converters', 'quotes']
+export const HOME_LINK_GROUPS: HomeLinkGroup[] = [
+  'projects',
+  'converters',
+  'travel',
+  'quotes',
+]
 
 /** i18n key for each group's heading. */
 export const GROUP_HEADING_KEYS: Record<HomeLinkGroup, string> = {
   projects: 'projects.heading',
   converters: 'converters.heading',
-  quotes: 'quotes.title',
+  travel: 'travel.title',
+  // Named for what the section is for, not what it contains; the
+  // /quotes page itself is still titled "Quotes".
+  quotes: 'quotes.homeHeading',
 }
 
 const projectLinks: HomeLink[] = projects.map((project) => ({
@@ -59,12 +67,29 @@ const converterLinks: HomeLink[] = [
   })),
 ]
 
+const travelLinks: HomeLink[] = [
+  // The packing list needs an account; the recommended catalogue does
+  // not, so both are offered and RequireAuth sorts out the first.
+  { id: 'travel.index', labelKey: 'travel.myTrips', group: 'travel', to: '/travel' },
+  {
+    id: 'travel.recommended',
+    labelKey: 'travel.recommendedTitle',
+    group: 'travel',
+    to: '/travel/recommended',
+  },
+]
+
 const quoteLinks: HomeLink[] = [
   // Labelled apart from the group heading, which is already "Quotes".
   { id: 'quotes.index', labelKey: 'quotes.randomLink', group: 'quotes', to: '/quotes' },
 ]
 
-export const homeLinks: HomeLink[] = [...projectLinks, ...converterLinks, ...quoteLinks]
+export const homeLinks: HomeLink[] = [
+  ...projectLinks,
+  ...converterLinks,
+  ...travelLinks,
+  ...quoteLinks,
+]
 
 export function findHomeLink(id: string): HomeLink | undefined {
   return homeLinks.find((link) => link.id === id)
