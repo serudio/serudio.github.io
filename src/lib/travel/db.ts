@@ -447,6 +447,8 @@ export interface TravelActivity {
     | 'note.renamed'
   subject: string
   detail: string | null
+  /** Who made the change, as they were named at the time. */
+  actorLabel: string | null
   createdAt: string
 }
 
@@ -460,7 +462,7 @@ export interface TravelActivity {
 export async function getActivity(tripId: string, limit = 100): Promise<TravelActivity[]> {
   const { data, error } = await client()
     .from('travel_activity')
-    .select('id, kind, subject, detail, created_at')
+    .select('id, kind, subject, detail, actor_label, created_at')
     .eq('trip_id', tripId)
     .order('created_at', { ascending: false })
     .limit(limit)
@@ -472,6 +474,7 @@ export async function getActivity(tripId: string, limit = 100): Promise<TravelAc
     kind: row.kind as TravelActivity['kind'],
     subject: row.subject as string,
     detail: (row.detail as string | null) ?? null,
+    actorLabel: (row.actor_label as string | null) ?? null,
     createdAt: row.created_at as string,
   }))
 }

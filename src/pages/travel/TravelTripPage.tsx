@@ -48,6 +48,7 @@ import DialogTitle from '@mui/material/DialogTitle'
 import Seo from '../../components/Seo'
 import Footer from '../../components/Footer'
 import { useDeclarePageChrome } from '../../components/pageChrome'
+import { useAuth } from '../../auth/useAuth'
 import { exportCsv, exportList } from '../../lib/travel/exportList'
 import { formatTimestamp, formatTripDates } from '../../lib/travel/formatDate'
 import HistoryIcon from '@mui/icons-material/History'
@@ -129,6 +130,8 @@ function colorFor(category: TravelCategory, index: number): string {
  */
 export default function TravelTripPage() {
   const { t, i18n } = useTranslation()
+  // Only to tell your own entries in the history from a collaborator's.
+  const { session } = useAuth()
   const { tripId } = useParams<{ tripId: string }>()
 
   const [trip, setTrip] = useState<TravelTrip | null>(null)
@@ -1502,6 +1505,18 @@ export default function TravelTripPage() {
                     subject: entry.subject,
                     detail: entry.detail ?? '',
                   })}
+                  {/* Only when somebody else did it: on your own list
+                      every line would otherwise carry your own name. */}
+                  {entry.actorLabel && entry.actorLabel !== session?.user.email && (
+                    <Typography
+                      component="span"
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ ml: 1 }}
+                    >
+                      — {entry.actorLabel}
+                    </Typography>
+                  )}
                 </Typography>
               </Stack>
             ))
