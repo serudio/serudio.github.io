@@ -235,7 +235,9 @@
         "removed": "видалено завдання «{{subject}}»",
         "renamed": "завдання «{{detail}}» → «{{subject}}»"
       }
-    }
+    },
+    "moveSectionUp": "Пересунути вище",
+    "moveSectionDown": "Пересунути нижче"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",

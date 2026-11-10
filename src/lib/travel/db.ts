@@ -178,9 +178,16 @@ export async function createCategory(input: {
 
 export async function updateCategory(
   id: string,
-  input: { name?: string; color?: string | null; isPerson?: boolean; personId?: string | null },
+  input: {
+    name?: string
+    color?: string | null
+    isPerson?: boolean
+    personId?: string | null
+    sortOrder?: number
+  },
 ) {
   const patch: Record<string, unknown> = {}
+  if (input.sortOrder !== undefined) patch.sort_order = input.sortOrder
   if (input.name !== undefined) patch.name = input.name.trim()
   if (input.color !== undefined) patch.color = input.color
   if (input.isPerson !== undefined) patch.is_person = input.isPerson
@@ -195,6 +202,28 @@ export async function updateCategory(
  * every trip that ever used it — deleting a label should not delete
  * history.
  */
+/**
+ * Writes a new order for the given sections.
+ *
+ * Takes the ids in the order they should end up and reuses the
+ * sort_order values those same sections already occupy, so sections
+ * left out of the list keep their place among them. Categories are
+ * account-wide, so this is the order everywhere, not just on the trip
+ * it was changed from.
+ */
+export async function reorderCategories(
+  ordered: { id: string; sortOrder: number }[],
+) {
+  const slots = ordered.map((row) => row.sortOrder).sort((a, b) => a - b)
+  await Promise.all(
+    ordered.map((row, index) =>
+      row.sortOrder === slots[index]
+        ? Promise.resolve()
+        : updateCategory(row.id, { sortOrder: slots[index] }),
+    ),
+  )
+}
+
 export async function deleteCategory(id: string) {
   const { error } = await client().from('travel_categories').delete().eq('id', id)
   if (error) throw error

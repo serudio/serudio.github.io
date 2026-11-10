@@ -52,6 +52,8 @@ import { useAuth } from '../../auth/useAuth'
 import { exportCsv, exportList } from '../../lib/travel/exportList'
 import { formatTimestamp, formatTripDates } from '../../lib/travel/formatDate'
 import HistoryIcon from '@mui/icons-material/History'
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import { SITE_URL } from '../../config/site'
 import { ROW_HOVER } from './rowStyles'
 import {
@@ -68,6 +70,7 @@ import {
   getNotes,
   getTrips,
   removeCategoryFromTrip,
+  reorderCategories,
   updateCategory,
   updateItem,
   updateNote,
@@ -644,6 +647,41 @@ export default function TravelTripPage() {
       ({ category, done }) => (sectionOpen[category.id] ?? !done) === false,
     ) &&
     (notes.length === 0 || !notesOpen)
+
+  /**
+   * The sections this trip shows, in their stored order.
+   *
+   * Not the order on screen: that sinks finished sections to the end,
+   * and renumbering from it would bake "done last" into the saved
+   * order permanently.
+   */
+  const orderedUsed = useMemo(() => {
+    const used = new Set(sections.used.map(({ category }) => category.id))
+    return categories
+      .filter((category) => used.has(category.id))
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+  }, [sections, categories])
+
+  /**
+   * Moves a section one place, swapping with the next section this trip
+   * actually shows — stepping over sections it does not, which would
+   * otherwise make a move look like it did nothing.
+   */
+  const moveSection = (categoryId: string, by: -1 | 1) => {
+    const from = orderedUsed.findIndex((category) => category.id === categoryId)
+    const to = from + by
+    if (from === -1 || to < 0 || to >= orderedUsed.length) return
+
+    const next = [...orderedUsed]
+    ;[next[from], next[to]] = [next[to], next[from]]
+
+    setMenu(null)
+    void run(() =>
+      reorderCategories(
+        next.map((category) => ({ id: category.id, sortOrder: category.sortOrder })),
+      ),
+    )
+  }
 
   const toggleAllSections = () => {
     const next: Record<string, boolean> = {}
@@ -1764,6 +1802,28 @@ export default function TravelTripPage() {
         anchorEl={menu?.anchor ?? null}
         onClose={() => setMenu(null)}
       >
+        {menu && (
+          <MenuItem
+            disabled={orderedUsed.findIndex((row) => row.id === menu.categoryId) <= 0}
+            onClick={() => moveSection(menu.categoryId, -1)}
+          >
+            <ArrowUpwardIcon fontSize="small" sx={{ mr: 1 }} />
+            {t('travel.moveSectionUp')}
+          </MenuItem>
+        )}
+        {menu && (
+          <MenuItem
+            disabled={
+              orderedUsed.findIndex((row) => row.id === menu.categoryId) ===
+              orderedUsed.length - 1
+            }
+            onClick={() => moveSection(menu.categoryId, 1)}
+          >
+            <ArrowDownwardIcon fontSize="small" sx={{ mr: 1 }} />
+            {t('travel.moveSectionDown')}
+          </MenuItem>
+        )}
+        {menu && <Divider />}
         {menu && (
           <MenuItem
             onClick={(event) => {

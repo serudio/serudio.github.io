@@ -229,7 +229,9 @@
         "removed": "removed task “{{subject}}”",
         "renamed": "task “{{detail}}” → “{{subject}}”"
       }
-    }
+    },
+    "moveSectionUp": "Move up",
+    "moveSectionDown": "Move down"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",
