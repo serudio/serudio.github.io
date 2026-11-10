@@ -11,7 +11,9 @@
     "postbuild": "tsx scripts/generate-route-pages.ts",
     "preview": "vite preview",
     "lint": "eslint .",
-    "generate:og-image": "node scripts/generate-og-image.mjs"
+    "generate:og-image": "node scripts/generate-og-image.mjs",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "fallback:sync": "tsx scripts/sync-fallback.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
@@ -29,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.14.0",
+    "@types/pg": "^8.23.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
@@ -36,6 +39,7 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
     "globals": "^15.12.0",
+    "pg": "^8.23.1",
     "sharp": "^0.33.5",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",

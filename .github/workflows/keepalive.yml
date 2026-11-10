@@ -1,0 +1,39 @@
+# Supabase pauses free projects after 7 idle days, which takes the catalogue
+# offline until someone unpauses it by hand. A cheap read every few days counts
+# as activity and keeps the project awake.
+name: Keep Supabase awake
+
+on:
+  schedule:
+    # 07:00 UTC every third day — well inside the 7-day idle window, so one
+    # skipped run (GitHub drops scheduled jobs under load) is not a problem.
+    - cron: "0 7 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read one row from the catalogue
+        env:
+          SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY repo variables are not set."
+            exit 1
+          fi
+
+          status=$(curl -sS -o /tmp/body -w '%{http_code}' --max-time 30 \
+            "$SUPABASE_URL/rest/v1/books?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY")
+
+          echo "HTTP $status"
+          cat /tmp/body
+
+          # A paused project answers 5xx or times out; fail loudly so the
+          # failed-workflow email tells you the catalogue is down.
+          if [ "$status" != "200" ]; then
+            echo "::error::Supabase did not answer with 200 — the project may be paused."
+            exit 1
+          fi
