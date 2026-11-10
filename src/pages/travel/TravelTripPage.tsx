@@ -77,6 +77,16 @@ import {
 const HIDE_DONE_KEY = 'serudio_travel_hide_done'
 const SORT_AZ_KEY = 'serudio_travel_sort_az'
 
+/**
+ * How a person's name is set, wherever it appears — the filter chips
+ * and the badge saying whose a section is. Lower case at 1.1px, so a
+ * name reads as a label rather than shouting beside the heading it
+ * sits next to.
+ */
+const PERSON_CHIP = {
+  '& .MuiChip-label': { textTransform: 'lowercase', letterSpacing: '1.1px' },
+} as const
+
 /** Offered when recolouring a section. Same family as the site's palette. */
 const PALETTE = [
   '#6366f1', '#38bdf8', '#a855f7', '#ec4899', '#ef4444',
@@ -924,6 +934,7 @@ export default function TravelTripPage() {
               variant={personFilter.length === 0 ? 'filled' : 'outlined'}
               color={personFilter.length === 0 ? 'primary' : 'default'}
               onClick={() => setPersonFilter([])}
+              sx={PERSON_CHIP}
             />
             {people.map((person) => {
               const selected = personFilter.includes(person.id)
@@ -945,6 +956,7 @@ export default function TravelTripPage() {
                     )
                   }
                   sx={{
+                    ...PERSON_CHIP,
                     borderColor: alpha(color, 0.5),
                     bgcolor: selected ? alpha(color, 0.35) : 'transparent',
                     '&:hover': { bgcolor: alpha(color, selected ? 0.45 : 0.15) },
@@ -1149,7 +1161,7 @@ export default function TravelTripPage() {
                   size="small"
                   variant="outlined"
                   label={categories.find((row) => row.id === category.personId)?.name ?? ''}
-                  sx={{ height: 20, fontSize: 11 }}
+                  sx={{ ...PERSON_CHIP, height: 20, fontSize: 11 }}
                 />
               )}
               <Tooltip title={t('travel.removeSection')}>
