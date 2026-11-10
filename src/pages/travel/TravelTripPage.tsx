@@ -13,6 +13,7 @@ import Container from '@mui/material/Container'
 import IconButton from '@mui/material/IconButton'
 import LinearProgress from '@mui/material/LinearProgress'
 import Menu from '@mui/material/Menu'
+import Popover from '@mui/material/Popover'
 import Divider from '@mui/material/Divider'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
@@ -215,9 +216,16 @@ export default function TravelTripPage() {
   // The item being renamed, and the text so far. Editing in place beats
   // a dialog for a one-line change.
   const [editingItem, setEditingItem] = useState<{ id: string; text: string } | null>(null)
-  const [editingSection, setEditingSection] = useState<{ id: string; name: string } | null>(
-    null,
-  )
+  /**
+   * Renaming a section, in a popover of its own.
+   *
+   * Not inline on the heading: the whole header folds the section when
+   * clicked, and a heading that sometimes folds and sometimes starts an
+   * edit is a coin toss every time you aim at it.
+   */
+  const [renaming, setRenaming] = useState<
+    { id: string; name: string; anchor: HTMLElement } | null
+  >(null)
 
   // Naming a trip is optional and after the fact: creating one asks
   // nothing, so the details are edited here once there is something to
@@ -462,10 +470,10 @@ export default function TravelTripPage() {
   /** Commits a rename, or quietly drops it if nothing changed. */
   /** Commits a section rename, or quietly drops it if nothing changed. */
   const commitSectionEdit = () => {
-    if (!editingSection) return
-    const { id, name } = editingSection
+    if (!renaming) return
+    const { id, name } = renaming
     const original = categories.find((row) => row.id === id)
-    setEditingSection(null)
+    setRenaming(null)
 
     const trimmed = name.trim()
     if (!trimmed || !original || trimmed === original.name) return
@@ -1118,48 +1126,17 @@ export default function TravelTripPage() {
               {category.isPerson && (
                 <PersonOutlineIcon fontSize="small" sx={{ color: color, flexShrink: 0 }} />
               )}
-              {editingSection?.id === category.id ? (
-                <TextField
-                  size="small"
-                  variant="standard"
-                  autoFocus
-                  fullWidth
-                  value={editingSection.name}
-                  // The header folds the section when clicked; this is a
-                  // control sitting inside it.
-                  onClick={(event) => event.stopPropagation()}
-                  onChange={(event) =>
-                    setEditingSection({ id: category.id, name: event.target.value })
-                  }
-                  onBlur={commitSectionEdit}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') commitSectionEdit()
-                    // Escape abandons the change; blur would otherwise
-                    // commit it on the way out.
-                    if (event.key === 'Escape') setEditingSection(null)
-                  }}
-                  sx={{ flexGrow: 1 }}
-                />
-              ) : (
-                <Typography
-                  variant="subtitle2"
-                  // Renaming works the way items do: click the words.
-                  // The chevron and the rest of the row still fold it.
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    setEditingSection({ id: category.id, name: category.name })
-                  }}
-                  sx={{
-                    flexGrow: 1,
-                    cursor: 'text',
-                    opacity: done ? 0.7 : 1,
-                    textTransform: 'uppercase',
-                    letterSpacing: '1.1px',
-                  }}
-                >
-                  {category.name}
-                </Typography>
-              )}
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  flexGrow: 1,
+                  opacity: done ? 0.7 : 1,
+                  textTransform: 'uppercase',
+                  letterSpacing: '1.1px',
+                }}
+              >
+                {category.name}
+              </Typography>
               {category.personId && (
                 <Chip
                   size="small"
@@ -1371,6 +1348,43 @@ export default function TravelTripPage() {
 
         <Footer />
       </Paper>
+
+      <Popover
+        open={renaming !== null}
+        anchorEl={renaming?.anchor ?? null}
+        // Closing by clicking away keeps the typing, the same as
+        // leaving an item's field does.
+        onClose={commitSectionEdit}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+      >
+        <Stack direction="row" spacing={1} sx={{ p: 1.5, alignItems: 'center' }}>
+          <TextField
+            size="small"
+            autoFocus
+            value={renaming?.name ?? ''}
+            placeholder={t('travel.renameSection')}
+            aria-label={t('travel.renameSection')}
+            onChange={(event) =>
+              setRenaming((previous) =>
+                previous ? { ...previous, name: event.target.value } : previous,
+              )
+            }
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') commitSectionEdit()
+              // Escape abandons it; closing any other way keeps it.
+              if (event.key === 'Escape') setRenaming(null)
+            }}
+            sx={{ minWidth: 220 }}
+          />
+          <Button
+            variant="contained"
+            disabled={!renaming?.name.trim()}
+            onClick={commitSectionEdit}
+          >
+            {t('travel.save')}
+          </Button>
+        </Stack>
+      </Popover>
 
       <Dialog open={confirmRemove !== null} onClose={() => setConfirmRemove(null)}>
         <DialogTitle>{t('travel.removeSectionTitle')}</DialogTitle>
@@ -1609,6 +1623,24 @@ export default function TravelTripPage() {
         anchorEl={menu?.anchor ?? null}
         onClose={() => setMenu(null)}
       >
+        {menu && (
+          <MenuItem
+            onClick={(event) => {
+              const category = categories.find((row) => row.id === menu.categoryId)
+              // Anchored to the menu entry, which is still on screen when
+              // the menu closes under it.
+              const anchor = event.currentTarget
+              setMenu(null)
+              if (category) {
+                setRenaming({ id: category.id, name: category.name, anchor })
+              }
+            }}
+          >
+            <EditOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
+            {t('travel.renameSection')}
+          </MenuItem>
+        )}
+        <Divider />
         <MenuItem disabled sx={{ opacity: 1 }}>
           <PaletteIcon fontSize="small" sx={{ mr: 1 }} />
           {t('travel.sectionColor')}

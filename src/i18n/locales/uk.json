@@ -219,7 +219,8 @@
     "startTripHeading": "Почати подорож",
     "presetSize": "{{sections}} розділів, {{items}} речей",
     "sortAz": "Сортувати за абеткою",
-    "sortManual": "Повернути свій порядок"
+    "sortManual": "Повернути свій порядок",
+    "renameSection": "Перейменувати розділ"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",

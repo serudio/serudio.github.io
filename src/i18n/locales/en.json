@@ -213,7 +213,8 @@
     "startTripHeading": "Start a trip",
     "presetSize": "{{sections}} sections, {{items}} items",
     "sortAz": "Sort A–Z",
-    "sortManual": "Back to your own order"
+    "sortManual": "Back to your own order",
+    "renameSection": "Rename section"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",
