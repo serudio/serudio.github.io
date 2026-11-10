@@ -14,21 +14,20 @@ const root = path.resolve(__dirname, "..");
 // routes are pulled from the registry (src/data/converters.ts) that also
 // drives the app's routing and the /converters index — add a converter
 // there and it shows up here automatically.
-const staticRoutes = ["/", "/converters", "/privacy"];
+const staticRoutes = ["/", "/converters", "/privacy", "/books/"];
 
-// The other projects (see src/data/projects.ts) are separate repos, but
-// GitHub Pages serves them under this same origin, so this sitemap is
-// allowed to list them — and it's the only sitemap that does, since
-// neither project ships one of its own.
+// todo-cloud is still a separate repo that GitHub Pages serves under
+// this same origin, so this sitemap is the only one that lists it.
+// (/books/ moved into this repo and is a static route above; it keeps
+// its trailing slash because that is the URL Google has indexed.)
 //
-// Trailing slashes are deliberate: GitHub Pages 301-redirects
+// The trailing slash is deliberate: GitHub Pages 301-redirects
 // /todo-cloud to /todo-cloud/, and a sitemap should name the URL that
 // actually answers rather than one that redirects.
 //
 // See CLAUDE.md, section "SEO".
 const projectRoutes = [
   "/todo-cloud/",
-  "/books/",
   // NOT listed: /todo-cloud/lists and /todo-cloud/points. Those paths
   // return 404 — todo-cloud routes by hash (#/lists) and, like this site
   // did before scripts/generate-route-pages.ts, has no file behind a

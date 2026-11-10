@@ -7,7 +7,9 @@ import CardActions from "@mui/material/CardActions";
 import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import { Link as RouterLink } from "react-router-dom";
 import { projects } from "../data/projects";
+import { SITE_URL } from "../config/site";
 
 export default function ProjectsSection() {
   const { t } = useTranslation();
@@ -41,10 +43,18 @@ export default function ProjectsSection() {
               </Box>
               <CardActions sx={{ p: 0 }}>
                 <Button
-                  href={project.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  endIcon={<OpenInNewIcon fontSize="small" />}
+                  {...(project.internal
+                    ? {
+                        component: RouterLink,
+                        // Router paths are origin-relative.
+                        to: project.url.replace(SITE_URL, ""),
+                      }
+                    : {
+                        href: project.url,
+                        target: "_blank",
+                        rel: "noopener noreferrer",
+                        endIcon: <OpenInNewIcon fontSize="small" />,
+                      })}
                   size="small"
                 >
                   {t("projects.open")}

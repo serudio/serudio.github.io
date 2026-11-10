@@ -69,11 +69,44 @@ interface RoutePage {
   /** Page title, before the " | serudio" suffix that <Seo /> also adds. */
   title: string
   description: string
+  /**
+   * Output path inside dist/, when the default <route>.html is wrong.
+   * Only /books/ needs this — see the comment on its entry below.
+   */
+  file?: string
+  /** Replaces the home page's WebSite JSON-LD for this route. */
+  jsonLd?: Record<string, unknown>
 }
 
 // '/' is dist/index.html itself and '/privacy' is the hand-written
 // public/privacy.html, so neither is generated here.
 const pages: RoutePage[] = [
+  {
+    // The ONE exception to the <route>.html rule above: this page was
+    // indexed by Google at /books/ (with the slash) while it lived in its
+    // own repo, and its canonical has always said so. Writing
+    // books/index.html keeps that exact URL answering 200 and /books
+    // redirecting to it, exactly as before the move — books.html would
+    // turn the indexed URL into a 404.
+    route: '/books/',
+    file: 'books/index.html',
+    title: translate('books.seoTitle'),
+    description: translate('books.seoDescription'),
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'Library',
+      name: translate('books.title'),
+      description: translate('books.seoDescription'),
+      url: `${SITE_URL}/books/`,
+      inLanguage: 'uk',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: 'Львів',
+        addressCountry: 'UA',
+      },
+      areaServed: 'Львів',
+    },
+  },
   {
     route: '/converters',
     title: translate('converters.heading'),
@@ -112,7 +145,14 @@ for (const page of pages) {
   html = replaceAttribute(html, /(<meta name="twitter:title" content=")[^"]*(")/, fullTitle)
   html = replaceAttribute(html, /(<meta name="twitter:description" content=")[^"]*(")/, page.description)
 
-  const file = path.join(dist, `${page.route.replace(/^\//, '')}.html`)
+  if (page.jsonLd) {
+    html = html.replace(
+      /<script type="application\/ld\+json">[\s\S]*?<\/script>/,
+      `<script type="application/ld+json">\n${JSON.stringify(page.jsonLd, null, 2)}\n    </script>`,
+    )
+  }
+
+  const file = path.join(dist, page.file ?? `${page.route.replace(/^\//, '')}.html`)
   mkdirSync(path.dirname(file), { recursive: true })
   writeFileSync(file, html)
 }

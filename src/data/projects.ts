@@ -6,16 +6,21 @@ export interface Project {
   /** i18n key for the one-line description. */
   descriptionKey: string
   url: string
+  /**
+   * True for projects that live in this repo as routes — they open via
+   * the router in the same tab rather than as an external link.
+   */
+  internal?: boolean
   featured?: boolean
   /** i18n key for the small badge label, e.g. "Main". */
   badgeKey?: string
 }
 
 /**
- * Both projects are separate repos that GitHub Pages serves under this
- * same origin, so their URLs are built from SITE_URL rather than
- * hardcoded — a custom domain will carry them along with everything else
- * (see CLAUDE.md, section "Domain").
+ * Book Rent lives in this repo as a route; todo-cloud is still its own
+ * repo that GitHub Pages serves under this same origin. URLs are built
+ * from SITE_URL rather than hardcoded, so a custom domain carries them
+ * along with everything else (see CLAUDE.md, section "Domain").
  *
  * The trailing slashes matter: GitHub Pages 301-redirects /books to
  * /books/, so linking without one sends every visitor — and every
@@ -33,6 +38,7 @@ export const projects: Project[] = [
     titleKey: 'projects.bookRent.title',
     descriptionKey: 'projects.bookRent.description',
     url: `${SITE_URL}/books/`,
+    internal: true,
   },
   // Shortcuts into Todo Cloud's own sections. These use hash routes
   // because that app routes by fragment (GitHub Pages has no SPA
