@@ -165,7 +165,9 @@
     "tripName": "Name",
     "startsOn": "From",
     "endsOn": "To",
-    "save": "Save"
+    "save": "Save",
+    "keepInDefault_one": "Keep {{count}} item in default list",
+    "keepInDefault_other": "Keep {{count}} items in default list"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",

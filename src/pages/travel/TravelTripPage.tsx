@@ -25,6 +25,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert'
 import PaletteIcon from '@mui/icons-material/Palette'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import BookmarkAddOutlinedIcon from '@mui/icons-material/BookmarkAddOutlined'
 import Collapse from '@mui/material/Collapse'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import Dialog from '@mui/material/Dialog'
@@ -111,6 +112,12 @@ export default function TravelTripPage() {
   // want kept open regardless.
   const [reopened, setReopened] = useState<Record<string, boolean>>({})
 
+  // The default list, so this trip can offer to keep anything it has
+  // picked up along the way. Read from the trips already fetched rather
+  // than through ensureTemplateTrip, which writes.
+  const [templateId, setTemplateId] = useState<string | null>(null)
+  const [templateItems, setTemplateItems] = useState<TravelItem[]>([])
+
   // Naming a trip is optional and after the fact: creating one asks
   // nothing, so the details are edited here once there is something to
   // name.
@@ -129,10 +136,18 @@ export default function TravelTripPage() {
         getItems(tripId),
         getNotes(tripId),
       ])
-      setTrip(trips.find((candidate) => candidate.id === tripId) ?? null)
+      const current = trips.find((candidate) => candidate.id === tripId) ?? null
+      setTrip(current)
       setCategories(cats)
       setItems(its)
       setNotes(nts)
+
+      // Only meaningful on a real trip: the default list cannot differ
+      // from itself.
+      const template = current?.isTemplate ? undefined : trips.find((row) => row.isTemplate)
+      setTemplateId(template?.id ?? null)
+      setTemplateItems(template ? await getItems(template.id) : [])
+
       setError(null)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught))
@@ -198,6 +213,28 @@ export default function TravelTripPage() {
     )
     return { used, loose }
   }, [categories, items])
+
+  /**
+   * Per section, the items this trip has that the default list does not.
+   * Compared on text within the same category, since a category row is
+   * shared between the trip and the template — so "Шкарпетки" under
+   * Clothes matches, and the same word under Hike does not.
+   */
+  const newToDefault = useMemo(() => {
+    if (!templateId) return new Map<string, TravelItem[]>()
+
+    const known = new Set(
+      templateItems.map((item) => `${item.categoryId ?? ''}|${item.text.trim().toLowerCase()}`),
+    )
+
+    const result = new Map<string, TravelItem[]>()
+    for (const item of items) {
+      if (!item.categoryId) continue
+      if (known.has(`${item.categoryId}|${item.text.trim().toLowerCase()}`)) continue
+      result.set(item.categoryId, [...(result.get(item.categoryId) ?? []), item])
+    }
+    return result
+  }, [templateId, templateItems, items])
 
   const packed = items.filter((item) => item.packed).length
   const progress = items.length > 0 ? Math.round((packed / items.length) * 100) : 0
@@ -658,6 +695,29 @@ export default function TravelTripPage() {
             />
           ))}
         </Box>
+        {menu && (newToDefault.get(menu.categoryId)?.length ?? 0) > 0 && (
+          <MenuItem
+            onClick={() => {
+              const categoryId = menu.categoryId
+              const missing = newToDefault.get(categoryId) ?? []
+              setMenu(null)
+              if (templateId) {
+                void run(async () => {
+                  await addItems(
+                    templateId,
+                    missing.map((item) => ({ text: item.text, categoryId })),
+                  )
+                })
+              }
+            }}
+          >
+            <BookmarkAddOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
+            {t('travel.keepInDefault', {
+              count: newToDefault.get(menu.categoryId)?.length ?? 0,
+            })}
+          </MenuItem>
+        )}
+
         <MenuItem
           onClick={() => {
             const categoryId = menu?.categoryId

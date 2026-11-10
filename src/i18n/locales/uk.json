@@ -167,7 +167,11 @@
     "tripName": "Назва",
     "startsOn": "З",
     "endsOn": "До",
-    "save": "Зберегти"
+    "save": "Зберегти",
+    "keepInDefault_one": "Зберегти {{count}} річ у списку за замовчуванням",
+    "keepInDefault_few": "Зберегти {{count}} речі у списку за замовчуванням",
+    "keepInDefault_many": "Зберегти {{count}} речей у списку за замовчуванням",
+    "keepInDefault_other": "Зберегти {{count}} речей у списку за замовчуванням"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",
