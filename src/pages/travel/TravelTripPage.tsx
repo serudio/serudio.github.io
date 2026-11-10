@@ -609,7 +609,12 @@ export default function TravelTripPage() {
                 <ChevronRightIcon fontSize="small" />
               )}
             </IconButton>
-            <Typography variant="caption" color="text.secondary" fontWeight={700}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              fontWeight={700}
+              sx={{ letterSpacing: '1.1px' }}
+            >
               {t('travel.beforeLeaving').toUpperCase()}
             </Typography>
             {pendingNotes > 0 && (
@@ -639,6 +644,8 @@ export default function TravelTripPage() {
                 variant="body2"
                 sx={{
                   flexGrow: 1,
+                  textTransform: 'lowercase',
+                  letterSpacing: '1.25px',
                   textDecoration: note.done ? 'line-through' : 'none',
                   color: note.done ? 'text.disabled' : 'text.primary',
                 }}
@@ -741,7 +748,12 @@ export default function TravelTripPage() {
               )}
               <Typography
                 variant="subtitle2"
-                sx={{ flexGrow: 1, opacity: done ? 0.7 : 1 }}
+                sx={{
+                  flexGrow: 1,
+                  opacity: done ? 0.7 : 1,
+                  textTransform: 'uppercase',
+                  letterSpacing: '1.1px',
+                }}
               >
                 {category.name}
               </Typography>
@@ -833,6 +845,8 @@ export default function TravelTripPage() {
                     sx={{
                       flexGrow: 1,
                       cursor: 'text',
+                      textTransform: 'lowercase',
+                      letterSpacing: '1.25px',
                       textDecoration: item.packed ? 'line-through' : 'none',
                       color: item.packed ? 'text.disabled' : 'text.primary',
                     }}
@@ -928,7 +942,10 @@ export default function TravelTripPage() {
                   }
                   sx={{ p: 0.5 }}
                 />
-                <Typography variant="body2" sx={{ flexGrow: 1 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ flexGrow: 1, textTransform: 'lowercase', letterSpacing: '1.25px' }}
+                >
                   {item.text}
                 </Typography>
                 <IconButton
