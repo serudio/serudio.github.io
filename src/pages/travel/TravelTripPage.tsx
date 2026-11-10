@@ -708,7 +708,14 @@ export default function TravelTripPage() {
           flexWrap="wrap"
           sx={{ alignItems: 'center', gap: 1, mb: 1 }}
         >
-          <Typography variant="h5" component="h1">
+          <Typography
+            variant="h5"
+            component="h1"
+            // Set like the section headings, a size up: the trip
+            // name and the sections under it are the same kind of
+            // label, so they are lettered the same way.
+            sx={{ textTransform: 'uppercase', letterSpacing: '1.2px' }}
+          >
             {trip?.name ?? t('travel.title')}
           </Typography>
           <Tooltip title={t('travel.editDetails')}>
