@@ -14,9 +14,9 @@ import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../auth/useAuth";
 import BookCard from "../../components/books/BookCard";
@@ -47,6 +47,7 @@ const listSx = {
 export default function BooksPage() {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
   const { books, loading, failed } = useBooks();
   const [listView, setListView] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -57,6 +58,14 @@ export default function BooksPage() {
     [books, query],
   );
   const searching = query.trim().length > 0;
+
+  // The standalone app routed by hash, so /books/#admin is a bookmark
+  // people (well, the owner) may still have. Send it to the real route.
+  useEffect(() => {
+    if (window.location.hash.replace(/^#\/?/, "") === "admin") {
+      navigate(BOOKS_ADMIN_PATH, { replace: true });
+    }
+  }, [navigate]);
 
   return (
     <Container maxWidth="lg" component="section">
