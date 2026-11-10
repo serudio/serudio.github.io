@@ -217,7 +217,9 @@
     "addedToNewTrip": "Створено нову подорож і додано «{{section}}».",
     "addAllFromDefault": "Додати все",
     "startTripHeading": "Почати подорож",
-    "presetSize": "{{sections}} розділів, {{items}} речей"
+    "presetSize": "{{sections}} розділів, {{items}} речей",
+    "sortAz": "Сортувати за абеткою",
+    "sortManual": "Повернути свій порядок"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",

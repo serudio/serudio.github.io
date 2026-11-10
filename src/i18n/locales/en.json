@@ -211,7 +211,9 @@
     "addedToNewTrip": "Started a new trip and added “{{section}}”.",
     "addAllFromDefault": "Add everything",
     "startTripHeading": "Start a trip",
-    "presetSize": "{{sections}} sections, {{items}} items"
+    "presetSize": "{{sections}} sections, {{items}} items",
+    "sortAz": "Sort A–Z",
+    "sortManual": "Back to your own order"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",

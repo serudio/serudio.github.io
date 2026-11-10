@@ -33,6 +33,7 @@ import SearchIcon from '@mui/icons-material/Search'
 import InputAdornment from '@mui/material/InputAdornment'
 import Collapse from '@mui/material/Collapse'
 import ToggleButton from '@mui/material/ToggleButton'
+import SortByAlphaIcon from '@mui/icons-material/SortByAlpha'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
@@ -73,6 +74,7 @@ import {
 } from '../../lib/travel/db'
 
 const HIDE_DONE_KEY = 'serudio_travel_hide_done'
+const SORT_AZ_KEY = 'serudio_travel_sort_az'
 
 /** Offered when recolouring a section. Same family as the site's palette. */
 const PALETTE = [
@@ -89,10 +91,13 @@ const PALETTE = [
  *
  * Array.sort is stable, so equal rows keep their relative order.
  */
-function doneLast<T extends { sortOrder: number }>(rows: T[], isDone: (row: T) => boolean): T[] {
-  return [...rows].sort(
-    (a, b) => Number(isDone(a)) - Number(isDone(b)) || a.sortOrder - b.sortOrder,
-  )
+function doneLast<T extends { sortOrder: number }>(
+  rows: T[],
+  isDone: (row: T) => boolean,
+  /** How to order rows that are both done or both not. */
+  then: (a: T, b: T) => number = (a, b) => a.sortOrder - b.sortOrder,
+): T[] {
+  return [...rows].sort((a, b) => Number(isDone(a)) - Number(isDone(b)) || then(a, b))
 }
 
 /** A section with no colour of its own still needs to render as something. */
@@ -108,7 +113,7 @@ function colorFor(category: TravelCategory, index: number): string {
  * same screen with a different id.
  */
 export default function TravelTripPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { tripId } = useParams<{ tripId: string }>()
 
   const [trip, setTrip] = useState<TravelTrip | null>(null)
@@ -155,6 +160,34 @@ export default function TravelTripPage() {
       // Private browsing; the choice just will not outlive the visit.
     }
   }, [hideDone])
+
+  const [sortAz, setSortAz] = useState(() => {
+    try {
+      return localStorage.getItem(SORT_AZ_KEY) === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SORT_AZ_KEY, String(sortAz))
+    } catch {
+      // As above.
+    }
+  }, [sortAz])
+
+  /**
+   * How rows sit inside a section: the order they were added, or by
+   * name. localeCompare rather than < so Cyrillic sorts as Ukrainian
+   * expects — і, ї and apostrophes all land wrong under a code-point
+   * comparison.
+   */
+  const byName = useMemo(() => {
+    if (!sortAz) return undefined
+    const collator = new Intl.Collator(i18n.resolvedLanguage)
+    return (a: { text: string }, b: { text: string }) => collator.compare(a.text, b.text)
+  }, [sortAz, i18n.resolvedLanguage])
 
   // Folded to start with: packing is what the page is for, and the
   // tasks are for the last minute. The warning tint on the block says
@@ -284,6 +317,7 @@ export default function TravelTripPage() {
         const entries = doneLast(
           hideDone ? all.filter((item) => !item.packed) : all,
           (item) => item.packed,
+          byName,
         )
         return {
           category,
@@ -310,9 +344,10 @@ export default function TravelTripPage() {
     const loose = doneLast(
       hideDone ? looseAll.filter((item) => !item.packed) : looseAll,
       (item) => item.packed,
+      byName,
     )
     return { used, loose }
-  }, [categories, items, hideDone, emptied, query, personFilter])
+  }, [categories, items, hideDone, emptied, query, personFilter, byName])
 
   useDeclarePageChrome({
     backTo: '/travel',
@@ -781,6 +816,18 @@ export default function TravelTripPage() {
             sx={{ flexGrow: 1, minWidth: 180 }}
           />
 
+          <Tooltip title={t(sortAz ? 'travel.sortManual' : 'travel.sortAz')}>
+            <ToggleButton
+              size="small"
+              value="sortAz"
+              selected={sortAz}
+              onChange={() => setSortAz((previous) => !previous)}
+              aria-label={t('travel.sortAz')}
+            >
+              <SortByAlphaIcon fontSize="small" />
+            </ToggleButton>
+          </Tooltip>
+
           <Tooltip title={t('travel.hideDone')}>
             <ToggleButton
               size="small"
@@ -938,7 +985,11 @@ export default function TravelTripPage() {
             )}
           </Stack>
           <Collapse in={notesOpen} unmountOnExit>
-          {doneLast(hideDone ? notes.filter((note) => !note.done) : notes, (note) => note.done).map((note) => (
+          {doneLast(
+            hideDone ? notes.filter((note) => !note.done) : notes,
+            (note) => note.done,
+            byName,
+          ).map((note) => (
             <Stack key={note.id} direction="row" sx={{ alignItems: 'center', ...ROW_HOVER }}>
               <Checkbox
                 size="small"
