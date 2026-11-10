@@ -359,24 +359,22 @@ export async function addRecommendedSet(tripId: string, set: RecommendedSet) {
 export async function ensureTemplateTrip(): Promise<string> {
   const trips = await getTrips()
   const existing = trips.find((trip) => trip.isTemplate)
-  const tripId =
-    existing?.id ?? (await createTrip({ name: 'Default list', isTemplate: true }))
+  // An existing default list is the account's own and is never touched.
+  // This runs on every visit to the travel page, and it used to re-seed
+  // any starter section the template no longer had items in — so
+  // emptying one, or removing it, quietly brought the whole section
+  // back on the next visit. Deletions have to stick; a list you cannot
+  // take things out of is not yours.
+  if (existing) return existing.id
 
-  // Seed any starter section the template is missing entirely. Written
-  // to be safe to re-run: an earlier version of this function threw
-  // partway through and left templates holding only their first
-  // section, and running it again is what repairs them.
-  //
-  // Only a wholly absent section comes back. Items deleted inside a
-  // section that still has others stay deleted — the trade-off is that
-  // emptying a starter section completely does let it return.
+  const tripId = await createTrip({ name: 'Default list', isTemplate: true })
+
+  // Seeded once, at creation. Categories are account-wide, so a name
+  // already in use is reused rather than duplicated.
   const categories = await getCategories()
-  const items = await getItems(tripId)
 
   for (const group of defaultTemplate.categories) {
     const match = findCategory(group.name, categories)
-    if (match && items.some((item) => item.categoryId === match.id)) continue
-
     const categoryId =
       match?.id ??
       (await createCategory({
@@ -404,9 +402,7 @@ export async function ensureTemplateTrip(): Promise<string> {
     )
   }
 
-  if ((await getNotes(tripId)).length === 0) {
-    await addNotes(tripId, defaultTemplate.notes)
-  }
+  await addNotes(tripId, defaultTemplate.notes)
 
   return tripId
 }
