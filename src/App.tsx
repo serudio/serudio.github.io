@@ -30,7 +30,10 @@ export default function App() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 3,
+        // Header and page, nothing else: the header is one compact row
+        // now, so the wide gap that used to separate two blocks of
+        // furniture just pushed the content down.
+        gap: 1.5,
         p: 2,
       }}
     >
