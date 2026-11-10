@@ -20,6 +20,7 @@ import Stack from '@mui/material/Stack'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
+import CloseIcon from '@mui/icons-material/Close'
 import DeleteIcon from '@mui/icons-material/Delete'
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined'
 import Seo from '../../components/Seo'
@@ -210,11 +211,40 @@ export default function TravelPage() {
                 <Typography variant="caption" color="text.secondary" fontWeight={700}>
                   {t('travel.previous').toUpperCase()}
                 </Typography>
-                <Box sx={{ mt: 1 }}>
-                  {previous.map((trip) => (
-                    <TripCard key={trip.id} trip={trip} />
-                  ))}
-                </Box>
+                {/* Chips, not cards: a finished trip is a thing to
+                    reopen or throw away, and a card each turned the
+                    page into a scroll of them as trips piled up. The
+                    dates go in the label, since the name alone is often
+                    just a date anyway. */}
+                <Stack
+                  direction="row"
+                  useFlexGap
+                  flexWrap="wrap"
+                  sx={{ gap: 1, mt: 1 }}
+                >
+                  {previous.map((trip) => {
+                    const dates = formatTripDates(
+                      trip,
+                      i18n.resolvedLanguage ?? i18n.language,
+                    )
+                    return (
+                      <Chip
+                        key={trip.id}
+                        variant="outlined"
+                        component={RouterLink}
+                        to={`/travel/t/${trip.id}`}
+                        clickable
+                        label={dates && dates !== trip.name ? `${trip.name} · ${dates}` : trip.name}
+                        onDelete={() => setConfirmDelete(trip)}
+                        deleteIcon={
+                          <Tooltip title={t('travel.delete')}>
+                            <CloseIcon />
+                          </Tooltip>
+                        }
+                      />
+                    )
+                  })}
+                </Stack>
               </Box>
             )}
 
