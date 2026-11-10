@@ -180,7 +180,9 @@
     "everyone": "Everyone",
     "whose": "Belongs to",
     "nobody": "No one",
-    "keepThisInDefault": "Keep this in the default list"
+    "keepThisInDefault": "Keep this in the default list",
+    "collapseAll": "Collapse all",
+    "expandAll": "Expand all"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",

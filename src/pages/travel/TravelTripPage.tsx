@@ -389,6 +389,22 @@ export default function TravelTripPage() {
     )
   }
 
+  const searching = query.trim().length > 0
+
+  // Measured against what is on screen, so a section left over from a
+  // longer list cannot make the button claim the wrong thing.
+  const allCollapsed =
+    sections.used.length > 0 &&
+    sections.used.every(
+      ({ category, done }) => (sectionOpen[category.id] ?? !done) === false,
+    )
+
+  const toggleAllSections = () => {
+    const next: Record<string, boolean> = {}
+    for (const { category } of sections.used) next[category.id] = allCollapsed
+    setSectionOpen((previous) => ({ ...previous, ...next }))
+  }
+
   const packed = items.filter((item) => item.packed).length
   const progress = items.length > 0 ? Math.round((packed / items.length) * 100) : 0
 
@@ -476,21 +492,34 @@ export default function TravelTripPage() {
               </Typography>
             </Stack>
             <LinearProgress variant="determinate" value={progress} sx={{ borderRadius: 1 }} />
-            <FormControlLabel
-              sx={{ mt: 0.5 }}
-              control={
-                <Switch
-                  size="small"
-                  checked={hideDone}
-                  onChange={(event) => setHideDone(event.target.checked)}
-                />
-              }
-              label={
-                <Typography variant="caption" color="text.secondary">
-                  {t('travel.hideDone')}
-                </Typography>
-              }
-            />
+            <Stack
+              direction="row"
+              sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 0.5 }}
+            >
+              <FormControlLabel
+                control={
+                  <Switch
+                    size="small"
+                    checked={hideDone}
+                    onChange={(event) => setHideDone(event.target.checked)}
+                  />
+                }
+                label={
+                  <Typography variant="caption" color="text.secondary">
+                    {t('travel.hideDone')}
+                  </Typography>
+                }
+              />
+              <Button
+                size="small"
+                onClick={toggleAllSections}
+                // A search opens every section for as long as it runs,
+                // so folding them would do nothing visible.
+                disabled={searching || sections.used.length === 0}
+              >
+                {t(allCollapsed ? 'travel.expandAll' : 'travel.collapseAll')}
+              </Button>
+            </Stack>
           </Box>
         )}
 
@@ -664,7 +693,7 @@ export default function TravelTripPage() {
         {sections.used.map(({ category, color, entries, done }) => {
           // A match inside a folded section would be invisible, so a
           // search opens everything for as long as it lasts.
-          const open = query.trim() ? true : (sectionOpen[category.id] ?? !done)
+          const open = searching ? true : (sectionOpen[category.id] ?? !done)
 
           return (
           <Box

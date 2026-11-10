@@ -186,7 +186,9 @@
     "everyone": "Усі",
     "whose": "Чий розділ",
     "nobody": "Нічий",
-    "keepThisInDefault": "Зберегти це у списку за замовчуванням"
+    "keepThisInDefault": "Зберегти це у списку за замовчуванням",
+    "collapseAll": "Згорнути всі",
+    "expandAll": "Розгорнути всі"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",
