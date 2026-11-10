@@ -32,7 +32,7 @@ import {
   getTrips,
   type TravelTrip,
 } from '../../lib/travel/db'
-import { formatTripDates } from '../../lib/travel/formatDate'
+import { defaultTripName, formatTripDates } from '../../lib/travel/formatDate'
 
 /**
  * The account's trips: the one being packed for, the default list it is
@@ -83,7 +83,7 @@ export default function TravelPage() {
     setCreating(true)
     try {
       const tripId = await createTripFromTemplate({
-        name: new Date().toLocaleDateString(i18n.language),
+        name: defaultTripName(i18n.resolvedLanguage ?? i18n.language),
       })
       navigate(`/travel/t/${tripId}`)
     } catch (caught) {

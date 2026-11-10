@@ -36,6 +36,7 @@ import {
   getTrips,
 } from '../../lib/travel/db'
 import { setsForPreset, tripPresets, type TripPreset } from '../../data/travel/tripPresets'
+import { defaultTripName } from '../../lib/travel/formatDate'
 import { useDeclarePageChrome } from '../../components/pageChrome'
 
 /**
@@ -84,7 +85,7 @@ export default function TravelRecommendedPage() {
     // Seeded from the default list, the same as a trip started from the
     // travel page — a new trip is not meant to be emptier than that.
     const id = await createTripFromTemplate({
-      name: new Date().toLocaleDateString(i18n.language),
+      name: defaultTripName(i18n.resolvedLanguage ?? i18n.language),
     })
     return { id, created: true }
   }

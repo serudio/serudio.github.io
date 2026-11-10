@@ -11,10 +11,7 @@
  * time. `new Date` reads that as UTC midnight, which renders as the day
  * before anywhere west of Greenwich — hence the explicit local time.
  */
-export function formatTripDate(value: string, locale: string): string {
-  const date = new Date(`${value}T00:00:00`)
-  if (Number.isNaN(date.getTime())) return value
-
+export function formatDay(date: Date, locale: string): string {
   const day = String(date.getDate()).padStart(2, '0')
   // Ukrainian short months carry a trailing point ("лист."), which
   // reads badly between hyphens.
@@ -22,6 +19,22 @@ export function formatTripDate(value: string, locale: string): string {
   const year = String(date.getFullYear() % 100).padStart(2, '0')
 
   return `${day}-${month}-${year}`
+}
+
+export function formatTripDate(value: string, locale: string): string {
+  const date = new Date(`${value}T00:00:00`)
+  if (Number.isNaN(date.getTime())) return value
+  return formatDay(date, locale)
+}
+
+/**
+ * The name a trip gets when it is started without one.
+ *
+ * The same shape as the dates shown on it — a trip called 10.11.2026
+ * sitting above "10-Nov-26" looked like two different days.
+ */
+export function defaultTripName(locale: string): string {
+  return formatDay(new Date(), locale)
 }
 
 /** Both ends of a trip, or whichever one it has. */
