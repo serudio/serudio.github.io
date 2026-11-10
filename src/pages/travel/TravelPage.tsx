@@ -235,11 +235,17 @@ export default function TravelPage() {
                         to={`/travel/t/${trip.id}`}
                         clickable
                         label={dates && dates !== trip.name ? `${trip.name} · ${dates}` : trip.name}
-                        onDelete={() => setConfirmDelete(trip)}
+                        // The chip is a link, so a click on the delete
+                        // icon still fires the anchor's default
+                        // navigation — stopPropagation does not touch
+                        // that, only preventDefault does.
+                        onDelete={(event: React.MouseEvent) => {
+                          event.preventDefault()
+                          event.stopPropagation()
+                          setConfirmDelete(trip)
+                        }}
                         deleteIcon={
-                          <Tooltip title={t('travel.delete')}>
-                            <CloseIcon />
-                          </Tooltip>
+                          <CloseIcon aria-label={t('travel.delete')} role="button" />
                         }
                       />
                     )
