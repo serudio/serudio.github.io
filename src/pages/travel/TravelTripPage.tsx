@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { alpha } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink, useParams } from 'react-router-dom'
@@ -140,6 +140,12 @@ export default function TravelTripPage() {
     }
   }, [hideDone])
 
+  const [notesOpen, setNotesOpen] = useState(true)
+  // Re-armed whenever packing resumes, so finishing again re-opens the
+  // tasks — but collapsing them after that is respected rather than
+  // fought on every render.
+  const autoOpened = useRef(false)
+
   // Naming a trip is optional and after the fact: creating one asks
   // nothing, so the details are edited here once there is something to
   // name.
@@ -266,6 +272,23 @@ export default function TravelTripPage() {
   const packed = items.filter((item) => item.packed).length
   const progress = items.length > 0 ? Math.round((packed / items.length) * 100) : 0
 
+  const pendingNotes = notes.filter((note) => !note.done).length
+  const allPacked = items.length > 0 && packed === items.length
+
+  // Tasks are easy to fold away and then forget. Once there is nothing
+  // left to pack they are all that stands between you and the door, so
+  // they come back open.
+  useEffect(() => {
+    if (!allPacked) {
+      autoOpened.current = false
+      return
+    }
+    if (pendingNotes > 0 && !autoOpened.current) {
+      setNotesOpen(true)
+      autoOpened.current = true
+    }
+  }, [allPacked, pendingNotes])
+
   if (loading && !loaded) {
     return (
       <Container maxWidth="lg">
@@ -352,10 +375,45 @@ export default function TravelTripPage() {
         )}
 
         {/* Before leaving — tasks, not luggage. */}
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="caption" color="text.secondary" fontWeight={700}>
-            {t('travel.beforeLeaving').toUpperCase()}
-          </Typography>
+        <Box
+          sx={{
+            mb: 3,
+            p: 1.5,
+            borderRadius: 2,
+            border: '1px solid',
+            // Anything outstanding stays visible even folded away: the
+            // whole block carries a warning tint until it is clear.
+            borderColor: (theme) =>
+              pendingNotes > 0 ? alpha(theme.palette.warning.main, 0.4) : 'divider',
+            bgcolor: (theme) =>
+              pendingNotes > 0 ? alpha(theme.palette.warning.main, 0.08) : 'transparent',
+          }}
+        >
+          <Stack
+            direction="row"
+            sx={{ alignItems: 'center', gap: 0.5, cursor: 'pointer' }}
+            onClick={() => setNotesOpen((previous) => !previous)}
+          >
+            <IconButton
+              size="small"
+              sx={{ p: 0.25 }}
+              aria-expanded={notesOpen}
+              aria-label={t('travel.beforeLeaving')}
+            >
+              {notesOpen ? (
+                <ExpandMoreIcon fontSize="small" />
+              ) : (
+                <ChevronRightIcon fontSize="small" />
+              )}
+            </IconButton>
+            <Typography variant="caption" color="text.secondary" fontWeight={700}>
+              {t('travel.beforeLeaving').toUpperCase()}
+            </Typography>
+            {pendingNotes > 0 && (
+              <Chip size="small" color="warning" variant="outlined" label={pendingNotes} />
+            )}
+          </Stack>
+          <Collapse in={notesOpen} unmountOnExit>
           {doneLast(hideDone ? notes.filter((note) => !note.done) : notes, (note) => note.done).map((note) => (
             <Stack key={note.id} direction="row" sx={{ alignItems: 'center' }}>
               <Checkbox
@@ -415,6 +473,7 @@ export default function TravelTripPage() {
               }}
             />
           </Stack>
+          </Collapse>
         </Box>
 
         {/* Packing, by section, flowed into columns. CSS columns rather
