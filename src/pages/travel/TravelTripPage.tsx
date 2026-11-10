@@ -155,7 +155,11 @@ export default function TravelTripPage() {
     }
   }, [hideDone])
 
-  const [notesOpen, setNotesOpen] = useState(true)
+  // Folded to start with: packing is what the page is for, and the
+  // tasks are for the last minute. The warning tint on the block says
+  // something is outstanding without it having to stand open, and the
+  // effect below opens it once there is nothing left to pack.
+  const [notesOpen, setNotesOpen] = useState(false)
   // Re-armed whenever packing resumes, so finishing again re-opens the
   // tasks — but collapsing them after that is respected rather than
   // fought on every render.
