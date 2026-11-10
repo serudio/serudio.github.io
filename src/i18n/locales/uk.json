@@ -237,7 +237,9 @@
       }
     },
     "moveSectionUp": "Пересунути вище",
-    "moveSectionDown": "Пересунути нижче"
+    "moveSectionDown": "Пересунути нижче",
+    "arrangeSections": "Порядок розділів",
+    "arrangeSectionsHint": "Порядок спільний для всіх подорожей."
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",

@@ -54,6 +54,8 @@ import { formatTimestamp, formatTripDates } from '../../lib/travel/formatDate'
 import HistoryIcon from '@mui/icons-material/History'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
+import TuneIcon from '@mui/icons-material/Tune'
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator'
 import { SITE_URL } from '../../config/site'
 import { ROW_HOVER } from './rowStyles'
 import {
@@ -259,6 +261,10 @@ export default function TravelTripPage() {
   // the one thing here nobody looks at most visits.
   const [activity, setActivity] = useState<TravelActivity[] | null>(null)
   const [activityOpen, setActivityOpen] = useState(false)
+  // The order being edited. Held locally so a drag moves the row under
+  // the pointer at once, then written when the drag ends.
+  const [arranging, setArranging] = useState<TravelCategory[] | null>(null)
+  const dragFrom = useRef<number | null>(null)
   const [draftName, setDraftName] = useState('')
   const [draftStarts, setDraftStarts] = useState('')
   const [draftEnds, setDraftEnds] = useState('')
@@ -663,24 +669,28 @@ export default function TravelTripPage() {
   }, [sections, categories])
 
   /**
-   * Moves a section one place, swapping with the next section this trip
-   * actually shows — stepping over sections it does not, which would
-   * otherwise make a move look like it did nothing.
+   * Writes a new section order.
+   *
+   * Takes the whole arrangement rather than one move, because that is
+   * what a drag produces: the row lands somewhere, and everything it
+   * passed shifts by one.
    */
-  const moveSection = (categoryId: string, by: -1 | 1) => {
-    const from = orderedUsed.findIndex((category) => category.id === categoryId)
-    const to = from + by
-    if (from === -1 || to < 0 || to >= orderedUsed.length) return
-
-    const next = [...orderedUsed]
-    ;[next[from], next[to]] = [next[to], next[from]]
-
-    setMenu(null)
+  const commitOrder = (next: TravelCategory[]) => {
+    setArranging(next)
     void run(() =>
       reorderCategories(
         next.map((category) => ({ id: category.id, sortOrder: category.sortOrder })),
       ),
     )
+  }
+
+  /** Lifts the row at `from` out and drops it back in at `to`. */
+  const moveWithin = (rows: TravelCategory[], from: number, to: number) => {
+    if (from === to || to < 0 || to >= rows.length) return rows
+    const next = [...rows]
+    const [lifted] = next.splice(from, 1)
+    next.splice(to, 0, lifted)
+    return next
   }
 
   const toggleAllSections = () => {
@@ -850,6 +860,16 @@ export default function TravelTripPage() {
               {t('travel.downloadCsv')}
             </MenuItem>
           </Menu>
+
+          <Tooltip title={t('travel.arrangeSections')}>
+            <IconButton
+              size="small"
+              aria-label={t('travel.arrangeSections')}
+              onClick={() => setArranging(orderedUsed)}
+            >
+              <TuneIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
 
           <Tooltip title={t('travel.activity')}>
             <IconButton
@@ -1565,6 +1585,89 @@ export default function TravelTripPage() {
         </DialogActions>
       </Dialog>
 
+      {/* Section order. Drag to rearrange, with arrows beside each row:
+          HTML5 drag events do not fire from a touch, and this is a page
+          used while actually packing, on a phone. The arrows are also
+          the only way through it with a keyboard. */}
+      <Dialog
+        open={arranging !== null}
+        onClose={() => setArranging(null)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>{t('travel.arrangeSections')}</DialogTitle>
+        <DialogContent dividers>
+          {(arranging ?? []).map((category, index) => (
+            <Stack
+              key={category.id}
+              direction="row"
+              draggable
+              onDragStart={() => {
+                dragFrom.current = index
+              }}
+              // Without this the drop is never allowed to happen.
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={() => {
+                const from = dragFrom.current
+                dragFrom.current = null
+                if (from === null || !arranging) return
+                commitOrder(moveWithin(arranging, from, index))
+              }}
+              sx={{
+                alignItems: 'center',
+                gap: 1,
+                py: 0.5,
+                px: 0.5,
+                borderRadius: 1,
+                cursor: 'grab',
+                '&:hover': { bgcolor: 'action.hover' },
+              }}
+            >
+              <DragIndicatorIcon fontSize="small" sx={{ color: 'text.disabled' }} />
+              <Box
+                sx={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  flexShrink: 0,
+                  bgcolor: category.color ?? 'text.disabled',
+                }}
+              />
+              <Typography
+                variant="body2"
+                sx={{ flexGrow: 1, textTransform: 'uppercase', letterSpacing: '1.1px' }}
+              >
+                {category.name}
+              </Typography>
+              <IconButton
+                size="small"
+                sx={{ p: 0.25 }}
+                aria-label={t('travel.moveSectionUp')}
+                disabled={index === 0}
+                onClick={() => arranging && commitOrder(moveWithin(arranging, index, index - 1))}
+              >
+                <ArrowUpwardIcon fontSize="small" />
+              </IconButton>
+              <IconButton
+                size="small"
+                sx={{ p: 0.25 }}
+                aria-label={t('travel.moveSectionDown')}
+                disabled={index === (arranging?.length ?? 0) - 1}
+                onClick={() => arranging && commitOrder(moveWithin(arranging, index, index + 1))}
+              >
+                <ArrowDownwardIcon fontSize="small" />
+              </IconButton>
+            </Stack>
+          ))}
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
+            {t('travel.arrangeSectionsHint')}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setArranging(null)}>{t('travel.close')}</Button>
+        </DialogActions>
+      </Dialog>
+
       <Dialog open={confirmRemove !== null} onClose={() => setConfirmRemove(null)}>
         <DialogTitle>{t('travel.removeSectionTitle')}</DialogTitle>
         <DialogContent>
@@ -1802,28 +1905,6 @@ export default function TravelTripPage() {
         anchorEl={menu?.anchor ?? null}
         onClose={() => setMenu(null)}
       >
-        {menu && (
-          <MenuItem
-            disabled={orderedUsed.findIndex((row) => row.id === menu.categoryId) <= 0}
-            onClick={() => moveSection(menu.categoryId, -1)}
-          >
-            <ArrowUpwardIcon fontSize="small" sx={{ mr: 1 }} />
-            {t('travel.moveSectionUp')}
-          </MenuItem>
-        )}
-        {menu && (
-          <MenuItem
-            disabled={
-              orderedUsed.findIndex((row) => row.id === menu.categoryId) ===
-              orderedUsed.length - 1
-            }
-            onClick={() => moveSection(menu.categoryId, 1)}
-          >
-            <ArrowDownwardIcon fontSize="small" sx={{ mr: 1 }} />
-            {t('travel.moveSectionDown')}
-          </MenuItem>
-        )}
-        {menu && <Divider />}
         {menu && (
           <MenuItem
             onClick={(event) => {

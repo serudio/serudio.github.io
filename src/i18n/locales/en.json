@@ -231,7 +231,9 @@
       }
     },
     "moveSectionUp": "Move up",
-    "moveSectionDown": "Move down"
+    "moveSectionDown": "Move down",
+    "arrangeSections": "Section order",
+    "arrangeSectionsHint": "The order is shared by every trip."
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",
