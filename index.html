@@ -65,19 +65,49 @@
       src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=__ADSENSE_CLIENT_ID__"
       crossorigin="anonymous"
     ></script>
-    <!-- Google tag (gtag.js) -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-4CPB5SN8DH"
-    ></script>
+    <!--
+      Google tag (gtag.js), loaded only when it should be:
+        * never on localhost, so development stays out of the numbers;
+        * never in a browser where #noga has been opened once (#ga undoes
+          it) — that is how the site owner keeps their own visits out.
+      The opt-out is per browser, and applies to every page on this
+      origin, so one visit to /#noga covers the whole site.
+    -->
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
+      (function () {
+        var id = "G-4CPB5SN8DH";
+        var excluded = false;
 
-      gtag("config", "G-4CPB5SN8DH");
+        try {
+          if (location.hash === "#noga") localStorage.setItem("ga-off", "1");
+          if (location.hash === "#ga") localStorage.removeItem("ga-off");
+          excluded = localStorage.getItem("ga-off") === "1";
+        } catch (error) {
+          // Private mode or blocked storage: count the visit as normal.
+        }
+
+        // Typing the hash on an already-open page only fires hashchange,
+        // so the block above would never see it.
+        window.addEventListener("hashchange", function () {
+          if (location.hash === "#noga" || location.hash === "#ga") {
+            location.reload();
+          }
+        });
+
+        if (location.hostname === "localhost" || excluded) return;
+
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () {
+          window.dataLayer.push(arguments);
+        };
+        window.gtag("js", new Date());
+        window.gtag("config", id);
+
+        var tag = document.createElement("script");
+        tag.async = true;
+        tag.src = "https://www.googletagmanager.com/gtag/js?id=" + id;
+        document.head.appendChild(tag);
+      })();
     </script>
   </body>
 </html>
