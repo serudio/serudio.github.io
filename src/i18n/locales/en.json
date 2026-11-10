@@ -5,7 +5,11 @@
   },
   "nav": {
     "home": "Home",
-    "converters": "Converters"
+    "converters": "Converters",
+    "menu": "Menu"
+  },
+  "settings": {
+    "title": "Settings"
   },
   "home": {
     "tagline": "Personal projects and small tools",
