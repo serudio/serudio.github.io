@@ -19,19 +19,27 @@ export default function SiteHeader() {
         flexWrap: 'wrap',
       }}
     >
-      <Stack direction="row" spacing={1.5} alignItems="center">
+      {/* Logo and wordmark are one link: clicking the mark is the
+          long-standing way back to the home page, and it was not. */}
+      <Link
+        component={NavLink}
+        to="/"
+        underline="none"
+        color="text.primary"
+        sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}
+      >
         <Avatar
           src="/logo.svg"
-          alt="serudio"
+          /* Empty: the wordmark beside it already says "serudio", and
+             reading it twice helps nobody. */
+          alt=""
           variant="rounded"
           sx={{ width: 40, height: 40, bgcolor: 'transparent' }}
         />
-        <Link component={NavLink} to="/" underline="none" color="text.primary">
-          <Typography variant="h6" fontWeight={700}>
-            serudio
-          </Typography>
-        </Link>
-      </Stack>
+        <Typography variant="h6" fontWeight={700}>
+          serudio
+        </Typography>
+      </Link>
       {/* Three icons instead of the seven controls that used to live
           here, so the row no longer needs to wrap on a phone. */}
       <Stack direction="row" spacing={0.5} alignItems="center">
