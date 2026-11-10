@@ -1497,6 +1497,29 @@ export default function TravelTripPage() {
         anchorEl={addSectionMenu}
         onClose={() => setAddSectionMenu(null)}
       >
+        {/* Everything at once, for the start of a trip when the answer
+            is almost always "all of it". Sections stay below for the
+            times it is not. */}
+        {defaultOnlySections.length > 1 && [
+          <MenuItem
+            key="all"
+            onClick={() => {
+              setAddSectionMenu(null)
+              if (!tripId) return
+              const rows = defaultOnlySections.flatMap(({ category, rows: items }) =>
+                items.map((item) => ({ text: item.text, categoryId: category.id })),
+              )
+              void run(() => addItems(tripId, rows))
+            }}
+          >
+            <PlaylistAddIcon fontSize="small" sx={{ mr: 1.5 }} />
+            {t('travel.addAllFromDefault')}
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+              {defaultOnlySections.reduce((total, { rows }) => total + rows.length, 0)}
+            </Typography>
+          </MenuItem>,
+          <Divider key="all-divider" />,
+        ]}
         {defaultOnlySections.map(({ category, rows }) => (
           <MenuItem
             key={category.id}

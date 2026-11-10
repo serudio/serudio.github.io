@@ -153,7 +153,6 @@
     "addToDefault": "Додати в список за замовчуванням",
     "addedToTrip": "«{{section}}» додано до подорожі.",
     "addedToDefault": "«{{section}}» додано до списку за замовчуванням.",
-    "noCurrentTrip": "Немає поточної подорожі — спершу створіть її.",
     "groups": {
       "trip": "Тип подорожі",
       "basics": "База",
@@ -214,7 +213,9 @@
     "downloadCsv": "Завантажити CSV",
     "csvSection": "Розділ",
     "csvItem": "Річ",
-    "csvPacked": "Зібрано"
+    "csvPacked": "Зібрано",
+    "addedToNewTrip": "Створено нову подорож і додано «{{section}}».",
+    "addAllFromDefault": "Додати все"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",

@@ -27,7 +27,12 @@ import {
   recommendedSets,
   type RecommendedSet,
 } from '../../data/travel/recommended'
-import { addRecommendedSet, ensureTemplateTrip } from '../../lib/travel/db'
+import {
+  addRecommendedSet,
+  createTripFromTemplate,
+  ensureTemplateTrip,
+  getTrips,
+} from '../../lib/travel/db'
 import { useDeclarePageChrome } from '../../components/pageChrome'
 
 /**
@@ -37,12 +42,8 @@ import { useDeclarePageChrome } from '../../components/pageChrome'
  * only appear once signed in — the page itself stays public so it can be
  * read and linked without one.
  */
-export default function TravelRecommendedPage({
-  currentTripId,
-}: {
-  currentTripId?: string | null
-}) {
-  const { t } = useTranslation()
+export default function TravelRecommendedPage() {
+  const { t, i18n } = useTranslation()
 
   useDeclarePageChrome({ backTo: '/travel', backLabel: t('travel.backToTravel'), width: 'md' })
   const { session } = useAuth()
@@ -62,19 +63,46 @@ export default function TravelRecommendedPage({
     )
   }, [query])
 
+  /**
+   * The trip a section should land in: the most recent one, or a new
+   * one when there is none.
+   *
+   * This used to be a prop the router never passed, so "add to current
+   * trip" could only ever answer that there wasn't one. Starting a trip
+   * is what you would do next anyway, so it does that instead of
+   * sending you away to do it by hand and come back.
+   */
+  const currentTrip = async (): Promise<{ id: string; created: boolean }> => {
+    const trips = await getTrips()
+    const current = trips.find((trip) => !trip.isTemplate && !trip.archived)
+    if (current) return { id: current.id, created: false }
+
+    // Seeded from the default list, the same as a trip started from the
+    // travel page — a new trip is not meant to be emptier than that.
+    const id = await createTripFromTemplate({
+      name: new Date().toLocaleDateString(i18n.language),
+    })
+    return { id, created: true }
+  }
+
   const addTo = async (set: RecommendedSet, target: 'trip' | 'template') => {
     setBusy(`${set.key}:${target}`)
     try {
-      const tripId = target === 'template' ? await ensureTemplateTrip() : currentTripId
-      if (!tripId) {
-        setMessage(t('travel.noCurrentTrip'))
-        return
-      }
-      await addRecommendedSet(tripId, set)
+      const destination =
+        target === 'template'
+          ? { id: await ensureTemplateTrip(), created: false }
+          : await currentTrip()
+
+      await addRecommendedSet(destination.id, set)
       setMessage(
-        t(target === 'template' ? 'travel.addedToDefault' : 'travel.addedToTrip', {
-          section: set.name,
-        }),
+        t(
+          target === 'template'
+            ? 'travel.addedToDefault'
+            : destination.created
+              ? 'travel.addedToNewTrip'
+              : 'travel.addedToTrip',
+          { section: set.name },
+        ),
       )
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))

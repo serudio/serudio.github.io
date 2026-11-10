@@ -151,7 +151,6 @@
     "addToDefault": "Add to default list",
     "addedToTrip": "“{{section}}” added to your trip.",
     "addedToDefault": "“{{section}}” added to your default list.",
-    "noCurrentTrip": "No current trip — create one first.",
     "groups": {
       "trip": "Kind of trip",
       "basics": "Basics",
@@ -208,7 +207,9 @@
     "downloadCsv": "Download CSV",
     "csvSection": "Section",
     "csvItem": "Item",
-    "csvPacked": "Packed"
+    "csvPacked": "Packed",
+    "addedToNewTrip": "Started a new trip and added “{{section}}”.",
+    "addAllFromDefault": "Add everything"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",
