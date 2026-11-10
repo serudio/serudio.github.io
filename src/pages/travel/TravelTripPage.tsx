@@ -509,16 +509,21 @@ export default function TravelTripPage() {
 
   // Measured against what is on screen, so a section left over from a
   // longer list cannot make the button claim the wrong thing.
+  // "Before leaving" folds with everything else, so the button leaves
+  // nothing standing open behind it. It only counts when there are
+  // tasks at all — an empty block is not something left expanded.
   const allCollapsed =
     sections.used.length > 0 &&
     sections.used.every(
       ({ category, done }) => (sectionOpen[category.id] ?? !done) === false,
-    )
+    ) &&
+    (notes.length === 0 || !notesOpen)
 
   const toggleAllSections = () => {
     const next: Record<string, boolean> = {}
     for (const { category } of sections.used) next[category.id] = allCollapsed
     setSectionOpen((previous) => ({ ...previous, ...next }))
+    setNotesOpen(allCollapsed)
   }
 
   // The share link's token goes in the query string, not the path:
