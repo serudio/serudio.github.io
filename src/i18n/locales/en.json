@@ -264,7 +264,8 @@
     "notConfigured": "Sign-in is unavailable: the site was built without Supabase settings.",
     "notAdminTitle": "No access",
     "notAdminBody": "You are signed in as {{email}}. This page is for the owner only.",
-    "backHome": "Back home"
+    "backHome": "Back home",
+    "account": "Account"
   },
   "books": {
     "title": "Books to rent",

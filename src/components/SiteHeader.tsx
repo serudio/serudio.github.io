@@ -7,6 +7,7 @@ import Link from '@mui/material/Link'
 import { NavLink } from 'react-router-dom'
 import LanguageSwitcher from './LanguageSwitcher'
 import ThemeModeSwitcher from './ThemeModeSwitcher'
+import AccountButton from './AccountButton'
 
 const navLinkSx = {
   '&.active': { color: 'primary.main' },
@@ -58,6 +59,9 @@ export default function SiteHeader() {
         </Link>
         <ThemeModeSwitcher />
         <LanguageSwitcher />
+        {/* Renders nothing when signed out, so the header does not grow
+            for visitors who never sign in. */}
+        <AccountButton />
       </Stack>
     </Box>
   )
