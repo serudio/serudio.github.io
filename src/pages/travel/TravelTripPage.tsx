@@ -33,8 +33,9 @@ import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd'
 import SearchIcon from '@mui/icons-material/Search'
 import InputAdornment from '@mui/material/InputAdornment'
 import Collapse from '@mui/material/Collapse'
-import FormControlLabel from '@mui/material/FormControlLabel'
-import Switch from '@mui/material/Switch'
+import ToggleButton from '@mui/material/ToggleButton'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -492,24 +493,7 @@ export default function TravelTripPage() {
               </Typography>
             </Stack>
             <LinearProgress variant="determinate" value={progress} sx={{ borderRadius: 1 }} />
-            <Stack
-              direction="row"
-              sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 0.5 }}
-            >
-              <FormControlLabel
-                control={
-                  <Switch
-                    size="small"
-                    checked={hideDone}
-                    onChange={(event) => setHideDone(event.target.checked)}
-                  />
-                }
-                label={
-                  <Typography variant="caption" color="text.secondary">
-                    {t('travel.hideDone')}
-                  </Typography>
-                }
-              />
+            <Stack direction="row" sx={{ justifyContent: 'flex-end', mt: 0.5 }}>
               <Button
                 size="small"
                 onClick={toggleAllSections}
@@ -523,59 +507,66 @@ export default function TravelTripPage() {
           </Box>
         )}
 
-        {people.length > 0 && (
-          <Stack
-            direction="row"
-            useFlexGap
-            flexWrap="wrap"
-            spacing={1}
-            sx={{ rowGap: 1, mb: 2 }}
-          >
-            <Chip
-              size="small"
-              label={t('travel.everyone')}
-              clickable
-              variant={personFilter === null ? 'filled' : 'outlined'}
-              color={personFilter === null ? 'primary' : 'default'}
-              onClick={() => setPersonFilter(null)}
-            />
-            {people.map((person) => (
-              <Chip
-                key={person.id}
-                size="small"
-                icon={<PersonOutlineIcon />}
-                label={person.name}
-                clickable
-                variant={personFilter === person.id ? 'filled' : 'outlined'}
-                onClick={() =>
-                  setPersonFilter((previous) => (previous === person.id ? null : person.id))
-                }
-                sx={
-                  personFilter === person.id && person.color
-                    ? { bgcolor: alpha(person.color, 0.3) }
-                    : undefined
-                }
-              />
-            ))}
-          </Stack>
-        )}
+        {/* One bar for the three things that change what you see:
+            what to search for, whether finished rows show, and whose
+            sections to look at. */}
+        <Stack
+          direction="row"
+          useFlexGap
+          flexWrap="wrap"
+          spacing={1}
+          sx={{ rowGap: 1, alignItems: 'center', mb: 3 }}
+        >
+          <TextField
+            size="small"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t('travel.searchItems')}
+            aria-label={t('travel.searchItems')}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ flexGrow: 1, minWidth: 180 }}
+          />
 
-        <TextField
-          fullWidth
-          size="small"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t('travel.searchItems')}
-          aria-label={t('travel.searchItems')}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 3 }}
-        />
+          <Tooltip title={t('travel.hideDone')}>
+            <ToggleButton
+              size="small"
+              value="hideDone"
+              selected={hideDone}
+              onChange={() => setHideDone((previous) => !previous)}
+              aria-label={t('travel.hideDone')}
+            >
+              {hideDone ? (
+                <VisibilityOffOutlinedIcon fontSize="small" />
+              ) : (
+                <VisibilityOutlinedIcon fontSize="small" />
+              )}
+            </ToggleButton>
+          </Tooltip>
+
+          {people.length > 0 && (
+            <TextField
+              select
+              size="small"
+              value={personFilter ?? ''}
+              onChange={(event) => setPersonFilter(event.target.value || null)}
+              aria-label={t('travel.whose')}
+              sx={{ minWidth: 150 }}
+            >
+              <MenuItem value="">{t('travel.everyone')}</MenuItem>
+              {people.map((person) => (
+                <MenuItem key={person.id} value={person.id}>
+                  {person.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+        </Stack>
 
         {/* Before leaving — tasks, not luggage. */}
         <Box
