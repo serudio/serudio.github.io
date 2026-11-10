@@ -179,7 +179,9 @@
     "refillFromDefault_one": "Додати {{count}} річ зі списку за замовчуванням",
     "refillFromDefault_few": "Додати {{count}} речі зі списку за замовчуванням",
     "refillFromDefault_many": "Додати {{count}} речей зі списку за замовчуванням",
-    "refillFromDefault_other": "Додати {{count}} речей зі списку за замовчуванням"
+    "refillFromDefault_other": "Додати {{count}} речей зі списку за замовчуванням",
+    "keepInDefaultNone": "У списку за замовчуванням вже все це є",
+    "refillFromDefaultNone": "У списку за замовчуванням немає нічого нового"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",

@@ -114,10 +114,10 @@ export default function TravelTripPage() {
   const [newNote, setNewNote] = useState('')
   const [newSection, setNewSection] = useState('')
   const [menu, setMenu] = useState<{ anchor: HTMLElement; categoryId: string } | null>(null)
-  // Sections the visitor has opened back up after finishing them. A
-  // finished section folds itself away; this remembers the ones they
-  // want kept open regardless.
-  const [reopened, setReopened] = useState<Record<string, boolean>>({})
+  // Explicit open/closed per section, overriding the default. Without an
+  // entry a section follows whether it is finished: done folds itself
+  // away, unfinished stays open.
+  const [sectionOpen, setSectionOpen] = useState<Record<string, boolean>>({})
 
   // The default list, so this trip can offer to keep anything it has
   // picked up along the way. Read from the trips already fetched rather
@@ -519,7 +519,7 @@ export default function TravelTripPage() {
           }}
         >
         {sections.used.map(({ category, color, entries, done }) => {
-          const open = !done || reopened[category.id] === true
+          const open = sectionOpen[category.id] ?? !done
 
           return (
           <Box
@@ -543,27 +543,25 @@ export default function TravelTripPage() {
               borderColor: alpha(color, 0.35),
             }}
           >
-            <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
-              {done && (
-                <IconButton
-                  size="small"
-                  sx={{ p: 0.25 }}
-                  aria-label={category.name}
-                  aria-expanded={open}
-                  onClick={() =>
-                    setReopened((previous) => ({
-                      ...previous,
-                      [category.id]: !open,
-                    }))
-                  }
-                >
-                  {open ? (
-                    <ExpandMoreIcon fontSize="small" />
-                  ) : (
-                    <ChevronRightIcon fontSize="small" />
-                  )}
-                </IconButton>
-              )}
+            <Stack
+              direction="row"
+              sx={{ alignItems: 'center', gap: 1, cursor: 'pointer' }}
+              onClick={() =>
+                setSectionOpen((previous) => ({ ...previous, [category.id]: !open }))
+              }
+            >
+              <IconButton
+                size="small"
+                sx={{ p: 0.25 }}
+                aria-label={category.name}
+                aria-expanded={open}
+              >
+                {open ? (
+                  <ExpandMoreIcon fontSize="small" />
+                ) : (
+                  <ChevronRightIcon fontSize="small" />
+                )}
+              </IconButton>
               {category.isPerson && (
                 <PersonOutlineIcon fontSize="small" sx={{ color: color, flexShrink: 0 }} />
               )}
@@ -579,9 +577,12 @@ export default function TravelTripPage() {
                     size="small"
                     sx={{ p: 0.25 }}
                     aria-label={t('travel.dismissSection')}
-                    onClick={() =>
+                    onClick={(event) => {
+                      // Header clicks fold the section; this is a
+                      // control sitting inside it.
+                      event.stopPropagation()
                       setEmptied((rows) => rows.filter((id) => id !== category.id))
-                    }
+                    }}
                   >
                     <CloseIcon fontSize="small" />
                   </IconButton>
@@ -595,9 +596,10 @@ export default function TravelTripPage() {
               <Tooltip title={t('travel.sectionActions')}>
                 <IconButton
                   size="small"
-                  onClick={(event) =>
+                  onClick={(event) => {
+                    event.stopPropagation()
                     setMenu({ anchor: event.currentTarget, categoryId: category.id })
-                  }
+                  }}
                 >
                   <MoreVertIcon fontSize="small" />
                 </IconButton>
@@ -856,8 +858,9 @@ export default function TravelTripPage() {
             />
           ))}
         </Box>
-        {menu && (newToDefault.get(menu.categoryId)?.length ?? 0) > 0 && (
+        {menu && templateId && (
           <MenuItem
+            disabled={(newToDefault.get(menu.categoryId)?.length ?? 0) === 0}
             onClick={() => {
               const categoryId = menu.categoryId
               const missing = newToDefault.get(categoryId) ?? []
@@ -873,14 +876,17 @@ export default function TravelTripPage() {
             }}
           >
             <BookmarkAddOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
-            {t('travel.keepInDefault', {
-              count: newToDefault.get(menu.categoryId)?.length ?? 0,
-            })}
+            {(newToDefault.get(menu.categoryId)?.length ?? 0) === 0
+              ? t('travel.keepInDefaultNone')
+              : t('travel.keepInDefault', {
+                  count: newToDefault.get(menu.categoryId)?.length ?? 0,
+                })}
           </MenuItem>
         )}
 
-        {menu && (missingFromTrip.get(menu.categoryId)?.length ?? 0) > 0 && (
+        {menu && templateId && (
           <MenuItem
+            disabled={(missingFromTrip.get(menu.categoryId)?.length ?? 0) === 0}
             onClick={() => {
               const categoryId = menu.categoryId
               const missing = missingFromTrip.get(categoryId) ?? []
@@ -899,9 +905,11 @@ export default function TravelTripPage() {
             }}
           >
             <PlaylistAddIcon fontSize="small" sx={{ mr: 1 }} />
-            {t('travel.refillFromDefault', {
-              count: missingFromTrip.get(menu.categoryId)?.length ?? 0,
-            })}
+            {(missingFromTrip.get(menu.categoryId)?.length ?? 0) === 0
+              ? t('travel.refillFromDefaultNone')
+              : t('travel.refillFromDefault', {
+                  count: missingFromTrip.get(menu.categoryId)?.length ?? 0,
+                })}
           </MenuItem>
         )}
 

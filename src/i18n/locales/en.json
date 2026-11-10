@@ -173,7 +173,9 @@
     "unmarkPerson": "Not a person",
     "dismissSection": "Hide empty section",
     "refillFromDefault_one": "Add {{count}} item from default list",
-    "refillFromDefault_other": "Add {{count}} items from default list"
+    "refillFromDefault_other": "Add {{count}} items from default list",
+    "keepInDefaultNone": "Default list already has these",
+    "refillFromDefaultNone": "Nothing extra in the default list"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",
