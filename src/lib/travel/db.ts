@@ -347,14 +347,17 @@ export async function deleteNote(id: string) {
  * same recommended set twice should land in the one section rather than
  * making a second one with the same name.
  */
+function findCategory(name: string, existing: TravelCategory[]): TravelCategory | undefined {
+  const wanted = name.trim().toLowerCase()
+  return existing.find((category) => category.name?.trim().toLowerCase() === wanted)
+}
+
 async function ensureCategory(
   name: string,
   color: string | null,
   existing: TravelCategory[],
 ): Promise<string> {
-  const match = existing.find(
-    (category) => category.name.trim().toLowerCase() === name.trim().toLowerCase(),
-  )
+  const match = findCategory(name, existing)
   if (match) return match.id
   return createCategory({ name, color, sortOrder: existing.length })
 }
@@ -390,25 +393,54 @@ export async function addRecommendedSet(tripId: string, set: RecommendedSet) {
  */
 export async function ensureTemplateTrip(): Promise<string> {
   const trips = await getTrips()
-  const template = trips.find((trip) => trip.isTemplate)
-  if (template) return template.id
+  const existing = trips.find((trip) => trip.isTemplate)
+  const tripId =
+    existing?.id ?? (await createTrip({ name: 'Default list', isTemplate: true }))
 
-  const tripId = await createTrip({ name: 'Default list', isTemplate: true })
+  // Seed any starter section the template is missing entirely. Written
+  // to be safe to re-run: an earlier version of this function threw
+  // partway through and left templates holding only their first
+  // section, and running it again is what repairs them.
+  //
+  // Only a wholly absent section comes back. Items deleted inside a
+  // section that still has others stay deleted — the trade-off is that
+  // emptying a starter section completely does let it return.
   const categories = await getCategories()
+  const items = await getItems(tripId)
 
-  for (const [index, group] of defaultTemplate.categories.entries()) {
-    const categoryId = await ensureCategory(group.name, group.color, [
-      ...categories,
-      // Keep sort_order marching forward as categories are created.
-      ...Array.from({ length: index }, () => ({}) as TravelCategory),
-    ])
+  for (const group of defaultTemplate.categories) {
+    const match = findCategory(group.name, categories)
+    if (match && items.some((item) => item.categoryId === match.id)) continue
+
+    const categoryId =
+      match?.id ??
+      (await createCategory({
+        name: group.name,
+        color: group.color,
+        sortOrder: categories.length,
+      }))
+
+    if (!match) {
+      // Keep the local list in step so the next sort_order is right and
+      // a repeated name is matched rather than duplicated.
+      categories.push({
+        id: categoryId,
+        name: group.name,
+        color: group.color,
+        sortOrder: categories.length,
+      })
+    }
+
     await addItems(
       tripId,
       group.items.map((text) => ({ text, categoryId })),
     )
   }
 
-  await addNotes(tripId, defaultTemplate.notes)
+  if ((await getNotes(tripId)).length === 0) {
+    await addNotes(tripId, defaultTemplate.notes)
+  }
+
   return tripId
 }
 

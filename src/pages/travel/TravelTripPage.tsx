@@ -22,6 +22,11 @@ import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import PaletteIcon from '@mui/icons-material/Palette'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
 import Seo from '../../components/Seo'
 import Footer from '../../components/Footer'
 import {
@@ -38,6 +43,7 @@ import {
   updateCategory,
   updateItem,
   updateNote,
+  updateTrip,
   type TravelCategory,
   type TravelItem,
   type TravelNote,
@@ -78,6 +84,14 @@ export default function TravelTripPage() {
   const [newNote, setNewNote] = useState('')
   const [newSection, setNewSection] = useState('')
   const [menu, setMenu] = useState<{ anchor: HTMLElement; categoryId: string } | null>(null)
+
+  // Naming a trip is optional and after the fact: creating one asks
+  // nothing, so the details are edited here once there is something to
+  // name.
+  const [editing, setEditing] = useState(false)
+  const [draftName, setDraftName] = useState('')
+  const [draftStarts, setDraftStarts] = useState('')
+  const [draftEnds, setDraftEnds] = useState('')
 
   const refresh = useCallback(async () => {
     if (!tripId) return
@@ -135,7 +149,7 @@ export default function TravelTripPage() {
 
   if (loading) {
     return (
-      <Container maxWidth="sm">
+      <Container maxWidth="lg">
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
           <CircularProgress />
         </Box>
@@ -144,7 +158,7 @@ export default function TravelTripPage() {
   }
 
   return (
-    <Container maxWidth="sm" disableGutters>
+    <Container maxWidth="lg" disableGutters>
       <Seo title={trip?.name ?? t('travel.title')} path={`/travel/t/${tripId ?? ''}`} noIndex />
       <Paper elevation={0} sx={{ p: { xs: 2.5, sm: 3 } }}>
         <Link
@@ -157,9 +171,31 @@ export default function TravelTripPage() {
           &larr; {t('travel.backToTravel')}
         </Link>
 
-        <Typography variant="h5" component="h1" sx={{ mb: 1 }}>
-          {trip?.name ?? t('travel.title')}
-        </Typography>
+        <Stack direction="row" sx={{ alignItems: 'center', gap: 1, mb: 1 }}>
+          <Typography variant="h5" component="h1">
+            {trip?.name ?? t('travel.title')}
+          </Typography>
+          <Tooltip title={t('travel.editDetails')}>
+            <IconButton
+              size="small"
+              aria-label={t('travel.editDetails')}
+              onClick={() => {
+                setDraftName(trip?.name ?? '')
+                setDraftStarts(trip?.startsOn ?? '')
+                setDraftEnds(trip?.endsOn ?? '')
+                setEditing(true)
+              }}
+            >
+              <EditOutlinedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+
+        {(trip?.startsOn || trip?.endsOn) && (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {[trip?.startsOn, trip?.endsOn].filter(Boolean).join(' — ')}
+          </Typography>
+        )}
 
         {error && (
           <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -192,6 +228,7 @@ export default function TravelTripPage() {
                 size="small"
                 checked={note.done}
                 onChange={() => void run(() => updateNote(note.id, { done: !note.done }))}
+                sx={{ p: 0.5 }}
               />
               <Typography
                 variant="body2"
@@ -203,7 +240,11 @@ export default function TravelTripPage() {
               >
                 {note.text}
               </Typography>
-              <IconButton size="small" onClick={() => void run(() => deleteNote(note.id))}>
+              <IconButton
+                size="small"
+                sx={{ p: 0.5 }}
+                onClick={() => void run(() => deleteNote(note.id))}
+              >
                 <DeleteIcon fontSize="small" />
               </IconButton>
             </Stack>
@@ -227,9 +268,30 @@ export default function TravelTripPage() {
           </Stack>
         </Box>
 
-        {/* Packing, by section. */}
+        {/* Packing, by section, flowed into columns. CSS columns rather
+            than a grid: sections vary a lot in length, and columns pack
+            them by height instead of letting one short section hold
+            open a tall row. */}
+        <Box
+          sx={{
+            columnCount: { xs: 1, sm: 2, md: 3 },
+            columnGap: 3,
+            mb: 2,
+          }}
+        >
         {sections.used.map(({ category, color, entries }) => (
-          <Box key={category.id} sx={{ mb: 3 }}>
+          <Box
+            key={category.id}
+            sx={{
+              // Keep a section whole rather than splitting its items
+              // across a column break.
+              breakInside: 'avoid',
+              WebkitColumnBreakInside: 'avoid',
+              display: 'inline-block',
+              width: '100%',
+              mb: 2,
+            }}
+          >
             <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
               <Box
                 sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: color, flexShrink: 0 }}
@@ -260,6 +322,7 @@ export default function TravelTripPage() {
                   size="small"
                   checked={item.packed}
                   onChange={() => void run(() => updateItem(item.id, { packed: !item.packed }))}
+                  sx={{ p: 0.5 }}
                 />
                 <Typography
                   variant="body2"
@@ -271,7 +334,11 @@ export default function TravelTripPage() {
                 >
                   {item.text}
                 </Typography>
-                <IconButton size="small" onClick={() => void run(() => deleteItem(item.id))}>
+                <IconButton
+                  size="small"
+                  sx={{ p: 0.5 }}
+                  onClick={() => void run(() => deleteItem(item.id))}
+                >
                   <DeleteIcon fontSize="small" />
                 </IconButton>
               </Stack>
@@ -298,6 +365,7 @@ export default function TravelTripPage() {
             />
           </Box>
         ))}
+        </Box>
 
         {sections.loose.length > 0 && (
           <Box sx={{ mb: 3 }}>
@@ -310,11 +378,16 @@ export default function TravelTripPage() {
                   size="small"
                   checked={item.packed}
                   onChange={() => void run(() => updateItem(item.id, { packed: !item.packed }))}
+                  sx={{ p: 0.5 }}
                 />
                 <Typography variant="body2" sx={{ flexGrow: 1 }}>
                   {item.text}
                 </Typography>
-                <IconButton size="small" onClick={() => void run(() => deleteItem(item.id))}>
+                <IconButton
+                  size="small"
+                  sx={{ p: 0.5 }}
+                  onClick={() => void run(() => deleteItem(item.id))}
+                >
                   <DeleteIcon fontSize="small" />
                 </IconButton>
               </Stack>
@@ -363,6 +436,58 @@ export default function TravelTripPage() {
 
         <Footer />
       </Paper>
+
+      <Dialog open={editing} onClose={() => setEditing(false)} fullWidth maxWidth="xs">
+        <DialogTitle>{t('travel.editDetails')}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              label={t('travel.tripName')}
+              value={draftName}
+              onChange={(event) => setDraftName(event.target.value)}
+              fullWidth
+              autoFocus
+            />
+            <Stack direction="row" spacing={2}>
+              <TextField
+                label={t('travel.startsOn')}
+                type="date"
+                value={draftStarts}
+                onChange={(event) => setDraftStarts(event.target.value)}
+                InputLabelProps={{ shrink: true }}
+                fullWidth
+              />
+              <TextField
+                label={t('travel.endsOn')}
+                type="date"
+                value={draftEnds}
+                onChange={(event) => setDraftEnds(event.target.value)}
+                InputLabelProps={{ shrink: true }}
+                fullWidth
+              />
+            </Stack>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditing(false)}>{t('travel.cancel')}</Button>
+          <Button
+            variant="contained"
+            disabled={!draftName.trim() || !tripId}
+            onClick={() =>
+              void run(async () => {
+                await updateTrip(tripId!, {
+                  name: draftName,
+                  startsOn: draftStarts,
+                  endsOn: draftEnds,
+                })
+                setEditing(false)
+              })
+            }
+          >
+            {t('travel.save')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Menu
         open={menu !== null}

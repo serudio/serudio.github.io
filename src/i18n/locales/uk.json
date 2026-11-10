@@ -161,7 +161,12 @@
       "activity": "Активність",
       "transport": "Як дістатися",
       "hacks": "Поради"
-    }
+    },
+    "editDetails": "Деталі подорожі",
+    "tripName": "Назва",
+    "startsOn": "З",
+    "endsOn": "До",
+    "save": "Зберегти"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",

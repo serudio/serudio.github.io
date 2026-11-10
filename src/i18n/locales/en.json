@@ -159,7 +159,12 @@
       "activity": "Activity",
       "transport": "Getting there",
       "hacks": "Tips"
-    }
+    },
+    "editDetails": "Trip details",
+    "tripName": "Name",
+    "startsOn": "From",
+    "endsOn": "To",
+    "save": "Save"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",
