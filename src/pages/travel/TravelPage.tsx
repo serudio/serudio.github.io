@@ -32,7 +32,11 @@ import {
   getTrips,
   type TravelTrip,
 } from '../../lib/travel/db'
-import { defaultTripName, formatTripDates } from '../../lib/travel/formatDate'
+import {
+  defaultTripName,
+  formatTimestamp,
+  formatTripDates,
+} from '../../lib/travel/formatDate'
 
 /**
  * The account's trips: the one being packed for, the default list it is
@@ -228,8 +232,16 @@ export default function TravelPage() {
                       i18n.resolvedLanguage ?? i18n.language,
                     )
                     return (
-                      <Chip
+                      <Tooltip
                         key={trip.id}
+                        title={t('travel.createdOn', {
+                          date: formatTimestamp(
+                            trip.createdAt,
+                            i18n.resolvedLanguage ?? i18n.language,
+                          ),
+                        })}
+                      >
+                      <Chip
                         variant="outlined"
                         component={RouterLink}
                         to={`/travel/t/${trip.id}`}
@@ -248,6 +260,7 @@ export default function TravelPage() {
                           <CloseIcon aria-label={t('travel.delete')} role="button" />
                         }
                       />
+                      </Tooltip>
                     )
                   })}
                 </Stack>

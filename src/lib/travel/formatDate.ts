@@ -28,6 +28,19 @@ export function formatTripDate(value: string, locale: string): string {
 }
 
 /**
+ * A timestamp as dd-MMM-yy.
+ *
+ * created_at carries a time, unlike the DATE columns above, so it is
+ * already unambiguous about which day it means — no local-midnight
+ * correction needed.
+ */
+export function formatTimestamp(value: string, locale: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return formatDay(date, locale)
+}
+
+/**
  * The name a trip gets when it is started without one.
  *
  * The same shape as the dates shown on it — a trip called 10.11.2026

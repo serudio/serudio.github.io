@@ -49,7 +49,7 @@ import Seo from '../../components/Seo'
 import Footer from '../../components/Footer'
 import { useDeclarePageChrome } from '../../components/pageChrome'
 import { exportCsv, exportList } from '../../lib/travel/exportList'
-import { formatTripDates } from '../../lib/travel/formatDate'
+import { formatTimestamp, formatTripDates } from '../../lib/travel/formatDate'
 import { SITE_URL } from '../../config/site'
 import { ROW_HOVER } from './rowStyles'
 import {
@@ -813,9 +813,18 @@ export default function TravelTripPage() {
           )}
         </Stack>
 
-        {(trip?.startsOn || trip?.endsOn) && (
+        {/* When the trip is, and when the list was started. The second
+            is what tells two trips named after a date apart. */}
+        {trip && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {trip && formatTripDates(trip, i18n.resolvedLanguage ?? i18n.language)}
+            {[
+              formatTripDates(trip, i18n.resolvedLanguage ?? i18n.language),
+              t('travel.createdOn', {
+                date: formatTimestamp(trip.createdAt, i18n.resolvedLanguage ?? i18n.language),
+              }),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </Typography>
         )}
 

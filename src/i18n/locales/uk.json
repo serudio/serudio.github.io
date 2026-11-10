@@ -220,7 +220,8 @@
     "presetSize": "{{sections}} розділів, {{items}} речей",
     "sortAz": "Сортувати за абеткою",
     "sortManual": "Повернути свій порядок",
-    "renameSection": "Перейменувати розділ"
+    "renameSection": "Перейменувати розділ",
+    "createdOn": "створено {{date}}"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",

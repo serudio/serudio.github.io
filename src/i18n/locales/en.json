@@ -214,7 +214,8 @@
     "presetSize": "{{sections}} sections, {{items}} items",
     "sortAz": "Sort A–Z",
     "sortManual": "Back to your own order",
-    "renameSection": "Rename section"
+    "renameSection": "Rename section",
+    "createdOn": "created {{date}}"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",
