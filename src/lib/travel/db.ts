@@ -23,6 +23,12 @@ export interface TravelCategory {
   isPerson: boolean
   /** The person section this one belongs to, if any. */
   personId: string | null
+  /**
+   * Whether a new trip starts with this section. Off for the ones kept
+   * on hand but rarely needed — snowboarding gear does not belong in
+   * every trip, and deleting it from each one defeats the list.
+   */
+  inNewTrips: boolean
   sortOrder: number
 }
 
@@ -140,7 +146,7 @@ export async function deleteTrip(id: string) {
 export async function getCategories(): Promise<TravelCategory[]> {
   const { data, error } = await client()
     .from('travel_categories')
-    .select('id, name, color, is_person, person_id, sort_order')
+    .select('id, name, color, is_person, person_id, in_new_trips, sort_order')
     .order('sort_order', { ascending: true })
     .abortSignal(signal())
   if (error) throw error
@@ -151,6 +157,7 @@ export async function getCategories(): Promise<TravelCategory[]> {
     color: row.color as string | null,
     isPerson: (row.is_person as boolean) ?? false,
     personId: (row.person_id as string | null) ?? null,
+    inNewTrips: (row.in_new_trips as boolean | null) ?? true,
     sortOrder: row.sort_order as number,
   }))
 }
@@ -183,6 +190,7 @@ export async function updateCategory(
     color?: string | null
     isPerson?: boolean
     personId?: string | null
+    inNewTrips?: boolean
     sortOrder?: number
   },
 ) {
@@ -192,6 +200,7 @@ export async function updateCategory(
   if (input.color !== undefined) patch.color = input.color
   if (input.isPerson !== undefined) patch.is_person = input.isPerson
   if (input.personId !== undefined) patch.person_id = input.personId
+  if (input.inNewTrips !== undefined) patch.in_new_trips = input.inNewTrips
   const { error } = await client().from('travel_categories').update(patch).eq('id', id)
   if (error) throw error
 }
@@ -421,6 +430,7 @@ export async function ensureTemplateTrip(): Promise<string> {
         color: group.color,
         isPerson: false,
         personId: null,
+        inNewTrips: true,
         sortOrder: categories.length,
       })
     }
@@ -436,7 +446,14 @@ export async function ensureTemplateTrip(): Promise<string> {
   return tripId
 }
 
-/** Starts a trip from the default list: same sections, nothing packed. */
+/**
+ * Starts a trip from the default list: nothing packed, and only the
+ * sections marked to travel.
+ *
+ * A section left out is still on the default list and still one menu
+ * entry away from this trip ("add section from default"), so the flag
+ * decides what a trip opens with, not what it can ever have.
+ */
 export async function createTripFromTemplate(input: {
   name: string
   startsOn?: string | null
@@ -445,14 +462,26 @@ export async function createTripFromTemplate(input: {
   const templateId = await ensureTemplateTrip()
   const tripId = await createTrip(input)
 
-  const [items, notes] = await Promise.all([getItems(templateId), getNotes(templateId)])
+  const [items, notes, categories] = await Promise.all([
+    getItems(templateId),
+    getNotes(templateId),
+    getCategories(),
+  ])
+
+  const skipped = new Set(
+    categories.filter((category) => !category.inNewTrips).map((category) => category.id),
+  )
 
   await addItems(
     tripId,
-    items.map((item) => ({
-      text: item.text,
-      categoryId: item.categoryId,
-    })),
+    // Anything with no section at all comes along: it belongs to no
+    // section that could have been switched off.
+    items
+      .filter((item) => !item.categoryId || !skipped.has(item.categoryId))
+      .map((item) => ({
+        text: item.text,
+        categoryId: item.categoryId,
+      })),
   )
   await addNotes(tripId, notes.map((note) => note.text))
 
@@ -508,7 +537,11 @@ export async function getActivity(tripId: string, limit = 100): Promise<TravelAc
 
 export interface SharedTrip {
   trip: { id: string; name: string; startsOn: string | null; endsOn: string | null }
-  categories: TravelCategory[]
+  /**
+   * Without `inNewTrips`: a guest sees the sections this trip uses, and
+   * what the owner's next trip starts with is not one of them.
+   */
+  categories: Omit<TravelCategory, 'inNewTrips'>[]
   items: TravelItem[]
   notes: TravelNote[]
 }

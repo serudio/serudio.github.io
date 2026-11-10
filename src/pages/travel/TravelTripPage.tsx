@@ -30,6 +30,8 @@ import BookmarkAddOutlinedIcon from '@mui/icons-material/BookmarkAddOutlined'
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline'
 import CloseIcon from '@mui/icons-material/Close'
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd'
+import CheckBoxOutlinedIcon from '@mui/icons-material/CheckBoxOutlined'
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank'
 import SearchIcon from '@mui/icons-material/Search'
 import InputAdornment from '@mui/material/InputAdornment'
 import Collapse from '@mui/material/Collapse'
@@ -1282,6 +1284,19 @@ export default function TravelTripPage() {
                   sx={{ ...PERSON_CHIP, height: 20, fontSize: 11 }}
                 />
               )}
+              {/* Only on the default list, and only when the answer is
+                  no: every other section travels, and saying so on each
+                  of them would be a wall of badges. */}
+              {trip?.isTemplate && !category.inNewTrips && (
+                <Tooltip title={t('travel.inNewTripsOffHint')}>
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    label={t('travel.inNewTripsOff')}
+                    sx={{ ...PERSON_CHIP, height: 20, fontSize: 11, opacity: 0.8 }}
+                  />
+                </Tooltip>
+              )}
               <Tooltip title={t('travel.removeSection')}>
                 <IconButton
                   size="small"
@@ -2040,6 +2055,29 @@ export default function TravelTripPage() {
             )),
             <Divider key="whose-end" />,
           ]}
+
+        {/* Only the default list decides what a new trip starts with;
+            on an actual trip the section is already here or it is not. */}
+        {menu && trip?.isTemplate && (
+          <MenuItem
+            onClick={() => {
+              const category = categories.find((row) => row.id === menu.categoryId)
+              setMenu(null)
+              if (category) {
+                void run(() =>
+                  updateCategory(category.id, { inNewTrips: !category.inNewTrips }),
+                )
+              }
+            }}
+          >
+            {categories.find((row) => row.id === menu.categoryId)?.inNewTrips ? (
+              <CheckBoxOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
+            ) : (
+              <CheckBoxOutlineBlankIcon fontSize="small" sx={{ mr: 1 }} />
+            )}
+            {t('travel.inNewTrips')}
+          </MenuItem>
+        )}
 
         <MenuItem
           onClick={() => {
