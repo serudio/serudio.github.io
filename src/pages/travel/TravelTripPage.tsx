@@ -586,17 +586,37 @@ export default function TravelTripPage() {
    * stopping to confirm that would be nagging. One that exists nowhere
    * else takes its items with it for good.
    */
+  /**
+   * Asks only when something would actually be lost.
+   *
+   * A section the default list holds in full can be put back from
+   * "From default" in a click, so a question there is in the way. A
+   * section the default does not have, or one carrying items the
+   * default has never seen, is the only copy of those words.
+   */
   const removeSection = (category: TravelCategory, entryCount: number) => {
     // An emptied section is only a placeholder waiting to be filled;
-    // dismissing it throws nothing away, so it needs no question.
+    // dismissing it throws nothing away.
     if (entryCount === 0) {
       setEmptied((rows) => rows.filter((id) => id !== category.id))
       return
     }
-    // Everything else asks first, including sections the default list
-    // also holds. Being able to add it back is not the same as not
-    // having lost anything: the trip's own ticks and its added items go
-    // with it, and one stray click should not be able to take them.
+
+    // No default to fall back on — on the default list itself, this is
+    // the copy everything else is restored from.
+    if (!templateId || !tripId) {
+      setConfirmRemove(category)
+      return
+    }
+
+    const inDefault = templateItems.some((item) => item.categoryId === category.id)
+    const ownItems = (newToDefault.get(category.id)?.length ?? 0) > 0
+
+    if (inDefault && !ownItems) {
+      void run(() => removeCategoryFromTrip(tripId, category.id))
+      return
+    }
+
     setConfirmRemove(category)
   }
 

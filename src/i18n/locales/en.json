@@ -195,7 +195,7 @@
     "sharedReadOnly": "You are viewing this list. Sign in to tick things off and add to it.",
     "sharedMissing": "No such list — the link may have been turned off.",
     "close": "Close",
-    "removeSectionBodyInDefault": "“{{name}}” is in your default list, so you can add the section back — but this trip’s ticks and anything added here go with it.",
+    "removeSectionBodyInDefault": "“{{name}}” is in your default list, but this trip has items that are not — those are the ones that go. The rest you can add back.",
     "copyList": "Copy list",
     "copyListHint": "Copy the list, paste it into your AI assistant, describe your trip and ask what you are missing.",
     "copyListDone": "List copied",
