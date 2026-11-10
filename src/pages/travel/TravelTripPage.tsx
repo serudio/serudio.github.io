@@ -13,6 +13,7 @@ import IconButton from '@mui/material/IconButton'
 import LinearProgress from '@mui/material/LinearProgress'
 import Link from '@mui/material/Link'
 import Menu from '@mui/material/Menu'
+import Popover from '@mui/material/Popover'
 import Divider from '@mui/material/Divider'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
@@ -362,6 +363,7 @@ export default function TravelTripPage() {
       })
       await addItems(tripId, [{ text: name, categoryId }])
       setNewSection('')
+      setNewSectionAnchor(null)
     })
   }
 
@@ -427,6 +429,7 @@ export default function TravelTripPage() {
   }, [templateId, templateItems, items, categories])
 
   const [addSectionMenu, setAddSectionMenu] = useState<HTMLElement | null>(null)
+  const [newSectionAnchor, setNewSectionAnchor] = useState<HTMLElement | null>(null)
   const [confirmRemove, setConfirmRemove] = useState<TravelCategory | null>(null)
 
   /**
@@ -579,9 +582,12 @@ export default function TravelTripPage() {
           />
         )}
 
-        {/* One bar for the three things that change what you see:
-            what to search for, whether finished rows show, and whose
-            sections to look at. */}
+        {/* Everything that acts on the page as a whole, in one bar:
+            first what changes the view (search, whose sections, whether
+            finished rows show, folded or not), then what adds a section
+            (a new one, one the default list already has, one from the
+            catalogue). The divider is the seam between looking and
+            changing. */}
         <Stack
           direction="row"
           useFlexGap
@@ -605,22 +611,6 @@ export default function TravelTripPage() {
             sx={{ flexGrow: 1, minWidth: 180 }}
           />
 
-          <Tooltip title={t('travel.hideDone')}>
-            <ToggleButton
-              size="small"
-              value="hideDone"
-              selected={hideDone}
-              onChange={() => setHideDone((previous) => !previous)}
-              aria-label={t('travel.hideDone')}
-            >
-              {hideDone ? (
-                <VisibilityOffOutlinedIcon fontSize="small" />
-              ) : (
-                <VisibilityOutlinedIcon fontSize="small" />
-              )}
-            </ToggleButton>
-          </Tooltip>
-
           {people.length > 0 && (
             <TextField
               select
@@ -639,6 +629,22 @@ export default function TravelTripPage() {
             </TextField>
           )}
 
+          <Tooltip title={t('travel.hideDone')}>
+            <ToggleButton
+              size="small"
+              value="hideDone"
+              selected={hideDone}
+              onChange={() => setHideDone((previous) => !previous)}
+              aria-label={t('travel.hideDone')}
+            >
+              {hideDone ? (
+                <VisibilityOffOutlinedIcon fontSize="small" />
+              ) : (
+                <VisibilityOutlinedIcon fontSize="small" />
+              )}
+            </ToggleButton>
+          </Tooltip>
+
           <Button
             size="small"
             onClick={toggleAllSections}
@@ -647,6 +653,35 @@ export default function TravelTripPage() {
             disabled={searching || sections.used.length === 0}
           >
             {t(allCollapsed ? 'travel.expandAll' : 'travel.collapseAll')}
+          </Button>
+
+          <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+
+          <Button
+            size="small"
+            startIcon={<AddIcon />}
+            onClick={(event) => setNewSectionAnchor(event.currentTarget)}
+          >
+            {t('travel.newSection')}
+          </Button>
+
+          {defaultOnlySections.length > 0 && (
+            <Button
+              size="small"
+              startIcon={<PlaylistAddIcon />}
+              onClick={(event) => setAddSectionMenu(event.currentTarget)}
+            >
+              {t('travel.addSectionFromDefault')}
+            </Button>
+          )}
+
+          <Button
+            size="small"
+            component={RouterLink}
+            to="/travel/recommended"
+            startIcon={<PlaylistAddIcon />}
+          >
+            {t('travel.addFromRecommended')}
           </Button>
         </Stack>
 
@@ -1037,28 +1072,34 @@ export default function TravelTripPage() {
           </Box>
         )}
 
-        {/* Your own section, alongside the recommended ones. */}
-        <Stack direction="row" spacing={1} sx={{ mb: 3 }}>
+        <Footer />
+      </Paper>
+
+      {/* Naming a new section. A popover rather than a field in the bar:
+          the bar already has one text input, and two side by side read as
+          alternatives to each other. */}
+      <Popover
+        open={newSectionAnchor !== null}
+        anchorEl={newSectionAnchor}
+        onClose={() => setNewSectionAnchor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+      >
+        <Stack direction="row" spacing={1} sx={{ p: 1.5, alignItems: 'center' }}>
           <TextField
             size="small"
-            fullWidth
+            autoFocus
             value={newSection}
             placeholder={t('travel.newSection')}
+            aria-label={t('travel.newSection')}
             onChange={(event) => setNewSection(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === 'Enter') addSection()
+              if (event.key === 'Escape') setNewSectionAnchor(null)
             }}
+            sx={{ minWidth: 220 }}
           />
-          {defaultOnlySections.length > 0 && (
-            <Button
-              size="small"
-              startIcon={<PlaylistAddIcon />}
-              onClick={(event) => setAddSectionMenu(event.currentTarget)}
-            >
-              {t('travel.addSectionFromDefault')}
-            </Button>
-          )}
           <Button
+            variant="contained"
             startIcon={<AddIcon />}
             disabled={!newSection.trim() || !tripId}
             onClick={addSection}
@@ -1066,18 +1107,7 @@ export default function TravelTripPage() {
             {t('travel.add')}
           </Button>
         </Stack>
-
-        <Button
-          size="small"
-          component={RouterLink}
-          to="/travel/recommended"
-          startIcon={<AddIcon />}
-        >
-          {t('travel.addFromRecommended')}
-        </Button>
-
-        <Footer />
-      </Paper>
+      </Popover>
 
       <Dialog open={confirmRemove !== null} onClose={() => setConfirmRemove(null)}>
         <DialogTitle>{t('travel.removeSectionTitle')}</DialogTitle>
