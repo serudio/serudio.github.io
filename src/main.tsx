@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import './i18n'
 import ThemeModeProvider from './components/ThemeModeProvider'
+import AuthProvider from './auth/AuthProvider'
 import App from './App'
 
 createRoot(document.getElementById('root')!).render(
@@ -11,7 +12,9 @@ createRoot(document.getElementById('root')!).render(
     <HelmetProvider>
       <ThemeModeProvider>
         <BrowserRouter>
-          <App />
+          <AuthProvider>
+            <App />
+          </AuthProvider>
         </BrowserRouter>
       </ThemeModeProvider>
     </HelmetProvider>

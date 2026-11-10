@@ -6,9 +6,13 @@ import SiteHeader from "./components/SiteHeader";
 import HomePage from "./pages/HomePage";
 import ConvertersIndexPage from "./pages/ConvertersIndexPage";
 import PrivacyPage from "./pages/PrivacyPage";
+import SignInPage from "./pages/SignInPage";
+import { useAuthReturn } from "./auth/useAuthReturn";
 import { converters } from "./data/converters";
 
 export default function App() {
+  useAuthReturn();
+
   return (
     <Box
       sx={{
@@ -43,6 +47,7 @@ export default function App() {
           />
         ))}
         <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/signin" element={<SignInPage />} />
       </Routes>
     </Box>
   );

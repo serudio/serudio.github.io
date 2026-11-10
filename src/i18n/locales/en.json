@@ -157,5 +157,16 @@
     "label": "Language",
     "uk": "UA",
     "en": "EN"
+  },
+  "auth": {
+    "signInTitle": "Sign in",
+    "signInBody": "Sign in with Google to open private pages.",
+    "continueWithGoogle": "Continue with Google",
+    "signOut": "Sign out",
+    "signedInAs": "Signed in as {{email}}",
+    "notConfigured": "Sign-in is unavailable: the site was built without Supabase settings.",
+    "notAdminTitle": "No access",
+    "notAdminBody": "You are signed in as {{email}}. This page is for the owner only.",
+    "backHome": "Back home"
   }
 }

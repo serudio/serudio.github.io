@@ -159,5 +159,16 @@
     "label": "Мова",
     "uk": "UA",
     "en": "EN"
+  },
+  "auth": {
+    "signInTitle": "Вхід",
+    "signInBody": "Увійдіть через Google, щоб відкрити приватні сторінки.",
+    "continueWithGoogle": "Увійти через Google",
+    "signOut": "Вийти",
+    "signedInAs": "Ви увійшли як {{email}}",
+    "notConfigured": "Вхід недоступний: сайт зібрано без налаштувань Supabase.",
+    "notAdminTitle": "Немає доступу",
+    "notAdminBody": "Ви увійшли як {{email}}. Ця сторінка доступна лише власнику.",
+    "backHome": "На головну"
   }
 }

@@ -16,3 +16,8 @@ yarn-error.log*
 
 # TypeScript incremental build info
 *.tsbuildinfo
+
+# Local env (Supabase credentials)
+.env
+.env.*
+!.env.example
