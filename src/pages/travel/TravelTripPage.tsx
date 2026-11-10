@@ -13,7 +13,6 @@ import IconButton from '@mui/material/IconButton'
 import LinearProgress from '@mui/material/LinearProgress'
 import Link from '@mui/material/Link'
 import Menu from '@mui/material/Menu'
-import Popover from '@mui/material/Popover'
 import Divider from '@mui/material/Divider'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
@@ -167,7 +166,12 @@ export default function TravelTripPage() {
   const [emptied, setEmptied] = useState<string[]>([])
   const [query, setQuery] = useState('')
   // Whose things to show. Null is everyone's.
-  const [personFilter, setPersonFilter] = useState<string | null>(null)
+  /**
+   * Whose sections to show. Empty means everyone — several people can
+   * be on at once, because packing is usually done for more than one of
+   * them at a time.
+   */
+  const [personFilter, setPersonFilter] = useState<string[]>([])
   // The item being renamed, and the text so far. Editing in place beats
   // a dialog for a one-line change.
   const [editingItem, setEditingItem] = useState<{ id: string; text: string } | null>(null)
@@ -256,9 +260,9 @@ export default function TravelTripPage() {
     const used = categories
       .filter(
         (category) =>
-          !personFilter ||
-          category.id === personFilter ||
-          category.personId === personFilter,
+          personFilter.length === 0 ||
+          personFilter.includes(category.id) ||
+          (category.personId !== null && personFilter.includes(category.personId)),
       )
       .map((category, index) => {
         const all = items
@@ -363,7 +367,6 @@ export default function TravelTripPage() {
       })
       await addItems(tripId, [{ text: name, categoryId }])
       setNewSection('')
-      setNewSectionAnchor(null)
     })
   }
 
@@ -429,7 +432,6 @@ export default function TravelTripPage() {
   }, [templateId, templateItems, items, categories])
 
   const [addSectionMenu, setAddSectionMenu] = useState<HTMLElement | null>(null)
-  const [newSectionAnchor, setNewSectionAnchor] = useState<HTMLElement | null>(null)
   const [confirmRemove, setConfirmRemove] = useState<TravelCategory | null>(null)
 
   /**
@@ -593,7 +595,7 @@ export default function TravelTripPage() {
           useFlexGap
           flexWrap="wrap"
           spacing={1}
-          sx={{ rowGap: 1, alignItems: 'center', mb: 3 }}
+          sx={{ rowGap: 1, alignItems: 'center', mb: 1.5 }}
         >
           <TextField
             size="small"
@@ -610,24 +612,6 @@ export default function TravelTripPage() {
             }}
             sx={{ flexGrow: 1, minWidth: 180 }}
           />
-
-          {people.length > 0 && (
-            <TextField
-              select
-              size="small"
-              value={personFilter ?? ''}
-              onChange={(event) => setPersonFilter(event.target.value || null)}
-              aria-label={t('travel.whose')}
-              sx={{ minWidth: 150 }}
-            >
-              <MenuItem value="">{t('travel.everyone')}</MenuItem>
-              {people.map((person) => (
-                <MenuItem key={person.id} value={person.id}>
-                  {person.name}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
 
           <Tooltip title={t('travel.hideDone')}>
             <ToggleButton
@@ -657,13 +641,26 @@ export default function TravelTripPage() {
 
           <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
 
-          <Button
+          <TextField
             size="small"
-            startIcon={<AddIcon />}
-            onClick={(event) => setNewSectionAnchor(event.currentTarget)}
-          >
-            {t('travel.newSection')}
-          </Button>
+            value={newSection}
+            onChange={(event) => setNewSection(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') addSection()
+            }}
+            placeholder={t('travel.newSection')}
+            aria-label={t('travel.newSection')}
+            // Two text inputs in one bar, so each carries the icon for
+            // what it does — a magnifier that narrows, a plus that adds.
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <AddIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ minWidth: 180 }}
+          />
 
           {defaultOnlySections.length > 0 && (
             <Button
@@ -684,6 +681,58 @@ export default function TravelTripPage() {
             {t('travel.addFromRecommended')}
           </Button>
         </Stack>
+
+        {/* People get their own row. They are the one filter whose
+            options are worth reading at a glance rather than opening,
+            and in the bar they pushed everything else around as soon as
+            a trip had more than two. Each chip wears that person's own
+            section colour, the same one their sections are tinted
+            with. */}
+        {people.length > 0 && (
+          <Stack
+            direction="row"
+            useFlexGap
+            flexWrap="wrap"
+            sx={{ gap: 0.5, alignItems: 'center', mb: 3 }}
+            role="group"
+            aria-label={t('travel.whose')}
+          >
+            <Chip
+              size="small"
+              label={t('travel.everyone')}
+              variant={personFilter.length === 0 ? 'filled' : 'outlined'}
+              color={personFilter.length === 0 ? 'primary' : 'default'}
+              onClick={() => setPersonFilter([])}
+            />
+            {people.map((person) => {
+              const selected = personFilter.includes(person.id)
+              const color = colorFor(person, categories.indexOf(person))
+              return (
+                <Chip
+                  key={person.id}
+                  size="small"
+                  label={person.name}
+                  variant={selected ? 'filled' : 'outlined'}
+                  // Each chip toggles on its own; turning the last one
+                  // off is the same as choosing everyone, so the filter
+                  // needs no separate clear.
+                  onClick={() =>
+                    setPersonFilter((previous) =>
+                      selected
+                        ? previous.filter((id) => id !== person.id)
+                        : [...previous, person.id],
+                    )
+                  }
+                  sx={{
+                    borderColor: alpha(color, 0.5),
+                    bgcolor: selected ? alpha(color, 0.35) : 'transparent',
+                    '&:hover': { bgcolor: alpha(color, selected ? 0.45 : 0.15) },
+                  }}
+                />
+              )
+            })}
+          </Stack>
+        )}
 
         {/* Before leaving — tasks, not luggage. */}
         <Box
@@ -1074,40 +1123,6 @@ export default function TravelTripPage() {
 
         <Footer />
       </Paper>
-
-      {/* Naming a new section. A popover rather than a field in the bar:
-          the bar already has one text input, and two side by side read as
-          alternatives to each other. */}
-      <Popover
-        open={newSectionAnchor !== null}
-        anchorEl={newSectionAnchor}
-        onClose={() => setNewSectionAnchor(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-      >
-        <Stack direction="row" spacing={1} sx={{ p: 1.5, alignItems: 'center' }}>
-          <TextField
-            size="small"
-            autoFocus
-            value={newSection}
-            placeholder={t('travel.newSection')}
-            aria-label={t('travel.newSection')}
-            onChange={(event) => setNewSection(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') addSection()
-              if (event.key === 'Escape') setNewSectionAnchor(null)
-            }}
-            sx={{ minWidth: 220 }}
-          />
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            disabled={!newSection.trim() || !tripId}
-            onClick={addSection}
-          >
-            {t('travel.add')}
-          </Button>
-        </Stack>
-      </Popover>
 
       <Dialog open={confirmRemove !== null} onClose={() => setConfirmRemove(null)}>
         <DialogTitle>{t('travel.removeSectionTitle')}</DialogTitle>
