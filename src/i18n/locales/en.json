@@ -171,7 +171,6 @@
     "hideDone": "Hide done",
     "markPerson": "Mark as a person",
     "unmarkPerson": "Not a person",
-    "dismissSection": "Hide empty section",
     "refillFromDefault_one": "Add {{count}} item from default list",
     "refillFromDefault_other": "Add {{count}} items from default list",
     "keepInDefaultNone": "Default list already has these",
@@ -185,7 +184,19 @@
     "expandAll": "Expand all",
     "addSectionFromDefault": "From default",
     "removeSectionTitle": "Remove this section?",
-    "removeSectionBody": "“{{name}}” is not in your default list, so its items cannot be brought back. The section itself stays available for other trips."
+    "removeSectionBody": "“{{name}}” is not in your default list, so its items cannot be brought back. The section itself stays available for other trips.",
+    "share": "Share",
+    "shareExplainer": "Anyone with the link can see the list. Anyone signed in can also work on it: tick things off, add things, remove things. Renaming the trip, deleting it, or sharing it on stays with you.",
+    "shareEnable": "Create a link",
+    "shareDisable": "Stop sharing",
+    "shareCopy": "Copy link",
+    "shareCopied": "Copied",
+    "sharedTitle": "Shared packing list",
+    "sharedSeoDescription": "A packing list opened from a shared link.",
+    "sharedBadge": "shared link",
+    "sharedReadOnly": "You are viewing this list. Sign in to tick things off and add to it.",
+    "sharedMissing": "No such list — the link may have been turned off.",
+    "close": "Close"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",

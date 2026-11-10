@@ -12,6 +12,7 @@ import QuotesPage from "./pages/quotes/QuotesPage";
 import TravelPage from "./pages/travel/TravelPage";
 import TravelTripPage from "./pages/travel/TravelTripPage";
 import TravelRecommendedPage from "./pages/travel/TravelRecommendedPage";
+import SharedTripPage from "./pages/travel/SharedTripPage";
 import QuotePage from "./pages/quotes/QuotePage";
 import QuotesAdminPage from "./pages/quotes/QuotesAdminPage";
 import BooksAdminPage from "./pages/books/BooksAdminPage";
@@ -71,6 +72,11 @@ export default function App() {
             is private data, so the rest sits behind RequireAuth — and
             the database enforces the same thing (migration 0011). */}
         <Route path="/travel/recommended" element={<TravelRecommendedPage />} />
+        {/* A trip opened by link. Deliberately outside RequireAuth: the
+            token in the URL is what grants access, and a signed-out
+            visitor reads it. Signing in is what unlocks editing, which
+            the database decides, not this route. */}
+        <Route path="/travel/share" element={<SharedTripPage />} />
         <Route
           path="/travel"
           element={

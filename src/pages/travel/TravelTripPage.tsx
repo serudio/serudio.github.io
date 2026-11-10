@@ -37,14 +37,20 @@ import ToggleButton from '@mui/material/ToggleButton'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import IosShareIcon from '@mui/icons-material/IosShare'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import Seo from '../../components/Seo'
 import Footer from '../../components/Footer'
+import { SITE_URL } from '../../config/site'
+import { ROW_HOVER } from './rowStyles'
 import {
   addItems,
+  disableShare,
+  enableShare,
   addNotes,
   createCategory,
   deleteItem,
@@ -169,6 +175,8 @@ export default function TravelTripPage() {
   // nothing, so the details are edited here once there is something to
   // name.
   const [editing, setEditing] = useState(false)
+  const [sharing, setSharing] = useState(false)
+  const [copied, setCopied] = useState(false)
   const [draftName, setDraftName] = useState('')
   const [draftStarts, setDraftStarts] = useState('')
   const [draftEnds, setDraftEnds] = useState('')
@@ -457,6 +465,12 @@ export default function TravelTripPage() {
     setSectionOpen((previous) => ({ ...previous, ...next }))
   }
 
+  // The share link's token goes in the query string, not the path:
+  // GitHub Pages serves only paths that exist as files, so a path
+  // segment would fall through to 404.html with a real HTTP 404. See
+  // SharedTripPage.
+  const shareUrl = trip?.shareToken ? `${SITE_URL}/travel/share?t=${trip.shareToken}` : ''
+
   const packed = items.filter((item) => item.packed).length
   const progress = items.length > 0 ? Math.round((packed / items.length) * 100) : 0
 
@@ -522,6 +536,17 @@ export default function TravelTripPage() {
               }}
             >
               <EditOutlinedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title={t('travel.share')}>
+            <IconButton
+              size="small"
+              aria-label={t('travel.share')}
+              color={trip?.shareToken ? 'primary' : 'default'}
+              onClick={() => setSharing(true)}
+            >
+              <IosShareIcon fontSize="small" />
             </IconButton>
           </Tooltip>
 
@@ -671,7 +696,7 @@ export default function TravelTripPage() {
           </Stack>
           <Collapse in={notesOpen} unmountOnExit>
           {doneLast(hideDone ? notes.filter((note) => !note.done) : notes, (note) => note.done).map((note) => (
-            <Stack key={note.id} direction="row" sx={{ alignItems: 'center' }}>
+            <Stack key={note.id} direction="row" sx={{ alignItems: 'center', ...ROW_HOVER }}>
               <Checkbox
                 size="small"
                 checked={note.done}
@@ -848,7 +873,7 @@ export default function TravelTripPage() {
 
             <Collapse in={open} unmountOnExit>
             {entries.map((item) => (
-              <Stack key={item.id} direction="row" sx={{ alignItems: 'center' }}>
+              <Stack key={item.id} direction="row" sx={{ alignItems: 'center', ...ROW_HOVER }}>
                 <Checkbox
                   size="small"
                   checked={item.packed}
@@ -971,7 +996,7 @@ export default function TravelTripPage() {
               {t('travel.uncategorised')}
             </Typography>
             {sections.loose.map((item) => (
-              <Stack key={item.id} direction="row" sx={{ alignItems: 'center' }}>
+              <Stack key={item.id} direction="row" sx={{ alignItems: 'center', ...ROW_HOVER }}>
                 <Checkbox
                   size="small"
                   checked={item.packed}
@@ -1075,6 +1100,92 @@ export default function TravelTripPage() {
             }}
           >
             {t('travel.delete')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Sharing. The link carries the token, so handing it to someone is
+          the whole of granting access — and clearing the token is the
+          only way to take it back, which the wording says plainly. */}
+      <Dialog
+        open={sharing}
+        onClose={() => {
+          setSharing(false)
+          setCopied(false)
+        }}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>{t('travel.share')}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {t('travel.shareExplainer')}
+          </Typography>
+
+          {trip?.shareToken ? (
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <TextField
+                size="small"
+                fullWidth
+                value={shareUrl}
+                slotProps={{ htmlInput: { readOnly: true } }}
+                onFocus={(event) => event.target.select()}
+              />
+              <Tooltip title={copied ? t('travel.shareCopied') : t('travel.shareCopy')}>
+                <IconButton
+                  aria-label={t('travel.shareCopy')}
+                  onClick={() => {
+                    void navigator.clipboard
+                      .writeText(shareUrl)
+                      .then(() => setCopied(true))
+                      // Clipboard access can be refused; the field is
+                      // readable and selectable either way.
+                      .catch(() => setCopied(false))
+                  }}
+                >
+                  <ContentCopyIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+          ) : (
+            <Button
+              variant="contained"
+              startIcon={<IosShareIcon />}
+              onClick={() =>
+                void run(async () => {
+                  if (!tripId) return
+                  await enableShare(tripId)
+                  setCopied(false)
+                })
+              }
+            >
+              {t('travel.shareEnable')}
+            </Button>
+          )}
+        </DialogContent>
+        <DialogActions>
+          {trip?.shareToken && (
+            <Button
+              color="error"
+              onClick={() =>
+                void run(async () => {
+                  if (!tripId) return
+                  await disableShare(tripId)
+                  setCopied(false)
+                })
+              }
+            >
+              {t('travel.shareDisable')}
+            </Button>
+          )}
+          <Box sx={{ flexGrow: 1 }} />
+          <Button
+            onClick={() => {
+              setSharing(false)
+              setCopied(false)
+            }}
+          >
+            {t('travel.close')}
           </Button>
         </DialogActions>
       </Dialog>

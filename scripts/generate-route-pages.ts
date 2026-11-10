@@ -180,6 +180,17 @@ const pages: RoutePage[] = [
     description: translate('travel.recommendedSeoDescription'),
   },
   {
+    // Only here so a shared link resolves to a real file and a 200
+    // instead of falling through to 404.html. The trip itself is
+    // fetched client-side from the token in the query string, so there
+    // is nothing page-specific to put in these tags — and nothing that
+    // should be indexed.
+    route: '/travel/share',
+    title: translate('travel.sharedTitle'),
+    description: translate('travel.sharedSeoDescription'),
+    noIndex: true,
+  },
+  {
     route: '/quotes',
     title: translate('quotes.title'),
     description: translate('quotes.seoDescription'),
