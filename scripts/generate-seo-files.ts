@@ -14,7 +14,12 @@ const root = path.resolve(__dirname, "..");
 // routes are pulled from the registry (src/data/converters.ts) that also
 // drives the app's routing and the /converters index — add a converter
 // there and it shows up here automatically.
-const staticRoutes = ["/", "/converters", "/privacy", "/books/"];
+// /quotes is listed; the individual /quotes/<slug> permalinks are NOT.
+// Each is a single line of text, and submitting ~30 near-empty URLs while
+// an AdSense thin-content review is open invites exactly the finding we
+// are trying to clear. They still exist, answer 200 and are reachable by
+// crawlers through links from /quotes — they are just not advertised.
+const staticRoutes = ["/", "/converters", "/privacy", "/books/", "/quotes"];
 
 // todo-cloud is still a separate repo that GitHub Pages serves under
 // this same origin, so this sitemap is the only one that lists it.

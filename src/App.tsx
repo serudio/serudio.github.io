@@ -8,6 +8,9 @@ import ConvertersIndexPage from "./pages/ConvertersIndexPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import SignInPage from "./pages/SignInPage";
 import BooksPage from "./pages/books/BooksPage";
+import QuotesPage from "./pages/quotes/QuotesPage";
+import QuotePage from "./pages/quotes/QuotePage";
+import QuotesAdminPage from "./pages/quotes/QuotesAdminPage";
 import BooksAdminPage from "./pages/books/BooksAdminPage";
 import RequireAuth from "./auth/RequireAuth";
 import { useAuthReturn } from "./auth/useAuthReturn";
@@ -49,6 +52,18 @@ export default function App() {
             }
           />
         ))}
+        {/* Quotes. The admin route is declared before the permalink so
+            "/quotes/admin" is not swallowed as a slug. */}
+        <Route path="/quotes" element={<QuotesPage />} />
+        <Route
+          path="/quotes/admin"
+          element={
+            <RequireAuth admin>
+              <QuotesAdminPage />
+            </RequireAuth>
+          }
+        />
+        <Route path="/quotes/:slug" element={<QuotePage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/signin" element={<SignInPage />} />
 

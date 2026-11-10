@@ -59,6 +59,53 @@
       "seoDescription": "Free online bank deposit calculator: work out the interest earned and the final payout for a fixed-rate deposit, with monthly, quarterly or annual capitalization and optional tax on interest."
     }
   },
+  "quotes": {
+    "title": "Quotes",
+    "seoDescription": "A collection of quotes in Ukrainian and English — a random one each time you open the page.",
+    "another": "Another one",
+    "permalink": "Link to this quote",
+    "allQuotes": "All quotes",
+    "filterLabel": "Filter by category",
+    "loading": "Loading…",
+    "noneMatch": "No quote matches the selected categories.",
+    "noneMatchHint": "Try removing a category, or pick a different one.",
+    "notFound": "This quote no longer exists.",
+    "notFoundTitle": "Quote not found",
+    "categories": {
+      "motivational": "Motivational",
+      "wisdom": "Wisdom",
+      "stoicism": "Stoicism",
+      "love": "Love",
+      "humor": "Humour",
+      "latin": "Latin",
+      "demotivational": "Demotivational"
+    }
+  },
+  "quotesAdmin": {
+    "title": "Quotes — manage",
+    "add": "Add quote",
+    "addTitle": "New quote",
+    "editTitle": "Edit quote",
+    "textUk": "Ukrainian",
+    "textUkHelp": "Ukrainian only — never enter Russian text.",
+    "textEn": "English",
+    "author": "Author",
+    "source": "Source",
+    "slug": "URL slug",
+    "slugHelp": "Used in the shared link. Avoid changing it once published.",
+    "categories": "Categories",
+    "published": "Published",
+    "actions": "Actions",
+    "edit": "Edit",
+    "trash": "Move to trash",
+    "save": "Save",
+    "cancel": "Cancel",
+    "count": "Showing {{shown}} of {{total}}",
+    "empty": "Nothing here.",
+    "missingEn": "No English version yet",
+    "offline": "Showing the bundled list — Supabase is not reachable, so changes cannot be saved.",
+    "loadFailed": "Could not load quotes from the database."
+  },
   "fuelCalculator": {
     "placeholder": "Enter a value...",
     "unit": "US MPG",

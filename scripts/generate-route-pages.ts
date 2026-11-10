@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { SITE_URL, SITE_NAME } from '../src/config/site'
 import { converters } from '../src/data/converters'
+import { fallbackQuotes, type Quote } from '../src/data/quotes'
+import { RESTRICTED_SLUGS } from '../src/data/quoteCategories'
 
 /**
  * Gives every SPA route a real HTML file, so GitHub Pages answers it
@@ -76,7 +78,62 @@ interface RoutePage {
   file?: string
   /** Replaces the home page's WebSite JSON-LD for this route. */
   jsonLd?: Record<string, unknown>
+  /** Emits robots noindex — the page exists to be linked, not found. */
+  noIndex?: boolean
 }
+
+/**
+ * Quotes for the per-quote permalink pages.
+ *
+ * Read straight from the REST endpoint rather than through supabase-js:
+ * this script needs six columns once, and that is not worth a client.
+ * Without credentials — a local build, since .env is not loaded into a
+ * tsx script's process.env — it falls back to the bundled list, so the
+ * build never depends on the database being awake.
+ */
+async function loadQuotes(): Promise<Quote[]> {
+  const url = process.env.VITE_SUPABASE_URL
+  const key = process.env.VITE_SUPABASE_ANON_KEY
+  if (!url || !key) return fallbackQuotes
+
+  try {
+    const response = await fetch(
+      `${url}/rest/v1/quotes?select=slug,text_uk,text_en,author,source,categories` +
+        `&published=eq.true&deleted_at=is.null&order=sort_order`,
+      {
+        headers: { apikey: key, Authorization: `Bearer ${key}` },
+        signal: AbortSignal.timeout(10_000),
+      },
+    )
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+
+    const rows = (await response.json()) as {
+      slug: string
+      text_uk: string
+      text_en: string | null
+      author: string | null
+      source: string | null
+      categories: string[] | null
+    }[]
+
+    if (rows.length === 0) throw new Error('empty table')
+
+    return rows.map((row) => ({
+      id: row.slug,
+      slug: row.slug,
+      uk: row.text_uk,
+      en: row.text_en ?? undefined,
+      author: row.author ?? undefined,
+      source: row.source ?? undefined,
+      categories: row.categories ?? [],
+    }))
+  } catch (error) {
+    console.warn(`  quotes: using bundled list (${(error as Error).message})`)
+    return fallbackQuotes
+  }
+}
+
+const quotes = await loadQuotes()
 
 // '/' is dist/index.html itself and '/privacy' is the hand-written
 // public/privacy.html, so neither is generated here.
@@ -117,6 +174,22 @@ const pages: RoutePage[] = [
     title: translate(converter.titleKey),
     description: translate(converter.seoDescriptionKey),
   })),
+  {
+    route: '/quotes',
+    title: translate('quotes.title'),
+    description: translate('quotes.seoDescription'),
+  },
+  // One file per quote so a shared link resolves and previews correctly.
+  // The quote itself is the description: it is the whole content of the
+  // page and exactly what a link preview should show. Quotes carrying a
+  // restricted category are noindex, and none of these are in the
+  // sitemap — see scripts/generate-seo-files.ts.
+  ...quotes.map((quote) => ({
+    route: `/quotes/${quote.slug}`,
+    title: translate('quotes.title'),
+    description: quote.author ? `${quote.uk} — ${quote.author}` : quote.uk,
+    noIndex: quote.categories.some((slug) => RESTRICTED_SLUGS.includes(slug)),
+  })),
 ]
 
 const template = readFileSync(path.join(dist, 'index.html'), 'utf8')
@@ -145,6 +218,10 @@ for (const page of pages) {
   html = replaceAttribute(html, /(<meta name="twitter:title" content=")[^"]*(")/, fullTitle)
   html = replaceAttribute(html, /(<meta name="twitter:description" content=")[^"]*(")/, page.description)
 
+  if (page.noIndex) {
+    html = replaceAttribute(html, /(<meta name="robots" content=")[^"]*(")/, 'noindex, follow')
+  }
+
   if (page.jsonLd) {
     html = html.replace(
       /<script type="application\/ld\+json">[\s\S]*?<\/script>/,
@@ -157,4 +234,8 @@ for (const page of pages) {
   writeFileSync(file, html)
 }
 
-console.log(`Generated ${pages.length} route pages in dist/ (${pages.map((p) => p.route).join(', ')})`)
+const quotePages = pages.filter((page) => page.route.startsWith('/quotes/')).length
+console.log(
+  `Generated ${pages.length} route pages in dist/ ` +
+    `(${pages.length - quotePages} site pages + ${quotePages} quote permalinks)`,
+)
