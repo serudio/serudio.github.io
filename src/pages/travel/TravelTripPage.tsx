@@ -136,6 +136,7 @@ export default function TravelTripPage() {
   // than through ensureTemplateTrip, which writes.
   const [templateId, setTemplateId] = useState<string | null>(null)
   const [templateItems, setTemplateItems] = useState<TravelItem[]>([])
+  const [templateNotes, setTemplateNotes] = useState<TravelNote[]>([])
 
   // Remembered per browser: whether to show what is already done is a
   // working preference, not something worth a column in the database.
@@ -215,6 +216,7 @@ export default function TravelTripPage() {
       const template = current?.isTemplate ? undefined : trips.find((row) => row.isTemplate)
       setTemplateId(template?.id ?? null)
       setTemplateItems(template ? await getItems(template.id) : [])
+      setTemplateNotes(template ? await getNotes(template.id) : [])
 
       setError(null)
     } catch (caught) {
@@ -443,6 +445,26 @@ export default function TravelTripPage() {
     () => new Set([...newToDefault.values()].flat().map((item) => item.id)),
     [newToDefault],
   )
+
+  /**
+   * Tasks the default list has no match for, by text — a task has no
+   * section to be told apart by, so the words are all there is.
+   */
+  const newNoteToDefaultIds = useMemo(() => {
+    if (!templateId) return new Set<string>()
+    const known = new Set(templateNotes.map((note) => note.text.trim().toLowerCase()))
+    return new Set(
+      notes
+        .filter((note) => !known.has(note.text.trim().toLowerCase()))
+        .map((note) => note.id),
+    )
+  }, [templateId, templateNotes, notes])
+
+  /** Copies one task up into the default list, leaving the trip's alone. */
+  const keepNote = (note: TravelNote) => {
+    if (!templateId) return
+    void run(() => addNotes(templateId, [note.text]))
+  }
 
   /** Copies one item up into the default list, leaving the trip's alone. */
   const keepOne = (item: TravelItem) => {
@@ -926,6 +948,18 @@ export default function TravelTripPage() {
               >
                 {note.text}
               </Typography>
+              {newNoteToDefaultIds.has(note.id) && (
+                <Tooltip title={t('travel.keepThisInDefault')}>
+                  <IconButton
+                    size="small"
+                    sx={{ p: 0.5 }}
+                    aria-label={t('travel.keepThisInDefault')}
+                    onClick={() => keepNote(note)}
+                  >
+                    <BookmarkAddOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
               <IconButton
                 size="small"
                 sx={{ p: 0.5 }}
