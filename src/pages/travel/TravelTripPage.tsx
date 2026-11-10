@@ -390,6 +390,57 @@ export default function TravelTripPage() {
     )
   }
 
+  /**
+   * Sections the default list has that this trip has no trace of.
+   * missingFromTrip only reaches sections already on the page, because
+   * a section with no items here does not render — so a whole section
+   * dropped from a trip, or added to the default since, had nowhere to
+   * come back from.
+   */
+  const defaultOnlySections = useMemo(() => {
+    if (!templateId) return []
+
+    const here = new Set(items.map((item) => item.categoryId).filter(Boolean))
+    const grouped = new Map<string, TravelItem[]>()
+
+    for (const item of templateItems) {
+      if (!item.categoryId || here.has(item.categoryId)) continue
+      grouped.set(item.categoryId, [...(grouped.get(item.categoryId) ?? []), item])
+    }
+
+    return [...grouped.entries()]
+      .map(([categoryId, rows]) => ({
+        category: categories.find((row) => row.id === categoryId),
+        rows,
+      }))
+      .filter((entry): entry is { category: TravelCategory; rows: TravelItem[] } =>
+        entry.category !== undefined,
+      )
+  }, [templateId, templateItems, items, categories])
+
+  const [addSectionMenu, setAddSectionMenu] = useState<HTMLElement | null>(null)
+  const [confirmRemove, setConfirmRemove] = useState<TravelCategory | null>(null)
+
+  /**
+   * Dropping a section from this trip.
+   *
+   * Asks first only when it cannot be undone: a section the default list
+   * also holds can be put back from "From default" in one click, so
+   * stopping to confirm that would be nagging. One that exists nowhere
+   * else takes its items with it for good.
+   */
+  const removeSection = (category: TravelCategory, entryCount: number) => {
+    if (entryCount === 0) {
+      setEmptied((rows) => rows.filter((id) => id !== category.id))
+      return
+    }
+    if (templateItems.some((item) => item.categoryId === category.id)) {
+      if (tripId) void run(() => removeCategoryFromTrip(tripId, category.id))
+      return
+    }
+    setConfirmRemove(category)
+  }
+
   const searching = query.trim().length > 0
 
   // Measured against what is on screen, so a section left over from a
@@ -450,7 +501,12 @@ export default function TravelTripPage() {
           &larr; {t('travel.backToTravel')}
         </Link>
 
-        <Stack direction="row" sx={{ alignItems: 'center', gap: 1, mb: 1 }}>
+        <Stack
+          direction="row"
+          useFlexGap
+          flexWrap="wrap"
+          sx={{ alignItems: 'center', gap: 1, mb: 1 }}
+        >
           <Typography variant="h5" component="h1">
             {trip?.name ?? t('travel.title')}
           </Typography>
@@ -468,6 +524,14 @@ export default function TravelTripPage() {
               <EditOutlinedIcon fontSize="small" />
             </IconButton>
           </Tooltip>
+
+          <Box sx={{ flexGrow: 1 }} />
+
+          {items.length > 0 && (
+            <Typography variant="caption" color="text.secondary">
+              {t('travel.packedCount', { packed, total: items.length })} · {progress}%
+            </Typography>
+          )}
         </Stack>
 
         {(trip?.startsOn || trip?.endsOn) && (
@@ -483,28 +547,11 @@ export default function TravelTripPage() {
         )}
 
         {items.length > 0 && (
-          <Box sx={{ mb: 3 }}>
-            <Stack direction="row" sx={{ justifyContent: 'space-between', mb: 0.5 }}>
-              <Typography variant="caption" color="text.secondary">
-                {t('travel.packedCount', { packed, total: items.length })}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {progress}%
-              </Typography>
-            </Stack>
-            <LinearProgress variant="determinate" value={progress} sx={{ borderRadius: 1 }} />
-            <Stack direction="row" sx={{ justifyContent: 'flex-end', mt: 0.5 }}>
-              <Button
-                size="small"
-                onClick={toggleAllSections}
-                // A search opens every section for as long as it runs,
-                // so folding them would do nothing visible.
-                disabled={searching || sections.used.length === 0}
-              >
-                {t(allCollapsed ? 'travel.expandAll' : 'travel.collapseAll')}
-              </Button>
-            </Stack>
-          </Box>
+          <LinearProgress
+            variant="determinate"
+            value={progress}
+            sx={{ borderRadius: 1, mb: 2 }}
+          />
         )}
 
         {/* One bar for the three things that change what you see:
@@ -566,6 +613,16 @@ export default function TravelTripPage() {
               ))}
             </TextField>
           )}
+
+          <Button
+            size="small"
+            onClick={toggleAllSections}
+            // A search opens every section for as long as it runs, so
+            // folding them would do nothing visible.
+            disabled={searching || sections.used.length === 0}
+          >
+            {t(allCollapsed ? 'travel.expandAll' : 'travel.collapseAll')}
+          </Button>
         </Stack>
 
         {/* Before leaving — tasks, not luggage. */}
@@ -756,23 +813,21 @@ export default function TravelTripPage() {
                   sx={{ height: 20, fontSize: 11 }}
                 />
               )}
-              {entries.length === 0 && (
-                <Tooltip title={t('travel.dismissSection')}>
-                  <IconButton
-                    size="small"
-                    sx={{ p: 0.25 }}
-                    aria-label={t('travel.dismissSection')}
-                    onClick={(event) => {
-                      // Header clicks fold the section; this is a
-                      // control sitting inside it.
-                      event.stopPropagation()
-                      setEmptied((rows) => rows.filter((id) => id !== category.id))
-                    }}
-                  >
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              )}
+              <Tooltip title={t('travel.removeSection')}>
+                <IconButton
+                  size="small"
+                  sx={{ p: 0.25 }}
+                  aria-label={t('travel.removeSection')}
+                  onClick={(event) => {
+                    // Header clicks fold the section; this is a control
+                    // sitting inside it.
+                    event.stopPropagation()
+                    removeSection(category, entries.length)
+                  }}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
               <Chip
                 size="small"
                 variant="outlined"
@@ -969,6 +1024,15 @@ export default function TravelTripPage() {
               if (event.key === 'Enter') addSection()
             }}
           />
+          {defaultOnlySections.length > 0 && (
+            <Button
+              size="small"
+              startIcon={<PlaylistAddIcon />}
+              onClick={(event) => setAddSectionMenu(event.currentTarget)}
+            >
+              {t('travel.addSectionFromDefault')}
+            </Button>
+          )}
           <Button
             startIcon={<AddIcon />}
             disabled={!newSection.trim() || !tripId}
@@ -989,6 +1053,31 @@ export default function TravelTripPage() {
 
         <Footer />
       </Paper>
+
+      <Dialog open={confirmRemove !== null} onClose={() => setConfirmRemove(null)}>
+        <DialogTitle>{t('travel.removeSectionTitle')}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            {t('travel.removeSectionBody', { name: confirmRemove?.name ?? '' })}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmRemove(null)}>{t('travel.cancel')}</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => {
+              const category = confirmRemove
+              setConfirmRemove(null)
+              if (category && tripId) {
+                void run(() => removeCategoryFromTrip(tripId, category.id))
+              }
+            }}
+          >
+            {t('travel.delete')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={editing} onClose={() => setEditing(false)} fullWidth maxWidth="xs">
         <DialogTitle>{t('travel.editDetails')}</DialogTitle>
@@ -1041,6 +1130,44 @@ export default function TravelTripPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Menu
+        open={addSectionMenu !== null}
+        anchorEl={addSectionMenu}
+        onClose={() => setAddSectionMenu(null)}
+      >
+        {defaultOnlySections.map(({ category, rows }) => (
+          <MenuItem
+            key={category.id}
+            onClick={() => {
+              setAddSectionMenu(null)
+              if (tripId) {
+                void run(() =>
+                  addItems(
+                    tripId,
+                    rows.map((row) => ({ text: row.text, categoryId: category.id })),
+                  ),
+                )
+              }
+            }}
+          >
+            <Box
+              sx={{
+                width: 10,
+                height: 10,
+                borderRadius: '50%',
+                bgcolor: category.color ?? 'text.disabled',
+                mr: 1.5,
+                flexShrink: 0,
+              }}
+            />
+            {category.name}
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+              {rows.length}
+            </Typography>
+          </MenuItem>
+        ))}
+      </Menu>
 
       <Menu
         open={menu !== null}
@@ -1182,18 +1309,7 @@ export default function TravelTripPage() {
           )}
         </MenuItem>
 
-        <MenuItem
-          onClick={() => {
-            const categoryId = menu?.categoryId
-            setMenu(null)
-            if (categoryId && tripId) {
-              void run(() => removeCategoryFromTrip(tripId, categoryId))
-            }
-          }}
-        >
-          <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
-          {t('travel.removeSection')}
-        </MenuItem>
+
       </Menu>
     </Container>
   )

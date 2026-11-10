@@ -188,7 +188,10 @@
     "nobody": "Нічий",
     "keepThisInDefault": "Зберегти це у списку за замовчуванням",
     "collapseAll": "Згорнути всі",
-    "expandAll": "Розгорнути всі"
+    "expandAll": "Розгорнути всі",
+    "addSectionFromDefault": "Зі списку",
+    "removeSectionTitle": "Прибрати цей розділ?",
+    "removeSectionBody": "«{{name}}» немає у списку за замовчуванням, тож його речі не вдасться повернути. Сам розділ лишиться доступним для інших подорожей."
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",

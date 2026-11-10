@@ -182,7 +182,10 @@
     "nobody": "No one",
     "keepThisInDefault": "Keep this in the default list",
     "collapseAll": "Collapse all",
-    "expandAll": "Expand all"
+    "expandAll": "Expand all",
+    "addSectionFromDefault": "From default",
+    "removeSectionTitle": "Remove this section?",
+    "removeSectionBody": "“{{name}}” is not in your default list, so its items cannot be brought back. The section itself stays available for other trips."
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",

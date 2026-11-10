@@ -33,6 +33,8 @@ export interface TravelTrip {
   endsOn: string | null
   isTemplate: boolean
   archived: boolean
+  /** Set while the trip is shared by link; null once sharing is off. */
+  shareToken: string | null
   createdAt: string
 }
 
@@ -75,7 +77,7 @@ async function currentUserId(): Promise<string> {
 export async function getTrips(): Promise<TravelTrip[]> {
   const { data, error } = await client()
     .from('travel_trips')
-    .select('id, name, starts_on, ends_on, is_template, archived, created_at')
+    .select('id, name, starts_on, ends_on, is_template, archived, share_token, created_at')
     .order('created_at', { ascending: false })
     .abortSignal(signal())
   if (error) throw error
@@ -87,6 +89,7 @@ export async function getTrips(): Promise<TravelTrip[]> {
     endsOn: row.ends_on as string | null,
     isTemplate: row.is_template as boolean,
     archived: row.archived as boolean,
+    shareToken: (row.share_token as string | null) ?? null,
     createdAt: row.created_at as string,
   }))
 }
@@ -429,4 +432,71 @@ export async function createTripFromTemplate(input: {
   await addNotes(tripId, notes.map((note) => note.text))
 
   return tripId
+}
+
+/* ---------------------------------------------------------------- sharing */
+
+export interface SharedTrip {
+  trip: { id: string; name: string; startsOn: string | null; endsOn: string | null }
+  categories: TravelCategory[]
+  items: TravelItem[]
+  notes: TravelNote[]
+}
+
+/**
+ * Sharing goes through database functions rather than ordinary queries:
+ * row-level security can only see the signed-in user, and what grants
+ * access here is a token in a URL. Each function re-checks the token and
+ * resolves the trip from it, so a caller never names the trip.
+ */
+export async function enableShare(tripId: string): Promise<string> {
+  const { data, error } = await client().rpc('travel_share_enable', { p_trip_id: tripId })
+  if (error) throw error
+  return data as string
+}
+
+export async function disableShare(tripId: string) {
+  const { error } = await client().rpc('travel_share_disable', { p_trip_id: tripId })
+  if (error) throw error
+}
+
+export async function getSharedTrip(token: string): Promise<SharedTrip> {
+  const { data, error } = await client().rpc('travel_shared_get', { p_token: token })
+  if (error) throw error
+  return data as SharedTrip
+}
+
+export async function sharedSetItem(token: string, itemId: string, packed: boolean) {
+  const { error } = await client().rpc('travel_shared_set_item', {
+    p_token: token,
+    p_item_id: itemId,
+    p_packed: packed,
+  })
+  if (error) throw error
+}
+
+export async function sharedAddItem(token: string, categoryId: string | null, text: string) {
+  const { error } = await client().rpc('travel_shared_add_item', {
+    p_token: token,
+    p_category_id: categoryId,
+    p_text: text,
+  })
+  if (error) throw error
+}
+
+export async function sharedDeleteItem(token: string, itemId: string) {
+  const { error } = await client().rpc('travel_shared_delete_item', {
+    p_token: token,
+    p_item_id: itemId,
+  })
+  if (error) throw error
+}
+
+export async function sharedSetNote(token: string, noteId: string, done: boolean) {
+  const { error } = await client().rpc('travel_shared_set_note', {
+    p_token: token,
+    p_note_id: noteId,
+    p_done: done,
+  })
+  if (error) throw error
 }
