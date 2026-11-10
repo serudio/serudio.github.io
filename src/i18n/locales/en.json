@@ -167,7 +167,8 @@
     "endsOn": "To",
     "save": "Save",
     "keepInDefault_one": "Keep {{count}} item in default list",
-    "keepInDefault_other": "Keep {{count}} items in default list"
+    "keepInDefault_other": "Keep {{count}} items in default list",
+    "hideDone": "Hide done"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",

@@ -27,6 +27,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import BookmarkAddOutlinedIcon from '@mui/icons-material/BookmarkAddOutlined'
 import Collapse from '@mui/material/Collapse'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Switch from '@mui/material/Switch'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -54,6 +56,8 @@ import {
   type TravelNote,
   type TravelTrip,
 } from '../../lib/travel/db'
+
+const HIDE_DONE_KEY = 'serudio_travel_hide_done'
 
 /** Offered when recolouring a section. Same family as the site's palette. */
 const PALETTE = [
@@ -117,6 +121,24 @@ export default function TravelTripPage() {
   // than through ensureTemplateTrip, which writes.
   const [templateId, setTemplateId] = useState<string | null>(null)
   const [templateItems, setTemplateItems] = useState<TravelItem[]>([])
+
+  // Remembered per browser: whether to show what is already done is a
+  // working preference, not something worth a column in the database.
+  const [hideDone, setHideDone] = useState(() => {
+    try {
+      return localStorage.getItem(HIDE_DONE_KEY) === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(HIDE_DONE_KEY, String(hideDone))
+    } catch {
+      // Private browsing; the choice just will not outlive the visit.
+    }
+  }, [hideDone])
 
   // Naming a trip is optional and after the fact: creating one asks
   // nothing, so the details are edited here once there is something to
@@ -191,15 +213,19 @@ export default function TravelTripPage() {
   const sections = useMemo(() => {
     const used = categories
       .map((category, index) => {
+        const all = items.filter((item) => item.categoryId === category.id)
         const entries = doneLast(
-          items.filter((item) => item.categoryId === category.id),
+          hideDone ? all.filter((item) => !item.packed) : all,
           (item) => item.packed,
         )
         return {
           category,
           color: colorFor(category, index),
           entries,
-          done: entries.length > 0 && entries.every((item) => item.packed),
+          // Judged on every item, not the visible ones: with done
+          // hidden, a finished section shows nothing and would
+          // otherwise read as unfinished.
+          done: all.length > 0 && all.every((item) => item.packed),
         }
       })
       .filter((section) => section.entries.length > 0)
@@ -207,12 +233,13 @@ export default function TravelTripPage() {
       // ones still being worked through, and folded shut.
       .sort((a, b) => Number(a.done) - Number(b.done))
 
+    const looseAll = items.filter((item) => !item.categoryId)
     const loose = doneLast(
-      items.filter((item) => !item.categoryId),
+      hideDone ? looseAll.filter((item) => !item.packed) : looseAll,
       (item) => item.packed,
     )
     return { used, loose }
-  }, [categories, items])
+  }, [categories, items, hideDone])
 
   /**
    * Per section, the items this trip has that the default list does not.
@@ -306,6 +333,21 @@ export default function TravelTripPage() {
               </Typography>
             </Stack>
             <LinearProgress variant="determinate" value={progress} sx={{ borderRadius: 1 }} />
+            <FormControlLabel
+              sx={{ mt: 0.5 }}
+              control={
+                <Switch
+                  size="small"
+                  checked={hideDone}
+                  onChange={(event) => setHideDone(event.target.checked)}
+                />
+              }
+              label={
+                <Typography variant="caption" color="text.secondary">
+                  {t('travel.hideDone')}
+                </Typography>
+              }
+            />
           </Box>
         )}
 
@@ -314,7 +356,7 @@ export default function TravelTripPage() {
           <Typography variant="caption" color="text.secondary" fontWeight={700}>
             {t('travel.beforeLeaving').toUpperCase()}
           </Typography>
-          {doneLast(notes, (note) => note.done).map((note) => (
+          {doneLast(hideDone ? notes.filter((note) => !note.done) : notes, (note) => note.done).map((note) => (
             <Stack key={note.id} direction="row" sx={{ alignItems: 'center' }}>
               <Checkbox
                 size="small"

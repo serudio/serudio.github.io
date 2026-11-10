@@ -171,7 +171,8 @@
     "keepInDefault_one": "Зберегти {{count}} річ у списку за замовчуванням",
     "keepInDefault_few": "Зберегти {{count}} речі у списку за замовчуванням",
     "keepInDefault_many": "Зберегти {{count}} речей у списку за замовчуванням",
-    "keepInDefault_other": "Зберегти {{count}} речей у списку за замовчуванням"
+    "keepInDefault_other": "Зберегти {{count}} речей у списку за замовчуванням",
+    "hideDone": "Сховати зібране"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",
