@@ -12,7 +12,6 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
 import IconButton from '@mui/material/IconButton'
 import LinearProgress from '@mui/material/LinearProgress'
-import Link from '@mui/material/Link'
 import Menu from '@mui/material/Menu'
 import Divider from '@mui/material/Divider'
 import MenuItem from '@mui/material/MenuItem'
@@ -39,12 +38,15 @@ import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import IosShareIcon from '@mui/icons-material/IosShare'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import Seo from '../../components/Seo'
 import Footer from '../../components/Footer'
+import { useDeclarePageChrome } from '../../components/pageChrome'
+import { exportCsv, exportList } from '../../lib/travel/exportList'
 import { SITE_URL } from '../../config/site'
 import { ROW_HOVER } from './rowStyles'
 import {
@@ -182,6 +184,8 @@ export default function TravelTripPage() {
   const [editing, setEditing] = useState(false)
   const [sharing, setSharing] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [listCopied, setListCopied] = useState(false)
+  const [exportMenu, setExportMenu] = useState<HTMLElement | null>(null)
   const [draftName, setDraftName] = useState('')
   const [draftStarts, setDraftStarts] = useState('')
   const [draftEnds, setDraftEnds] = useState('')
@@ -300,6 +304,12 @@ export default function TravelTripPage() {
     )
     return { used, loose }
   }, [categories, items, hideDone, emptied, query, personFilter])
+
+  useDeclarePageChrome({
+    backTo: '/travel',
+    backLabel: t('travel.backToTravel'),
+    width: 'lg',
+  })
 
   const theme = useTheme()
   const wide = useMediaQuery(theme.breakpoints.up('md'))
@@ -478,14 +488,16 @@ export default function TravelTripPage() {
    * else takes its items with it for good.
    */
   const removeSection = (category: TravelCategory, entryCount: number) => {
+    // An emptied section is only a placeholder waiting to be filled;
+    // dismissing it throws nothing away, so it needs no question.
     if (entryCount === 0) {
       setEmptied((rows) => rows.filter((id) => id !== category.id))
       return
     }
-    if (templateItems.some((item) => item.categoryId === category.id)) {
-      if (tripId) void run(() => removeCategoryFromTrip(tripId, category.id))
-      return
-    }
+    // Everything else asks first, including sections the default list
+    // also holds. Being able to add it back is not the same as not
+    // having lost anything: the trip's own ticks and its added items go
+    // with it, and one stray click should not be able to take them.
     setConfirmRemove(category)
   }
 
@@ -510,6 +522,57 @@ export default function TravelTripPage() {
   // segment would fall through to 404.html with a real HTTP 404. See
   // SharedTripPage.
   const shareUrl = trip?.shareToken ? `${SITE_URL}/travel/share?t=${trip.shareToken}` : ''
+
+  const downloadCsv = () => {
+    if (!trip) return
+    setExportMenu(null)
+    const csv = exportCsv({
+      categories,
+      items,
+      headers: {
+        section: t('travel.csvSection'),
+        item: t('travel.csvItem'),
+        packed: t('travel.csvPacked'),
+      },
+      uncategorised: t('travel.uncategorised'),
+    })
+
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${trip.name || 'travel'}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const copyList = () => {
+    if (!trip) return
+    setExportMenu(null)
+    const text = exportList({
+      trip,
+      categories,
+      items,
+      notes,
+      strings: {
+        lead: t('travel.exportLead'),
+        trip: t('travel.exportTrip'),
+        dates: t('travel.exportDates'),
+        beforeLeaving: t('travel.beforeLeaving'),
+        uncategorised: t('travel.uncategorised'),
+      },
+    })
+    void navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setListCopied(true)
+        // Back to the instructions after a moment: the tooltip's job is
+        // to say what to do with the copy, not to report the copy.
+        window.setTimeout(() => setListCopied(false), 2500)
+      })
+      // Clipboard access can be refused; saying nothing is better than
+      // claiming a copy that did not happen.
+      .catch(() => setError(t('travel.copyListFailed')))
+  }
 
   const packed = items.filter((item) => item.packed).length
   const progress = items.length > 0 ? Math.round((packed / items.length) * 100) : 0
@@ -545,16 +608,6 @@ export default function TravelTripPage() {
     <Container maxWidth="lg" disableGutters>
       <Seo title={trip?.name ?? t('travel.title')} path={`/travel/t/${tripId ?? ''}`} noIndex />
       <Paper elevation={0} sx={{ p: { xs: 2.5, sm: 3 } }}>
-        <Link
-          component={RouterLink}
-          to="/travel"
-          variant="body2"
-          color="text.secondary"
-          sx={{ display: 'inline-block', mb: 2 }}
-        >
-          &larr; {t('travel.backToTravel')}
-        </Link>
-
         <Stack
           direction="row"
           useFlexGap
@@ -578,6 +631,35 @@ export default function TravelTripPage() {
               <EditOutlinedIcon fontSize="small" />
             </IconButton>
           </Tooltip>
+
+          {/* Says what to do with it, not just what it does: the copy
+              is only useful if you know to paste it somewhere that can
+              read it back to you. */}
+          <Tooltip title={listCopied ? t('travel.copyListDone') : t('travel.copyListHint')}>
+            <IconButton
+              size="small"
+              aria-label={t('travel.copyList')}
+              onClick={(event) => setExportMenu(event.currentTarget)}
+              color={listCopied ? 'primary' : 'default'}
+            >
+              <AutoAwesomeOutlinedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+
+          <Menu
+            open={exportMenu !== null}
+            anchorEl={exportMenu}
+            onClose={() => setExportMenu(null)}
+          >
+            <MenuItem onClick={copyList}>
+              <AutoAwesomeOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
+              {t('travel.copyMenuAssistant')}
+            </MenuItem>
+            <MenuItem onClick={downloadCsv}>
+              <ContentCopyIcon fontSize="small" sx={{ mr: 1 }} />
+              {t('travel.downloadCsv')}
+            </MenuItem>
+          </Menu>
 
           <Tooltip title={t('travel.share')}>
             <IconButton
@@ -1149,7 +1231,15 @@ export default function TravelTripPage() {
         <DialogTitle>{t('travel.removeSectionTitle')}</DialogTitle>
         <DialogContent>
           <Typography variant="body2">
-            {t('travel.removeSectionBody', { name: confirmRemove?.name ?? '' })}
+            {/* Says which of the two it is: one loses the items for
+                good, the other only loses this trip's work on them. */}
+            {t(
+              confirmRemove &&
+                templateItems.some((item) => item.categoryId === confirmRemove.id)
+                ? 'travel.removeSectionBodyInDefault'
+                : 'travel.removeSectionBody',
+              { name: confirmRemove?.name ?? '' },
+            )}
           </Typography>
         </DialogContent>
         <DialogActions>

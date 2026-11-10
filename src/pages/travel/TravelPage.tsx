@@ -15,7 +15,6 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
-import Link from '@mui/material/Link'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Tooltip from '@mui/material/Tooltip'
@@ -230,15 +229,6 @@ export default function TravelPage() {
             )}
           </>
         )}
-
-        <Link
-          component={RouterLink}
-          to="/travel/recommended"
-          variant="body2"
-          color="text.secondary"
-        >
-          {t('travel.browseRecommended')}
-        </Link>
 
         <Footer />
       </Paper>

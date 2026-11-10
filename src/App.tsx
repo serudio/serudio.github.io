@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
 import SiteHeader from "./components/SiteHeader";
+import PageChromeProvider from "./components/PageChromeProvider";
 import HomePage from "./pages/HomePage";
 import ConvertersIndexPage from "./pages/ConvertersIndexPage";
 import PrivacyPage from "./pages/PrivacyPage";
@@ -34,11 +34,13 @@ export default function App() {
         p: 2,
       }}
     >
-      <Container maxWidth="sm" disableGutters>
+      {/* The header reads its width and its back link from whichever
+          page is mounted, so it wraps the routes rather than sitting
+          beside them. */}
+      <PageChromeProvider>
         <SiteHeader />
-      </Container>
 
-      <Routes>
+        <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/converters" element={<ConvertersIndexPage />} />
         {converters.map(({ slug, titleKey, seoDescriptionKey, Page }) => (
@@ -112,7 +114,8 @@ export default function App() {
             </RequireAuth>
           }
         />
-      </Routes>
+        </Routes>
+      </PageChromeProvider>
     </Box>
   );
 }

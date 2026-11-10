@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink } from 'react-router-dom'
 import Accordion from '@mui/material/Accordion'
 import AccordionDetails from '@mui/material/AccordionDetails'
 import AccordionSummary from '@mui/material/AccordionSummary'
@@ -10,7 +9,6 @@ import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
 import Container from '@mui/material/Container'
 import InputAdornment from '@mui/material/InputAdornment'
-import Link from '@mui/material/Link'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemText from '@mui/material/ListItemText'
@@ -30,6 +28,7 @@ import {
   type RecommendedSet,
 } from '../../data/travel/recommended'
 import { addRecommendedSet, ensureTemplateTrip } from '../../lib/travel/db'
+import { useDeclarePageChrome } from '../../components/pageChrome'
 
 /**
  * The recommended catalogue: browsable by anyone, signed in or not.
@@ -44,6 +43,8 @@ export default function TravelRecommendedPage({
   currentTripId?: string | null
 }) {
   const { t } = useTranslation()
+
+  useDeclarePageChrome({ backTo: '/travel', backLabel: t('travel.backToTravel'), width: 'md' })
   const { session } = useAuth()
   const [query, setQuery] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
@@ -90,16 +91,6 @@ export default function TravelRecommendedPage({
         path="/travel/recommended"
       />
       <Paper elevation={0} sx={{ p: { xs: 2.5, sm: 3 } }}>
-        <Link
-          component={RouterLink}
-          to="/travel"
-          variant="body2"
-          color="text.secondary"
-          sx={{ display: 'inline-block', mb: 2 }}
-        >
-          &larr; {t('travel.backToTravel')}
-        </Link>
-
         <Typography variant="h5" component="h1" sx={{ mb: 1 }}>
           {t('travel.recommendedTitle')}
         </Typography>

@@ -1,9 +1,8 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link as RouterLink, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
-import Link from '@mui/material/Link'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import Seo from '../../components/Seo'
@@ -11,6 +10,7 @@ import Footer from '../../components/Footer'
 import QuoteCard from '../../components/quotes/QuoteCard'
 import { RESTRICTED_SLUGS } from '../../data/quoteCategories'
 import { useQuotes } from '../../hooks/useQuotes'
+import { useDeclarePageChrome } from '../../components/pageChrome'
 
 /**
  * A single quote's permalink.
@@ -23,6 +23,8 @@ import { useQuotes } from '../../hooks/useQuotes'
  */
 export default function QuotePage() {
   const { t } = useTranslation()
+
+  useDeclarePageChrome({ backTo: '/quotes', backLabel: t('quotes.allQuotes') })
   const { slug } = useParams<{ slug: string }>()
   const { quotes, loading } = useQuotes()
 
@@ -43,16 +45,6 @@ export default function QuotePage() {
         noIndex={restricted || !quote}
       />
       <Paper elevation={0} sx={{ p: { xs: 3, sm: 4 } }}>
-        <Link
-          component={RouterLink}
-          to="/quotes"
-          variant="body2"
-          color="text.secondary"
-          sx={{ display: 'inline-block', mb: 3 }}
-        >
-          &larr; {t('quotes.allQuotes')}
-        </Link>
-
         {quote ? (
           <Box component="figure" sx={{ m: 0 }}>
             <QuoteCard quote={quote} />
