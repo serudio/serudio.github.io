@@ -8,7 +8,10 @@
     "converters": "Converters"
   },
   "home": {
-    "tagline": "Personal projects and small tools"
+    "tagline": "Personal projects and small tools",
+    "searchPlaceholder": "Search",
+    "mostUsed": "Most used",
+    "noMatches": "Nothing matches “{{query}}”."
   },
   "projects": {
     "heading": "My projects",
@@ -61,6 +64,7 @@
   },
   "quotes": {
     "title": "Quotes",
+    "randomLink": "Random quote",
     "seoDescription": "A collection of quotes in Ukrainian and English — a random one each time you open the page.",
     "another": "Another one",
     "permalink": "Link to this quote",
