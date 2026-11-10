@@ -179,7 +179,8 @@
     "searchItems": "Search this list",
     "everyone": "Everyone",
     "whose": "Belongs to",
-    "nobody": "No one"
+    "nobody": "No one",
+    "keepThisInDefault": "Keep this in the default list"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",

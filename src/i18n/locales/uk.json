@@ -185,7 +185,8 @@
     "searchItems": "Пошук у списку",
     "everyone": "Усі",
     "whose": "Чий розділ",
-    "nobody": "Нічий"
+    "nobody": "Нічий",
+    "keepThisInDefault": "Зберегти це у списку за замовчуванням"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",

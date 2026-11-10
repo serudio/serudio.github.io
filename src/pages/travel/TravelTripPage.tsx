@@ -375,6 +375,20 @@ export default function TravelTripPage() {
     )
   }
 
+  /** Item ids the default list has never seen, for the per-row action. */
+  const newToDefaultIds = useMemo(
+    () => new Set([...newToDefault.values()].flat().map((item) => item.id)),
+    [newToDefault],
+  )
+
+  /** Copies one item up into the default list, leaving the trip's alone. */
+  const keepOne = (item: TravelItem) => {
+    if (!templateId || !item.categoryId) return
+    void run(() =>
+      addItems(templateId, [{ text: item.text, categoryId: item.categoryId }]),
+    )
+  }
+
   const packed = items.filter((item) => item.packed).length
   const progress = items.length > 0 ? Math.round((packed / items.length) * 100) : 0
 
@@ -796,6 +810,18 @@ export default function TravelTripPage() {
                   >
                     {item.text}
                   </Typography>
+                )}
+                {newToDefaultIds.has(item.id) && (
+                  <Tooltip title={t('travel.keepThisInDefault')}>
+                    <IconButton
+                      size="small"
+                      sx={{ p: 0.5 }}
+                      aria-label={t('travel.keepThisInDefault')}
+                      onClick={() => keepOne(item)}
+                    >
+                      <BookmarkAddOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                 )}
                 <IconButton
                   size="small"
