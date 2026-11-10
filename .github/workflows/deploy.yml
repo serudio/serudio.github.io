@@ -27,6 +27,14 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+        env:
+          # Public values (the anon key ships in the bundle either way —
+          # row-level security is what protects the data), so they live in
+          # repo Variables rather than Secrets. Without them the site still
+          # builds, but /books/ falls back to its bundled snapshot and
+          # sign-in is unavailable.
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
 
       # SPA fallback so a direct/refreshed load of e.g. /privacy is served
       # by GitHub Pages' 404.html and then rendered by React Router.

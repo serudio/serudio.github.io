@@ -94,6 +94,61 @@ domain move.
   per locale (e.g. `/en/...`) with hreflang tags — a real routing/SEO
   project, not a small addition; flag it before starting.
 
+## Auth and Supabase
+
+- One Supabase project backs everything here. `src/lib/supabase.ts`
+  creates a **single** client — don't create a second one anywhere; two
+  clients race each other refreshing the same token.
+- Sign-in is Google OAuth via Supabase. The session lives in
+  `localStorage` under a key derived from the project ref, so **every
+  page on this origin shares one sign-in automatically**. That is what
+  makes auth work across projects in this repo with no extra plumbing —
+  and why a new project needs no auth code of its own.
+- `<AuthProvider>` (mounted above the router in `main.tsx`) owns the
+  session; read it with `useAuth()`. Gate a route with `<RequireAuth>`
+  for any signed-in visitor, or `<RequireAuth admin>` for the owner.
+  Unauthenticated visitors are sent to `/signin`, which returns them to
+  the page they wanted (`src/auth/returnTo.ts` survives the OAuth round
+  trip, because Google always redirects back to the site root).
+- **Guards are UX, not security.** This is a client-side app: anyone can
+  edit the JS or call the API directly. Anything that must be protected
+  has to be enforced by row-level security in Postgres as well — see
+  `supabase/migrations/0003_admin_write_access.sql`, which checks the
+  email on the signed JWT.
+- Admin addresses live in `src/config/auth.ts` **and** in that migration.
+  Changing who is an admin means changing both.
+- Env vars: `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (public — they
+  ship in the bundle; set as repo *Variables*, not Secrets) and
+  `SUPABASE_DB_URL` (local only, for migrations). See `.env.example`.
+- Migrations: `npm run db:migrate` applies everything in
+  `supabase/migrations/` and records it in `schema_migrations`. **CI
+  never runs migrations** — the deploy workflow only builds. Apply a
+  migration locally *before* pushing code that depends on it.
+- Since 2026-10-30 Supabase no longer grants Data API access to new
+  tables automatically: every new table needs explicit `grant` statements
+  in the migration that creates it (see `0008_explicit_api_grants.sql`).
+- The free-tier project pauses after 7 idle days, which takes the data
+  offline. `.github/workflows/keepalive.yml` reads one row every third
+  day to prevent that, and fails loudly if the project is already down.
+
+## Book Rent (/books/)
+
+- Catalogue at `/books/`, owner-only admin at `/books/admin`.
+- **The trailing slash is load-bearing.** This app used to be its own
+  repo, and Google indexed `https://serudio.github.io/books/`. That is
+  why `scripts/generate-route-pages.ts` writes `books/index.html` instead
+  of the `books.html` it writes for every other route — see the comment
+  on that entry. Don't "fix" it to match the others.
+- `src/data/books.ts` holds a snapshot of the catalogue, shown when
+  Supabase is unreachable. Refresh it with `npm run fallback:sync` after
+  the real catalogue changes noticeably; it refuses to write an empty
+  list.
+- A book with no price/pledge of its own inherits the standard rate from
+  `src/data/booksPricing.ts`, so only exceptions need filling in. A
+  deliberate `0` is still honoured as free.
+- Deleting a book sets `deleted_at` rather than dropping the row; the
+  read policy hides trashed books from everyone but the admin.
+
 ## Domain
 
 - Currently deployed at the default GitHub Pages user domain:
