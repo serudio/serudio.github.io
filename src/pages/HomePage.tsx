@@ -17,7 +17,7 @@ import {
   GROUP_HEADING_KEYS,
   HOME_LINK_GROUPS,
   findHomeLink,
-  homeLinks,
+  homePageLinks,
   type HomeLink,
 } from '../data/homeLinks'
 import { localUsageStore } from '../lib/usage'
@@ -79,8 +79,8 @@ export default function HomePage() {
   // language the visitor is reading.
   const matches = useMemo(() => {
     const needle = query.trim().toLowerCase()
-    if (!needle) return homeLinks
-    return homeLinks.filter((link) => t(link.labelKey).toLowerCase().includes(needle))
+    if (!needle) return homePageLinks
+    return homePageLinks.filter((link) => t(link.labelKey).toLowerCase().includes(needle))
   }, [query, t])
 
   const mostUsed = useMemo(
@@ -89,7 +89,9 @@ export default function HomePage() {
         ? []
         : mostUsedIds
             .map(findHomeLink)
-            .filter((link): link is HomeLink => link !== undefined),
+            // navOnly too: a link kept off this page should not come
+            // back through the shortcuts because it was used before.
+            .filter((link): link is HomeLink => link !== undefined && !link.navOnly),
     [mostUsedIds, query],
   )
 

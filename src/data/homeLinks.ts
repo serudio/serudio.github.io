@@ -22,6 +22,14 @@ export interface HomeLink {
   to?: string
   /** External URL, opened in a new tab. */
   href?: string
+  /**
+   * In the navigation menu but not on the home page.
+   *
+   * The home page is the front door and reads best when each group
+   * answers one question; the menu is the full index and can afford the
+   * rest.
+   */
+  navOnly?: boolean
 }
 
 export const HOME_LINK_GROUPS: HomeLinkGroup[] = [
@@ -64,14 +72,17 @@ const converterLinks: HomeLink[] = [
 ]
 
 const travelLinks: HomeLink[] = [
-  // The packing list needs an account; the recommended catalogue does
-  // not, so both are offered and RequireAuth sorts out the first.
+  // The packing list needs an account; RequireAuth sorts that out.
   { id: 'travel.index', labelKey: 'travel.myTrips', group: 'travel', to: '/travel' },
   {
+    // Kept out of the home page: it is where you go from a trip, not
+    // somewhere to start. /travel offers it, and so does a trip's own
+    // bar.
     id: 'travel.recommended',
     labelKey: 'travel.recommendedTitle',
     group: 'travel',
     to: '/travel/recommended',
+    navOnly: true,
   },
 ]
 
@@ -80,12 +91,16 @@ const quoteLinks: HomeLink[] = [
   { id: 'quotes.index', labelKey: 'quotes.randomLink', group: 'quotes', to: '/quotes' },
 ]
 
+/** Everything, for the navigation menu. */
 export const homeLinks: HomeLink[] = [
   ...projectLinks,
   ...converterLinks,
   ...travelLinks,
   ...quoteLinks,
 ]
+
+/** What the home page shows: everything the menu has, less the detours. */
+export const homePageLinks: HomeLink[] = homeLinks.filter((link) => !link.navOnly)
 
 export function findHomeLink(id: string): HomeLink | undefined {
   return homeLinks.find((link) => link.id === id)
