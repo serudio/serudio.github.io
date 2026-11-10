@@ -19,13 +19,8 @@ export interface TravelCategory {
   id: string
   name: string
   color: string | null
-  sortOrder: number
-}
-
-export interface TravelPerson {
-  id: string
-  name: string
-  color: string | null
+  /** A section naming someone rather than a kind of thing. */
+  isPerson: boolean
   sortOrder: number
 }
 
@@ -43,7 +38,6 @@ export interface TravelItem {
   id: string
   tripId: string
   categoryId: string | null
-  personId: string | null
   text: string
   packed: boolean
   sortOrder: number
@@ -141,7 +135,7 @@ export async function deleteTrip(id: string) {
 export async function getCategories(): Promise<TravelCategory[]> {
   const { data, error } = await client()
     .from('travel_categories')
-    .select('id, name, color, sort_order')
+    .select('id, name, color, is_person, sort_order')
     .order('sort_order', { ascending: true })
     .abortSignal(signal())
   if (error) throw error
@@ -150,6 +144,7 @@ export async function getCategories(): Promise<TravelCategory[]> {
     id: row.id as string,
     name: row.name as string,
     color: row.color as string | null,
+    isPerson: (row.is_person as boolean) ?? false,
     sortOrder: row.sort_order as number,
   }))
 }
@@ -157,6 +152,7 @@ export async function getCategories(): Promise<TravelCategory[]> {
 export async function createCategory(input: {
   name: string
   color?: string | null
+  isPerson?: boolean
   sortOrder?: number
 }): Promise<string> {
   const { data, error } = await client()
@@ -165,6 +161,7 @@ export async function createCategory(input: {
       user_id: await currentUserId(),
       name: input.name.trim(),
       color: input.color ?? null,
+      is_person: input.isPerson ?? false,
       sort_order: input.sortOrder ?? 0,
     })
     .select('id')
@@ -173,10 +170,14 @@ export async function createCategory(input: {
   return data.id as string
 }
 
-export async function updateCategory(id: string, input: { name?: string; color?: string | null }) {
+export async function updateCategory(
+  id: string,
+  input: { name?: string; color?: string | null; isPerson?: boolean },
+) {
   const patch: Record<string, unknown> = {}
   if (input.name !== undefined) patch.name = input.name.trim()
   if (input.color !== undefined) patch.color = input.color
+  if (input.isPerson !== undefined) patch.is_person = input.isPerson
   const { error } = await client().from('travel_categories').update(patch).eq('id', id)
   if (error) throw error
 }
@@ -192,52 +193,12 @@ export async function deleteCategory(id: string) {
   if (error) throw error
 }
 
-export async function getPeople(): Promise<TravelPerson[]> {
-  const { data, error } = await client()
-    .from('travel_people')
-    .select('id, name, color, sort_order')
-    .order('sort_order', { ascending: true })
-    .abortSignal(signal())
-  if (error) throw error
-
-  return (data ?? []).map((row) => ({
-    id: row.id as string,
-    name: row.name as string,
-    color: row.color as string | null,
-    sortOrder: row.sort_order as number,
-  }))
-}
-
-export async function createPerson(input: { name: string; color?: string | null }) {
-  const { error } = await client()
-    .from('travel_people')
-    .insert({
-      user_id: await currentUserId(),
-      name: input.name.trim(),
-      color: input.color ?? null,
-    })
-  if (error) throw error
-}
-
-export async function updatePerson(id: string, input: { name?: string; color?: string | null }) {
-  const patch: Record<string, unknown> = {}
-  if (input.name !== undefined) patch.name = input.name.trim()
-  if (input.color !== undefined) patch.color = input.color
-  const { error } = await client().from('travel_people').update(patch).eq('id', id)
-  if (error) throw error
-}
-
-export async function deletePerson(id: string) {
-  const { error } = await client().from('travel_people').delete().eq('id', id)
-  if (error) throw error
-}
-
 /* ------------------------------------------------------------ items/notes */
 
 export async function getItems(tripId: string): Promise<TravelItem[]> {
   const { data, error } = await client()
     .from('travel_items')
-    .select('id, trip_id, category_id, person_id, text, packed, sort_order')
+    .select('id, trip_id, category_id, text, packed, sort_order')
     .eq('trip_id', tripId)
     .order('sort_order', { ascending: true })
     .abortSignal(signal())
@@ -247,7 +208,6 @@ export async function getItems(tripId: string): Promise<TravelItem[]> {
     id: row.id as string,
     tripId: row.trip_id as string,
     categoryId: row.category_id as string | null,
-    personId: row.person_id as string | null,
     text: row.text as string,
     packed: row.packed as boolean,
     sortOrder: row.sort_order as number,
@@ -256,7 +216,7 @@ export async function getItems(tripId: string): Promise<TravelItem[]> {
 
 export async function addItems(
   tripId: string,
-  items: { text: string; categoryId?: string | null; personId?: string | null }[],
+  items: { text: string; categoryId?: string | null }[],
 ) {
   if (items.length === 0) return
 
@@ -264,7 +224,6 @@ export async function addItems(
     items.map((item, index) => ({
       trip_id: tripId,
       category_id: item.categoryId ?? null,
-      person_id: item.personId ?? null,
       text: item.text.trim(),
       sort_order: index,
     })),
@@ -274,13 +233,12 @@ export async function addItems(
 
 export async function updateItem(
   id: string,
-  input: { text?: string; packed?: boolean; categoryId?: string | null; personId?: string | null },
+  input: { text?: string; packed?: boolean; categoryId?: string | null },
 ) {
   const patch: Record<string, unknown> = {}
   if (input.text !== undefined) patch.text = input.text.trim()
   if (input.packed !== undefined) patch.packed = input.packed
   if (input.categoryId !== undefined) patch.category_id = input.categoryId
-  if (input.personId !== undefined) patch.person_id = input.personId
 
   const { error } = await client().from('travel_items').update(patch).eq('id', id)
   if (error) throw error
@@ -427,6 +385,7 @@ export async function ensureTemplateTrip(): Promise<string> {
         id: categoryId,
         name: group.name,
         color: group.color,
+        isPerson: false,
         sortOrder: categories.length,
       })
     }
@@ -460,7 +419,6 @@ export async function createTripFromTemplate(input: {
     items.map((item) => ({
       text: item.text,
       categoryId: item.categoryId,
-      personId: item.personId,
     })),
   )
   await addNotes(tripId, notes.map((note) => note.text))

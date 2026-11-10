@@ -168,7 +168,10 @@
     "save": "Save",
     "keepInDefault_one": "Keep {{count}} item in default list",
     "keepInDefault_other": "Keep {{count}} items in default list",
-    "hideDone": "Hide done"
+    "hideDone": "Hide done",
+    "markPerson": "Mark as a person",
+    "unmarkPerson": "Not a person",
+    "dismissSection": "Hide empty section"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",

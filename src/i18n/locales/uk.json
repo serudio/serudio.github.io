@@ -172,7 +172,10 @@
     "keepInDefault_few": "Зберегти {{count}} речі у списку за замовчуванням",
     "keepInDefault_many": "Зберегти {{count}} речей у списку за замовчуванням",
     "keepInDefault_other": "Зберегти {{count}} речей у списку за замовчуванням",
-    "hideDone": "Сховати зібране"
+    "hideDone": "Сховати зібране",
+    "markPerson": "Позначити як людину",
+    "unmarkPerson": "Не людина",
+    "dismissSection": "Сховати порожній розділ"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",

@@ -26,6 +26,8 @@ import PaletteIcon from '@mui/icons-material/Palette'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import BookmarkAddOutlinedIcon from '@mui/icons-material/BookmarkAddOutlined'
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline'
+import CloseIcon from '@mui/icons-material/Close'
 import Collapse from '@mui/material/Collapse'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Switch from '@mui/material/Switch'
@@ -146,6 +148,12 @@ export default function TravelTripPage() {
   // fought on every render.
   const autoOpened = useRef(false)
 
+  // Sections emptied just now. Deleting the last item used to make the
+  // whole section disappear, taking the add field with it — so there
+  // was no way back if the deletion was a mistake. They stay until
+  // dismissed, or until the page is loaded afresh.
+  const [emptied, setEmptied] = useState<string[]>([])
+
   // Naming a trip is optional and after the fact: creating one asks
   // nothing, so the details are edited here once there is something to
   // name.
@@ -234,7 +242,7 @@ export default function TravelTripPage() {
           done: all.length > 0 && all.every((item) => item.packed),
         }
       })
-      .filter((section) => section.entries.length > 0)
+      .filter((section) => section.entries.length > 0 || emptied.includes(section.category.id))
       // A packed section is finished business: out of the way of the
       // ones still being worked through, and folded shut.
       .sort((a, b) => Number(a.done) - Number(b.done))
@@ -245,7 +253,7 @@ export default function TravelTripPage() {
       (item) => item.packed,
     )
     return { used, loose }
-  }, [categories, items, hideDone])
+  }, [categories, items, hideDone, emptied])
 
   /**
    * Per section, the items this trip has that the default list does not.
@@ -533,12 +541,29 @@ export default function TravelTripPage() {
                   )}
                 </IconButton>
               )}
+              {category.isPerson && (
+                <PersonOutlineIcon fontSize="small" sx={{ color: color, flexShrink: 0 }} />
+              )}
               <Typography
                 variant="subtitle2"
                 sx={{ flexGrow: 1, opacity: done ? 0.7 : 1 }}
               >
                 {category.name}
               </Typography>
+              {entries.length === 0 && (
+                <Tooltip title={t('travel.dismissSection')}>
+                  <IconButton
+                    size="small"
+                    sx={{ p: 0.25 }}
+                    aria-label={t('travel.dismissSection')}
+                    onClick={() =>
+                      setEmptied((rows) => rows.filter((id) => id !== category.id))
+                    }
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
               <Chip
                 size="small"
                 variant="outlined"
@@ -590,8 +615,20 @@ export default function TravelTripPage() {
                   sx={{ p: 0.5 }}
                   onClick={() =>
                     optimistic(
-                      () =>
-                        setItems((previous) => previous.filter((row) => row.id !== item.id)),
+                      () => {
+                        setItems((previous) => {
+                          const next = previous.filter((row) => row.id !== item.id)
+                          const last = !next.some(
+                            (row) => row.categoryId === item.categoryId,
+                          )
+                          if (last && item.categoryId) {
+                            setEmptied((rows) =>
+                              rows.includes(item.categoryId!) ? rows : [...rows, item.categoryId!],
+                            )
+                          }
+                          return next
+                        })
+                      },
                       () => deleteItem(item.id),
                     )
                   }
@@ -818,6 +855,23 @@ export default function TravelTripPage() {
             })}
           </MenuItem>
         )}
+
+        <MenuItem
+          onClick={() => {
+            const category = categories.find((row) => row.id === menu?.categoryId)
+            setMenu(null)
+            if (category) {
+              void run(() => updateCategory(category.id, { isPerson: !category.isPerson }))
+            }
+          }}
+        >
+          <PersonOutlineIcon fontSize="small" sx={{ mr: 1 }} />
+          {t(
+            categories.find((row) => row.id === menu?.categoryId)?.isPerson
+              ? 'travel.unmarkPerson'
+              : 'travel.markPerson',
+          )}
+        </MenuItem>
 
         <MenuItem
           onClick={() => {
