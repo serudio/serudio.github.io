@@ -53,12 +53,8 @@ const projectLinks: HomeLink[] = projects.map((project) => ({
 }))
 
 const converterLinks: HomeLink[] = [
-  {
-    id: 'converters.index',
-    labelKey: 'converters.viewAll',
-    group: 'converters',
-    to: '/converters',
-  },
+  // No "view all" entry: every converter is listed here already, and the
+  // index itself is in the header nav.
   ...converters.map((converter) => ({
     id: `converters.${converter.slug}`,
     labelKey: converter.nameKey,

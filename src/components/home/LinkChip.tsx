@@ -30,9 +30,9 @@ export default function LinkChip({
     onClick: () => onOpen(link.id),
     sx: {
       maxWidth: '100%',
-      // A touch of tracking stops the short labels reading as cramped
-      // at this size, and keeps every chip metrically alike.
-      '& .MuiChip-label': { letterSpacing: '0.015em' },
+      // Lowercase with wide tracking: set in px rather than em so the
+      // spacing stays put regardless of the chip's font size.
+      '& .MuiChip-label': { textTransform: 'lowercase', letterSpacing: '1.25px' },
     },
   }
 

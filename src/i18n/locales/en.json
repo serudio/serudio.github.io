@@ -11,7 +11,8 @@
     "tagline": "Personal projects and small tools",
     "searchPlaceholder": "Search",
     "mostUsed": "Most used",
-    "noMatches": "Nothing matches “{{query}}”."
+    "noMatches": "Nothing matches “{{query}}”.",
+    "signInHint": "For your travel lists and other private pages."
   },
   "projects": {
     "heading": "My projects",

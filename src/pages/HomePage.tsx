@@ -8,6 +8,8 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import SearchIcon from '@mui/icons-material/Search'
+import LoginIcon from '@mui/icons-material/Login'
+import Button from '@mui/material/Button'
 import Seo from '../components/Seo'
 import Footer from '../components/Footer'
 import LinkChip from '../components/home/LinkChip'
@@ -19,6 +21,7 @@ import {
   type HomeLink,
 } from '../data/homeLinks'
 import { localUsageStore } from '../lib/usage'
+import { useAuth } from '../auth/useAuth'
 
 /** How many shortcuts the "most used" row offers before it stops helping. */
 const MOST_USED_LIMIT = 5
@@ -61,6 +64,7 @@ function ChipRow({ links, onOpen }: { links: HomeLink[]; onOpen: (id: string) =>
  */
 export default function HomePage() {
   const { t } = useTranslation()
+  const { session, loading: authLoading, configured, signIn } = useAuth()
   const [query, setQuery] = useState('')
 
   // Read once per mount: the counts only change when a link is opened,
@@ -109,6 +113,22 @@ export default function HomePage() {
           }}
           sx={{ mb: 3 }}
         />
+
+        {configured && !authLoading && !session && (
+          <Box sx={{ mb: 3 }}>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<LoginIcon fontSize="small" />}
+              onClick={() => void signIn('/')}
+            >
+              {t('auth.signInTitle')}
+            </Button>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.75 }}>
+              {t('home.signInHint')}
+            </Typography>
+          </Box>
+        )}
 
         {mostUsed.length > 0 && (
           <Box sx={{ mb: 3 }}>
