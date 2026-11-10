@@ -182,6 +182,9 @@ export default function TravelTripPage() {
   // The item being renamed, and the text so far. Editing in place beats
   // a dialog for a one-line change.
   const [editingItem, setEditingItem] = useState<{ id: string; text: string } | null>(null)
+  const [editingSection, setEditingSection] = useState<{ id: string; name: string } | null>(
+    null,
+  )
 
   // Naming a trip is optional and after the fact: creating one asks
   // nothing, so the details are edited here once there is something to
@@ -422,6 +425,25 @@ export default function TravelTripPage() {
   }
 
   /** Commits a rename, or quietly drops it if nothing changed. */
+  /** Commits a section rename, or quietly drops it if nothing changed. */
+  const commitSectionEdit = () => {
+    if (!editingSection) return
+    const { id, name } = editingSection
+    const original = categories.find((row) => row.id === id)
+    setEditingSection(null)
+
+    const trimmed = name.trim()
+    if (!trimmed || !original || trimmed === original.name) return
+
+    optimistic(
+      () =>
+        setCategories((previous) =>
+          previous.map((row) => (row.id === id ? { ...row, name: trimmed } : row)),
+        ),
+      () => updateCategory(id, { name: trimmed }),
+    )
+  }
+
   const commitItemEdit = () => {
     if (!editingItem) return
     const { id, text } = editingItem
@@ -475,32 +497,30 @@ export default function TravelTripPage() {
   }
 
   /**
-   * Sections the default list has that this trip has no trace of.
-   * missingFromTrip only reaches sections already on the page, because
-   * a section with no items here does not render — so a whole section
-   * dropped from a trip, or added to the default since, had nowhere to
-   * come back from.
+   * What "From default" can still add, per section.
+   *
+   * Built from missingFromTrip, so it covers both cases at once: a
+   * section the trip never had comes with all its items, and one it
+   * already has comes with only the items it is short of. It used to
+   * list whole-section gaps alone, which meant the control vanished as
+   * soon as every section existed here — exactly when topping one up is
+   * what you want.
+   *
+   * A section with nothing missing is left out: an entry that would add
+   * nothing is worse than no entry.
    */
-  const defaultOnlySections = useMemo(() => {
-    if (!templateId) return []
-
-    const here = new Set(items.map((item) => item.categoryId).filter(Boolean))
-    const grouped = new Map<string, TravelItem[]>()
-
-    for (const item of templateItems) {
-      if (!item.categoryId || here.has(item.categoryId)) continue
-      grouped.set(item.categoryId, [...(grouped.get(item.categoryId) ?? []), item])
-    }
-
-    return [...grouped.entries()]
-      .map(([categoryId, rows]) => ({
-        category: categories.find((row) => row.id === categoryId),
-        rows,
-      }))
-      .filter((entry): entry is { category: TravelCategory; rows: TravelItem[] } =>
-        entry.category !== undefined,
-      )
-  }, [templateId, templateItems, items, categories])
+  const defaultOnlySections = useMemo(
+    () =>
+      [...missingFromTrip.entries()]
+        .map(([categoryId, rows]) => ({
+          category: categories.find((row) => row.id === categoryId),
+          rows,
+        }))
+        .filter((entry): entry is { category: TravelCategory; rows: TravelItem[] } =>
+          entry.category !== undefined,
+        ),
+    [missingFromTrip, categories],
+  )
 
   const [addSectionMenu, setAddSectionMenu] = useState<HTMLElement | null>(null)
   const [confirmRemove, setConfirmRemove] = useState<TravelCategory | null>(null)
@@ -1047,17 +1067,48 @@ export default function TravelTripPage() {
               {category.isPerson && (
                 <PersonOutlineIcon fontSize="small" sx={{ color: color, flexShrink: 0 }} />
               )}
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  flexGrow: 1,
-                  opacity: done ? 0.7 : 1,
-                  textTransform: 'uppercase',
-                  letterSpacing: '1.1px',
-                }}
-              >
-                {category.name}
-              </Typography>
+              {editingSection?.id === category.id ? (
+                <TextField
+                  size="small"
+                  variant="standard"
+                  autoFocus
+                  fullWidth
+                  value={editingSection.name}
+                  // The header folds the section when clicked; this is a
+                  // control sitting inside it.
+                  onClick={(event) => event.stopPropagation()}
+                  onChange={(event) =>
+                    setEditingSection({ id: category.id, name: event.target.value })
+                  }
+                  onBlur={commitSectionEdit}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') commitSectionEdit()
+                    // Escape abandons the change; blur would otherwise
+                    // commit it on the way out.
+                    if (event.key === 'Escape') setEditingSection(null)
+                  }}
+                  sx={{ flexGrow: 1 }}
+                />
+              ) : (
+                <Typography
+                  variant="subtitle2"
+                  // Renaming works the way items do: click the words.
+                  // The chevron and the rest of the row still fold it.
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    setEditingSection({ id: category.id, name: category.name })
+                  }}
+                  sx={{
+                    flexGrow: 1,
+                    cursor: 'text',
+                    opacity: done ? 0.7 : 1,
+                    textTransform: 'uppercase',
+                    letterSpacing: '1.1px',
+                  }}
+                >
+                  {category.name}
+                </Typography>
+              )}
               {category.personId && (
                 <Chip
                   size="small"
