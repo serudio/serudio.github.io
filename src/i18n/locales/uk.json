@@ -248,7 +248,8 @@
     "placeholder": "Введіть значення...",
     "unit": "US MPG",
     "resultUnit": "L/100 km",
-    "quickPicks": "Швидкий пошук (популярні MPG)"
+    "quickPicks": "Швидкий пошук (популярні MPG)",
+    "mostUsed": "Найчастіші"
   },
   "keyboardLayoutCalculator": {
     "inputPlaceholder": "Введіть текст, який перетворився на нісенітницю...",

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
@@ -20,7 +20,8 @@ import {
   homePageLinks,
   type HomeLink,
 } from '../data/homeLinks'
-import { localUsageStore } from '../lib/usage'
+import { useUsage } from '../lib/useUsage'
+import { USAGE_HOME } from '../lib/usage'
 import { useAuth } from '../auth/useAuth'
 
 /** How many shortcuts the "most used" row offers before it stops helping. */
@@ -67,13 +68,11 @@ export default function HomePage() {
   const { session, loading: authLoading, configured, signIn } = useAuth()
   const [query, setQuery] = useState('')
 
-  // Read once per mount: the counts only change when a link is opened,
-  // and that navigates away.
-  const [mostUsedIds] = useState(() =>
-    localUsageStore.top(MOST_USED_LIMIT).map((entry) => entry.id),
+  // Local when signed out, the account's when signed in.
+  const { top: mostUsedEntries, record: handleOpen } = useUsage(
+    USAGE_HOME,
+    MOST_USED_LIMIT,
   )
-
-  const handleOpen = useCallback((id: string) => localUsageStore.record(id), [])
 
   // Matching happens on the translated label so search works in whichever
   // language the visitor is reading.
@@ -87,12 +86,12 @@ export default function HomePage() {
     () =>
       query.trim()
         ? []
-        : mostUsedIds
-            .map(findHomeLink)
+        : mostUsedEntries
+            .map((entry) => findHomeLink(entry.id))
             // navOnly too: a link kept off this page should not come
             // back through the shortcuts because it was used before.
             .filter((link): link is HomeLink => link !== undefined && !link.navOnly),
-    [mostUsedIds, query],
+    [mostUsedEntries, query],
   )
 
   return (

@@ -242,7 +242,8 @@
     "placeholder": "Enter a value...",
     "unit": "US MPG",
     "resultUnit": "L/100 km",
-    "quickPicks": "Quick picks (popular MPG)"
+    "quickPicks": "Quick picks (popular MPG)",
+    "mostUsed": "Most used"
   },
   "keyboardLayoutCalculator": {
     "inputPlaceholder": "Type the text that turned into gibberish...",

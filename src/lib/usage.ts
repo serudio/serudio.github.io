@@ -1,15 +1,22 @@
 /**
- * How often each home-page link gets opened, so the most-used ones can
- * be offered as shortcuts.
+ * How often something gets used, so the most-used ones can be offered
+ * as shortcuts.
  *
- * Deliberately behind a tiny interface. Today the counts live in this
- * browser's localStorage, which means they do not follow the visitor
- * between devices and are lost when site data is cleared — acceptable
- * for a convenience shortcut. When there is shared auth across the site,
- * a Supabase-backed store implementing the same two methods drops in
- * here without touching any caller; signed-out visitors keep the local
- * one as the fallback.
+ * Two stores behind one interface. Signed out, the counts live in this
+ * browser's localStorage: they do not follow the visitor between
+ * devices and go when site data is cleared, which is acceptable for a
+ * convenience shortcut. Signed in, they live in usage_counters
+ * (migration 0018) and follow the account.
+ *
+ * `scope` keeps unrelated counters apart — the home page's links and
+ * the fuel calculator's figures are both "most used" and have nothing
+ * to say to each other.
+ *
+ * `top` is async because the remote store cannot be anything else. The
+ * local one resolves immediately rather than pretending to be slow.
  */
+
+import { supabase } from './supabase'
 
 export interface UsageEntry {
   id: string
@@ -19,11 +26,29 @@ export interface UsageEntry {
 }
 
 export interface UsageStore {
-  record(id: string): void
-  top(limit: number): UsageEntry[]
+  record(scope: string, id: string): void
+  top(scope: string, limit: number): Promise<UsageEntry[]>
 }
 
+/** Namespaces for `scope`, so a typo cannot silently split a counter. */
+export const USAGE_HOME = 'home'
+export const USAGE_FUEL = 'fuel'
+
 const STORAGE_KEY = 'serudio_usage'
+
+/**
+ * Entries were stored unscoped before there was more than one counter.
+ * They are read as the home page's, which is the only thing that was
+ * ever counted, so existing shortcuts survive.
+ */
+function scopedKey(scope: string, id: string): string {
+  return scope === USAGE_HOME ? id : `${scope}:${id}`
+}
+
+function inScope(scope: string, id: string): string | null {
+  if (scope === USAGE_HOME) return id.includes(':') ? null : id
+  return id.startsWith(`${scope}:`) ? id.slice(scope.length + 1) : null
+}
 
 /**
  * A link clicked once years ago should not outrank one clicked twice
@@ -67,18 +92,58 @@ function write(entries: Record<string, UsageEntry>): void {
 }
 
 export const localUsageStore: UsageStore = {
-  record(id) {
+  record(scope, id) {
+    const key = scopedKey(scope, id)
     const entries = read()
-    const previous = entries[id]
-    entries[id] = {
-      id,
-      count: (previous?.count ?? 0) + 1,
+    entries[key] = {
+      id: key,
+      count: (entries[key]?.count ?? 0) + 1,
       lastAt: Date.now(),
     }
     write(entries)
   },
 
-  top(limit) {
-    return Object.values(read()).sort(byUsefulness).slice(0, limit)
+  top(scope, limit) {
+    const entries = Object.values(read())
+      .map((entry) => ({ entry, id: inScope(scope, entry.id) }))
+      .filter((row): row is { entry: UsageEntry; id: string } => row.id !== null)
+      .map(({ entry, id }) => ({ ...entry, id }))
+      .sort(byUsefulness)
+      .slice(0, limit)
+    return Promise.resolve(entries)
+  },
+}
+
+/**
+ * The signed-in store. Counts live in usage_counters and follow the
+ * account between devices.
+ *
+ * Recording is fire-and-forget: a shortcut that fails to get more
+ * popular is not worth interrupting anyone over, and the caller is
+ * usually mid-click on something else.
+ */
+export const remoteUsageStore: UsageStore = {
+  record(scope, id) {
+    void supabase?.rpc('usage_record', { p_scope: scope, p_key: id })
+  },
+
+  async top(scope, limit) {
+    // A caller that only wants `record` asks for none; PostgREST has no
+    // sensible answer for limit 0, so do not ask it.
+    if (!supabase || limit <= 0) return []
+    const { data, error } = await supabase
+      .from('usage_counters')
+      .select('key, count, last_at')
+      .eq('scope', scope)
+      .order('count', { ascending: false })
+      .order('last_at', { ascending: false })
+      .limit(limit)
+    if (error) return []
+
+    return (data ?? []).map((row) => ({
+      id: row.key as string,
+      count: row.count as number,
+      lastAt: new Date(row.last_at as string).getTime(),
+    }))
   },
 }

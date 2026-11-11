@@ -11,7 +11,8 @@ import Typography from '@mui/material/Typography'
 import MenuIcon from '@mui/icons-material/Menu'
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined'
 import { GROUP_HEADING_KEYS, HOME_LINK_GROUPS, homeLinks } from '../data/homeLinks'
-import { localUsageStore } from '../lib/usage'
+import { useUsage } from '../lib/useUsage'
+import { USAGE_HOME } from '../lib/usage'
 
 /**
  * Everywhere you can go, from any page.
@@ -26,10 +27,13 @@ export default function NavMenu() {
   const location = useLocation()
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
 
+  // Only to count; the menu shows every link rather than a top few.
+  const { record } = useUsage(USAGE_HOME, 0)
+
   const close = () => setAnchor(null)
 
   const open = (id: string) => {
-    localUsageStore.record(id)
+    record(id)
     close()
   }
 
