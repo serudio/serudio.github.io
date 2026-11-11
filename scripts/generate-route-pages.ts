@@ -191,6 +191,15 @@ const pages: RoutePage[] = [
     noIndex: true,
   },
   {
+    // Only here so the URL answers 200 instead of falling through to a
+    // hard 404 when it is typed or bookmarked — the page itself is one
+    // account's private list, so there is nothing to index.
+    route: '/goals',
+    title: translate('goals.seoTitle'),
+    description: translate('goals.seoDescription'),
+    noIndex: true,
+  },
+  {
     route: '/quotes',
     title: translate('quotes.title'),
     description: translate('quotes.seoDescription'),

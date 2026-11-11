@@ -9,6 +9,7 @@ import PrivacyPage from "./pages/PrivacyPage";
 import SignInPage from "./pages/SignInPage";
 import BooksPage from "./pages/books/BooksPage";
 import QuotesPage from "./pages/quotes/QuotesPage";
+import GoalsPage from "./pages/goals/GoalsPage";
 import TravelPage from "./pages/travel/TravelPage";
 import TravelTripPage from "./pages/travel/TravelTripPage";
 import TravelRecommendedPage from "./pages/travel/TravelRecommendedPage";
@@ -95,6 +96,17 @@ export default function App() {
           element={
             <RequireAuth>
               <TravelTripPage />
+            </RequireAuth>
+          }
+        />
+        {/* Goals are the account's own, like a packing list: behind
+            RequireAuth here, and scoped to auth.uid() in the database
+            (migration 0019), which is the half that actually holds. */}
+        <Route
+          path="/goals"
+          element={
+            <RequireAuth>
+              <GoalsPage />
             </RequireAuth>
           }
         />
