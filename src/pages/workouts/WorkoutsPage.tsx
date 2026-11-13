@@ -68,6 +68,10 @@ const yearOf = (date: string) => Number(date.slice(0, 4))
 
 const VIEW_KEY = 'serudio_workouts_view'
 
+/** The counts a set almost always comes in, offered rather than typed. */
+const REP_PRESETS = [10, 15, 20, 30]
+const SET_COUNTS = [1, 2, 3, 4]
+
 interface View {
   /** Days with nothing on them are dropped from the grid. */
   hideEmpty: boolean
@@ -466,19 +470,43 @@ export default function WorkoutsPage() {
               type="number"
               value={reps}
               label={t('workouts.reps')}
-              sx={{ width: 100 }}
+              sx={{ width: 92 }}
               onChange={(event) => setReps(event.target.value)}
               onKeyDown={(event) => event.key === 'Enter' && void handleQuickAdd()}
             />
-            <TextField
-              size="small"
-              type="number"
-              value={count}
-              label={t('workouts.sets')}
-              sx={{ width: 90 }}
-              onChange={(event) => setCount(event.target.value)}
-              onKeyDown={(event) => event.key === 'Enter' && void handleQuickAdd()}
-            />
+            {/* The usual counts, beside the field rather than instead of
+                it: 12 and 17 happen, and typing them must stay as easy
+                as it was. */}
+            <Stack direction="row" sx={{ gap: 0.5 }}>
+              {REP_PRESETS.map((value) => (
+                <Chip
+                  key={value}
+                  size="small"
+                  label={value}
+                  variant={reps === String(value) ? 'filled' : 'outlined'}
+                  color={reps === String(value) ? 'primary' : 'default'}
+                  onClick={() => setReps(String(value))}
+                />
+              ))}
+            </Stack>
+
+            <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+              {t('workouts.sets')}
+            </Typography>
+            {/* Nobody does seven sets off the bar, so this is a choice
+                of four rather than a number to type. */}
+            <Stack direction="row" sx={{ gap: 0.5 }}>
+              {SET_COUNTS.map((value) => (
+                <Chip
+                  key={value}
+                  size="small"
+                  label={value}
+                  variant={count === String(value) ? 'filled' : 'outlined'}
+                  color={count === String(value) ? 'primary' : 'default'}
+                  onClick={() => setCount(String(value))}
+                />
+              ))}
+            </Stack>
             <Button
               size="small"
               variant="contained"
