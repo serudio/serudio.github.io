@@ -37,16 +37,20 @@ export interface YearGrid {
   width: Record<string, number>
 }
 
-/** Their sheet's base width, and a ceiling so one odd day cannot stretch the page. */
+/** The usual day, and a ceiling so one odd day cannot stretch the page. */
 const MIN_COLUMNS = 4
 const MAX_COLUMNS = 12
 
 /**
- * How wide each exercise's block of set columns is.
+ * How wide each exercise's block of set columns is: as many as were
+ * actually done that year, and never fewer than four.
  *
- * One more than the most sets actually done that year, so there is
- * always an empty cell to type the next set into — the thing that makes
- * a spreadsheet a spreadsheet rather than a report.
+ * There used to be a spare column past the last one used, so the next
+ * set always had somewhere to be typed. With four sets being the usual
+ * day that meant a fifth empty column on every exercise — seven of them
+ * across the page, carrying nothing, every day of the year. Adding a
+ * fifth set goes through the bar at the top instead, and the column it
+ * creates then stays for the rest of that year.
  */
 export function widthFor(sets: WorkoutSet[], exercises: Exercise[]): Record<string, number> {
   const used: Record<string, number> = {}
@@ -57,7 +61,7 @@ export function widthFor(sets: WorkoutSet[], exercises: Exercise[]): Record<stri
   const width: Record<string, number> = {}
   for (const exercise of exercises) {
     width[exercise.id] = Math.min(
-      Math.max((used[exercise.id] ?? 0) + 1, MIN_COLUMNS),
+      Math.max(used[exercise.id] ?? 0, MIN_COLUMNS),
       MAX_COLUMNS,
     )
   }
