@@ -47,6 +47,8 @@ export default function YearGrid({
   actions,
   scrollToToday = false,
   hideEmpty = false,
+  isMonthOpen,
+  onToggleMonth,
 }: {
   year: number
   exercises: Exercise[]
@@ -55,6 +57,8 @@ export default function YearGrid({
   actions: GridActions
   scrollToToday?: boolean
   hideEmpty?: boolean
+  isMonthOpen(year: number, month: number): boolean
+  onToggleMonth(year: number, month: number): void
 }) {
   const { t, i18n } = useTranslation()
   const locale = i18n.resolvedLanguage ?? i18n.language
@@ -72,6 +76,7 @@ export default function YearGrid({
       days: hideEmpty
         ? month.days.filter((row) => row.total > 0 || row.date === today)
         : month.days,
+      open: isMonthOpen(year, month.month),
     }))
     .filter((month) => month.days.length > 0)
 
@@ -101,7 +106,11 @@ export default function YearGrid({
       if (slot + 1 < width) setEditing({ day, exerciseId, slot: slot + 1 })
       return
     }
-    const days = visible.flatMap((month) => month.days.map((row) => row.date))
+    // Only what is on screen: Enter must not drop the cursor into a
+    // month that is folded shut.
+    const days = visible
+      .filter((month) => month.open)
+      .flatMap((month) => month.days.map((row) => row.date))
     const next = days[days.indexOf(day) + 1]
     if (next) setEditing({ day: next, exerciseId, slot })
   }
@@ -169,9 +178,13 @@ export default function YearGrid({
                     zIndex: 1,
                     textAlign: 'left',
                     textTransform: 'capitalize',
+                    cursor: 'pointer',
+                    userSelect: 'none',
                   }}
+                  onClick={() => onToggleMonth(year, month.month)}
+                  title={t(month.open ? 'workouts.collapse' : 'workouts.expand')}
                 >
-                  {formatMonth(year, month.month, locale)}
+                  {month.open ? '▾' : '▸'} {formatMonth(year, month.month, locale)}
                 </Box>
                 {exercises.map((exercise) => (
                   <Box component="td" key={exercise.id} colSpan={(grid.width[exercise.id] ?? 0) + 1} sx={totalCell}>
@@ -183,7 +196,7 @@ export default function YearGrid({
                 </Box>
               </Box>
 
-              {month.days.map((row) => (
+              {month.open && month.days.map((row) => (
                 <Box
                   component="tr"
                   key={row.date}

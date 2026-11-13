@@ -69,23 +69,33 @@ interface View {
   hideEmpty: boolean
   /** Exercises whose columns are not drawn, by id. */
   hidden: string[]
+  /**
+   * Months the reader has folded or unfolded by hand, "2026-10" -> open.
+   *
+   * Only the exceptions are kept. Everything else follows the rule
+   * below — the month in progress is open, the ones behind it are shut —
+   * so a stored choice never has to be rewritten as time passes.
+   */
+  months: Record<string, boolean>
 }
 
 function readView(): View {
   try {
     const raw = localStorage.getItem(VIEW_KEY)
-    if (!raw) return { hideEmpty: false, hidden: [] }
+    if (!raw) return { hideEmpty: false, hidden: [], months: {} }
     const parsed = JSON.parse(raw) as Partial<View>
     return {
       hideEmpty: parsed.hideEmpty === true,
       hidden: Array.isArray(parsed.hidden)
         ? parsed.hidden.filter((id) => typeof id === 'string')
         : [],
+      months:
+        parsed.months && typeof parsed.months === 'object' ? parsed.months : {},
     }
   } catch {
     // Private browsing or unparseable storage: show everything, which
     // is the harmless direction to fail in.
-    return { hideEmpty: false, hidden: [] }
+    return { hideEmpty: false, hidden: [], months: {} }
   }
 }
 
@@ -303,6 +313,27 @@ export default function WorkoutsPage() {
    */
   const shown = exercises.filter((exercise) => !view.hidden.includes(exercise.id))
 
+  const currentMonth = Number(today.slice(5, 7))
+  const monthKey = (year: number, month: number) => `${year}-${String(month).padStart(2, '0')}`
+
+  /**
+   * The month being trained in is open; everything behind it is folded.
+   *
+   * A year is twelve blocks of thirty rows, and eleven of them are
+   * finished business — the totals on the closed header say what
+   * happened in each, which is what a past month is consulted for.
+   */
+  const isMonthOpen = (year: number, month: number) => {
+    const stored = view.months[monthKey(year, month)]
+    if (stored !== undefined) return stored
+    return year === currentYear && month === currentMonth
+  }
+
+  const toggleMonth = (year: number, month: number) =>
+    updateView({
+      months: { ...view.months, [monthKey(year, month)]: !isMonthOpen(year, month) },
+    })
+
   const pastYears = totals.filter((row) => row.year !== currentYear)
 
   if (loading && !loaded) {
@@ -462,6 +493,8 @@ export default function WorkoutsPage() {
             actions={actions}
             scrollToToday={loaded}
             hideEmpty={view.hideEmpty}
+            isMonthOpen={isMonthOpen}
+            onToggleMonth={toggleMonth}
           />
         )}
 
@@ -489,6 +522,8 @@ export default function WorkoutsPage() {
                 today={today}
                 actions={actions}
                 hideEmpty={view.hideEmpty}
+                isMonthOpen={isMonthOpen}
+                onToggleMonth={toggleMonth}
               />
             )}
           </Box>

@@ -295,7 +295,9 @@
     "delete": "Delete",
     "deleteExerciseTitle": "Delete this exercise?",
     "deleteExerciseBody": "“{{name}}” will be deleted, along with every set recorded under it ({{count}}).",
-    "hideEmptyDays": "Hide empty days"
+    "hideEmptyDays": "Hide empty days",
+    "expand": "Expand",
+    "collapse": "Collapse"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",
