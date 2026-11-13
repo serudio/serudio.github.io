@@ -306,7 +306,9 @@
     "collapse": "Згорнути",
     "onlyThisWeek": "Лише цей тиждень",
     "export": "Експорт",
-    "exportHint": "Завантажити всю історію як таблицю (.xlsx)"
+    "exportHint": "Завантажити всю історію як таблицю (.xlsx)",
+    "fourColumns": "Лише 4 підходи",
+    "setsNotShown": "Ще {{count}} підходів поза таблицею — у сумі враховані"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",

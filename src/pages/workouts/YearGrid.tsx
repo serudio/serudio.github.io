@@ -47,6 +47,7 @@ export default function YearGrid({
   actions,
   hideEmpty = false,
   weekOnly = false,
+  columnCap,
   isMonthOpen,
   onToggleMonth,
 }: {
@@ -57,6 +58,8 @@ export default function YearGrid({
   actions: GridActions
   hideEmpty?: boolean
   weekOnly?: boolean
+  /** Draw at most this many set columns per exercise. */
+  columnCap?: number
   isMonthOpen(year: number, month: number): boolean
   onToggleMonth(year: number, month: number): void
 }) {
@@ -64,7 +67,7 @@ export default function YearGrid({
   const locale = i18n.resolvedLanguage ?? i18n.language
   const [editing, setEditing] = useState<Editing>(null)
 
-  const grid = buildYearGrid(sets, exercises, year, today)
+  const grid = buildYearGrid(sets, exercises, year, today, columnCap)
 
   // Today always stays, even with nothing on it: it is the row the next
   // set gets typed into, and hiding it would mean turning the filter
@@ -294,6 +297,11 @@ export default function YearGrid({
                             actions.openDayMenu(event.currentTarget, row.date, exercise.id)
                           }
                         }}
+                        title={
+                          (row.hidden[exercise.id] ?? 0) > 0
+                            ? t('workouts.setsNotShown', { count: row.hidden[exercise.id] })
+                            : undefined
+                        }
                         sx={{
                           ...totalCell,
                           cursor: (row.totals[exercise.id] ?? 0) > 0 ? 'pointer' : 'default',
@@ -301,6 +309,14 @@ export default function YearGrid({
                         }}
                       >
                         {row.totals[exercise.id] ?? 0}
+                        {/* The total counts sets with no column to sit
+                            in, so it says so rather than looking like
+                            arithmetic that does not work. */}
+                        {(row.hidden[exercise.id] ?? 0) > 0 && (
+                          <Box component="span" sx={{ color: 'warning.main' }}>
+                            {'\u00b7\u00b7'}
+                          </Box>
+                        )}
                       </Box>
                     </Fragment>
                   ))}

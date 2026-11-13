@@ -15,8 +15,16 @@ export interface DayRow {
   date: string
   /** Per exercise, the sets of that day indexed by the column they sit in. */
   slots: Record<string, (WorkoutSet | undefined)[]>
-  /** Per exercise, that day's reps. */
+  /** Per exercise, that day's reps — every set, drawn or not. */
   totals: Record<string, number>
+  /**
+   * Per exercise, how many of that day's sets have no cell to sit in.
+   *
+   * Only ever non-zero when the columns are capped. The total still
+   * counts them, so without this the row would show four cells of 20
+   * beside a total of 100 and read as a bug.
+   */
+  hidden: Record<string, number>
   /** Every exercise together. */
   total: number
 }
@@ -52,7 +60,11 @@ const MAX_COLUMNS = 12
  * fifth set goes through the bar at the top instead, and the column it
  * creates then stays for the rest of that year.
  */
-export function widthFor(sets: WorkoutSet[], exercises: Exercise[]): Record<string, number> {
+export function widthFor(
+  sets: WorkoutSet[],
+  exercises: Exercise[],
+  cap = MAX_COLUMNS,
+): Record<string, number> {
   const used: Record<string, number> = {}
   for (const set of sets) {
     used[set.exerciseId] = Math.max(used[set.exerciseId] ?? 0, set.slot + 1)
@@ -60,10 +72,7 @@ export function widthFor(sets: WorkoutSet[], exercises: Exercise[]): Record<stri
 
   const width: Record<string, number> = {}
   for (const exercise of exercises) {
-    width[exercise.id] = Math.min(
-      Math.max(used[exercise.id] ?? 0, MIN_COLUMNS),
-      MAX_COLUMNS,
-    )
+    width[exercise.id] = Math.min(Math.max(used[exercise.id] ?? 0, MIN_COLUMNS), cap)
   }
   return width
 }
@@ -95,8 +104,9 @@ export function buildYearGrid(
   exercises: Exercise[],
   year: number,
   today: string,
+  columnCap = MAX_COLUMNS,
 ): YearGrid {
-  const width = widthFor(sets, exercises)
+  const width = widthFor(sets, exercises, columnCap)
 
   const byDate = new Map<string, WorkoutSet[]>()
   for (const set of sets) {
@@ -123,23 +133,26 @@ export function buildYearGrid(
 
     const slots: Record<string, (WorkoutSet | undefined)[]> = {}
     const totals: Record<string, number> = {}
+    const hidden: Record<string, number> = {}
     let total = 0
 
     for (const exercise of exercises) {
       slots[exercise.id] = Array.from({ length: width[exercise.id] })
       totals[exercise.id] = 0
+      hidden[exercise.id] = 0
     }
 
     for (const set of byDate.get(date) ?? []) {
       const row = slots[set.exerciseId]
-      // A set beyond the capped width still counts towards every total;
-      // it just has no cell to sit in.
+      // A set past the last column still counts towards every total; it
+      // just has nowhere to be drawn, and the row says as much.
       if (row && set.slot < row.length) row[set.slot] = set
+      else if (row) hidden[set.exerciseId] = (hidden[set.exerciseId] ?? 0) + 1
       totals[set.exerciseId] = (totals[set.exerciseId] ?? 0) + set.reps
       total += set.reps
     }
 
-    block.days.push({ date, slots, totals, total })
+    block.days.push({ date, slots, totals, hidden, total })
     block.total += total
     yearTotal += total
 

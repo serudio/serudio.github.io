@@ -300,7 +300,9 @@
     "collapse": "Collapse",
     "onlyThisWeek": "Only this week",
     "export": "Export",
-    "exportHint": "Download the whole history as a spreadsheet (.xlsx)"
+    "exportHint": "Download the whole history as a spreadsheet (.xlsx)",
+    "fourColumns": "Only 4 sets",
+    "setsNotShown": "{{count}} more sets off the grid — counted in this total"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",

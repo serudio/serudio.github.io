@@ -79,6 +79,8 @@ interface View {
   hidden: string[]
   /** The month in progress is cut down to the current week, from Monday. */
   weekOnly: boolean
+  /** Never draw more than four set columns, however many were done. */
+  fourColumns: boolean
   /**
    * Months the reader has folded or unfolded by hand, "2026-10" -> open.
    *
@@ -92,11 +94,14 @@ interface View {
 function readView(): View {
   try {
     const raw = localStorage.getItem(VIEW_KEY)
-    if (!raw) return { hideEmpty: false, hidden: [], weekOnly: false, months: {} }
+    if (!raw) {
+      return { hideEmpty: false, hidden: [], weekOnly: false, fourColumns: false, months: {} }
+    }
     const parsed = JSON.parse(raw) as Partial<View>
     return {
       hideEmpty: parsed.hideEmpty === true,
       weekOnly: parsed.weekOnly === true,
+      fourColumns: parsed.fourColumns === true,
       hidden: Array.isArray(parsed.hidden)
         ? parsed.hidden.filter((id) => typeof id === 'string')
         : [],
@@ -106,7 +111,7 @@ function readView(): View {
   } catch {
     // Private browsing or unparseable storage: show everything, which
     // is the harmless direction to fail in.
-    return { hideEmpty: false, hidden: [], weekOnly: false, months: {} }
+    return { hideEmpty: false, hidden: [], weekOnly: false, fourColumns: false, months: {} }
   }
 }
 
@@ -550,6 +555,20 @@ export default function WorkoutsPage() {
               control={
                 <Checkbox
                   size="small"
+                  checked={view.fourColumns}
+                  onChange={(event) => updateView({ fourColumns: event.target.checked })}
+                />
+              }
+              label={
+                <Typography variant="body2" color="text.secondary">
+                  {t('workouts.fourColumns')}
+                </Typography>
+              }
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
                   checked={view.weekOnly}
                   onChange={(event) => updateView({ weekOnly: event.target.checked })}
                 />
@@ -586,6 +605,7 @@ export default function WorkoutsPage() {
             actions={actions}
             hideEmpty={view.hideEmpty}
             weekOnly={view.weekOnly}
+            columnCap={view.fourColumns ? 4 : undefined}
             isMonthOpen={isMonthOpen}
             onToggleMonth={toggleMonth}
           />
@@ -616,6 +636,7 @@ export default function WorkoutsPage() {
                 actions={actions}
                 hideEmpty={view.hideEmpty}
                 weekOnly={view.weekOnly}
+                columnCap={view.fourColumns ? 4 : undefined}
                 isMonthOpen={isMonthOpen}
                 onToggleMonth={toggleMonth}
               />
