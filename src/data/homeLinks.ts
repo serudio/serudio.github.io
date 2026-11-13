@@ -11,7 +11,13 @@ import { projects } from './projects'
  * `id` is also the key the usage counter stores (see src/lib/usage.ts),
  * so it must stay stable: changing one resets that link's history.
  */
-export type HomeLinkGroup = 'projects' | 'converters' | 'travel' | 'goals' | 'quotes'
+export type HomeLinkGroup =
+  | 'projects'
+  | 'converters'
+  | 'travel'
+  | 'goals'
+  | 'workouts'
+  | 'quotes'
 
 export interface HomeLink {
   id: string
@@ -37,6 +43,7 @@ export const HOME_LINK_GROUPS: HomeLinkGroup[] = [
   'converters',
   'travel',
   'goals',
+  'workouts',
   'quotes',
 ]
 
@@ -46,6 +53,7 @@ export const GROUP_HEADING_KEYS: Record<HomeLinkGroup, string> = {
   converters: 'converters.heading',
   travel: 'travel.title',
   goals: 'goals.title',
+  workouts: 'workouts.title',
   // Named for what the section is for, not what it contains; the
   // /quotes page itself is still titled "Quotes".
   quotes: 'quotes.homeHeading',
@@ -93,6 +101,11 @@ const goalLinks: HomeLink[] = [
   { id: 'goals.index', labelKey: 'goals.myGoals', group: 'goals', to: '/goals' },
 ]
 
+const workoutLinks: HomeLink[] = [
+  // Needs an account, like the packing list and the goals.
+  { id: 'workouts.index', labelKey: 'workouts.myWorkouts', group: 'workouts', to: '/workouts' },
+]
+
 const quoteLinks: HomeLink[] = [
   // Labelled apart from the group heading, which is already "Quotes".
   { id: 'quotes.index', labelKey: 'quotes.randomLink', group: 'quotes', to: '/quotes' },
@@ -104,6 +117,7 @@ export const homeLinks: HomeLink[] = [
   ...converterLinks,
   ...travelLinks,
   ...goalLinks,
+  ...workoutLinks,
   ...quoteLinks,
 ]
 

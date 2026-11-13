@@ -63,3 +63,32 @@ export function addDays(value: string, days: number): string {
   date.setDate(date.getDate() + days)
   return todayIso(date)
 }
+
+/**
+ * A grid row's day label: weekday and day of the month, "чт-13".
+ *
+ * The shape the records were already kept in — the weekday is the part
+ * that makes a training pattern visible at a glance, which a bare
+ * number does not.
+ */
+export function formatWeekdayDay(value: string, locale: string): string {
+  const date = new Date(`${value}T00:00:00`)
+  if (Number.isNaN(date.getTime())) return value
+  const weekday = date.toLocaleDateString(locale, { weekday: 'short' }).replace(/\.$/, '')
+  return `${weekday}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+/** A month's name in the reader's language, e.g. "листопад". */
+export function formatMonth(year: number, month: number, locale: string): string {
+  return new Date(year, month - 1, 1).toLocaleDateString(locale, { month: 'long' })
+}
+
+/** How many days a month has, 1-indexed month. */
+export function daysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate()
+}
+
+/** "2026-11-13" from its parts. */
+export function isoDate(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}

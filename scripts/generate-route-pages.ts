@@ -200,6 +200,14 @@ const pages: RoutePage[] = [
     noIndex: true,
   },
   {
+    // Same as /goals: a real file so a typed or bookmarked URL answers
+    // 200, and noindex because the page is one account's training log.
+    route: '/workouts',
+    title: translate('workouts.seoTitle'),
+    description: translate('workouts.seoDescription'),
+    noIndex: true,
+  },
+  {
     route: '/quotes',
     title: translate('quotes.title'),
     description: translate('quotes.seoDescription'),

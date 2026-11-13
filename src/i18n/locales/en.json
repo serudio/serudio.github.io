@@ -273,6 +273,29 @@
       "done": "Done"
     }
   },
+  "workouts": {
+    "title": "Workouts",
+    "seoTitle": "Workouts",
+    "seoDescription": "A training log: sets and reps, totalled by day, month and year.",
+    "myWorkouts": "My workouts",
+    "manage": "Exercises",
+    "reps": "Reps",
+    "sets": "Sets",
+    "add": "Add",
+    "newExercise": "New exercise",
+    "addExercise": "Add",
+    "total": "Total",
+    "yearSummary": "{{reps}} reps · {{sets}} sets",
+    "copyTo": "Copy to…",
+    "copyToTitle": "Copy to another exercise",
+    "copyToBody": "Sets: {{reps}}. They will be added to the exercise you pick, on the same day.",
+    "repeatToday": "Repeat today",
+    "cancel": "Cancel",
+    "close": "Close",
+    "delete": "Delete",
+    "deleteExerciseTitle": "Delete this exercise?",
+    "deleteExerciseBody": "“{{name}}” will be deleted, along with every set recorded under it ({{count}})."
+  },
   "fuelCalculator": {
     "placeholder": "Enter a value...",
     "unit": "US MPG",

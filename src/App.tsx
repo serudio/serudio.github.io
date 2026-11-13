@@ -10,6 +10,7 @@ import SignInPage from "./pages/SignInPage";
 import BooksPage from "./pages/books/BooksPage";
 import QuotesPage from "./pages/quotes/QuotesPage";
 import GoalsPage from "./pages/goals/GoalsPage";
+import WorkoutsPage from "./pages/workouts/WorkoutsPage";
 import TravelPage from "./pages/travel/TravelPage";
 import TravelTripPage from "./pages/travel/TravelTripPage";
 import TravelRecommendedPage from "./pages/travel/TravelRecommendedPage";
@@ -107,6 +108,16 @@ export default function App() {
           element={
             <RequireAuth>
               <GoalsPage />
+            </RequireAuth>
+          }
+        />
+        {/* Workouts, like goals, are the account's own — RequireAuth
+            here, and auth.uid() in the database (migration 0020). */}
+        <Route
+          path="/workouts"
+          element={
+            <RequireAuth>
+              <WorkoutsPage />
             </RequireAuth>
           }
         />
