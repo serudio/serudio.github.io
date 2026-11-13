@@ -130,18 +130,58 @@ export async function getYearTotals(): Promise<YearTotal[]> {
   }))
 }
 
+/**
+ * A whole year, however many rows that is.
+ *
+ * PostgREST caps how many rows one response may carry, so a single
+ * request returns the first page and says nothing about the rest. A
+ * busy year runs to a couple of thousand sets, and reading only the
+ * first page made the year appear to stop in the spring — the data was
+ * there, the request was not asking for it.
+ *
+ * The exact count comes back with the first page and the loop runs
+ * until it has that many, rather than stopping when a page looks short:
+ * the server's cap may be lower than the page size asked for, and then
+ * "short page" means nothing at all.
+ *
+ * Ordered by id last so the sort is total. done_on and sort_order are
+ * not unique across exercises on the same day, and without a tiebreak
+ * two pages can disagree about the order and drop or repeat a row.
+ */
 export async function getYear(year: number): Promise<WorkoutSet[]> {
-  const { data, error } = await client()
-    .from('workout_sets')
-    .select('id, exercise_id, done_on, reps, sort_order')
-    .gte('done_on', `${year}-01-01`)
-    .lte('done_on', `${year}-12-31`)
-    .order('done_on', { ascending: true })
-    .order('sort_order', { ascending: true })
-    .abortSignal(signal())
-  if (error) throw error
+  const PAGE = 1000
+  const all: WorkoutSet[] = []
+  let total = Infinity
+  let from = 0
 
-  return (data ?? []).map((row) => toSet(row as Record<string, unknown>))
+  while (all.length < total) {
+    const { data, error, count } = await client()
+      .from('workout_sets')
+      .select('id, exercise_id, done_on, reps, sort_order', { count: 'exact' })
+      .gte('done_on', `${year}-01-01`)
+      .lte('done_on', `${year}-12-31`)
+      .order('done_on', { ascending: true })
+      .order('sort_order', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, from + PAGE - 1)
+      .abortSignal(signal())
+    if (error) throw error
+
+    const rows = (data ?? []).map((row) => toSet(row as Record<string, unknown>))
+    all.push(...rows)
+
+    if (typeof count === 'number') total = count
+    // Nothing came back, so nothing more will: stop rather than ask the
+    // same question forever.
+    if (rows.length === 0) break
+
+    // By what actually arrived, not by what was asked for. The server's
+    // cap can be lower than PAGE, and advancing by PAGE would then step
+    // straight over the rows it did not send.
+    from += rows.length
+  }
+
+  return all
 }
 
 /**
