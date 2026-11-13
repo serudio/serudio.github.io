@@ -297,7 +297,10 @@
     "deleteExerciseBody": "“{{name}}” will be deleted, along with every set recorded under it ({{count}}).",
     "hideEmptyDays": "Hide empty days",
     "expand": "Expand",
-    "collapse": "Collapse"
+    "collapse": "Collapse",
+    "onlyThisWeek": "Only this week",
+    "export": "Export",
+    "exportHint": "Download the whole history as a spreadsheet (.xlsx)"
   },
   "fuelCalculator": {
     "placeholder": "Enter a value...",

@@ -25,6 +25,7 @@ import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import DownloadIcon from '@mui/icons-material/Download'
 import TuneIcon from '@mui/icons-material/Tune'
 import Seo from '../../components/Seo'
 import Footer from '../../components/Footer'
@@ -36,6 +37,7 @@ import {
   copySets,
   createExercise,
   deleteExercise,
+  getAllSets,
   getExercises,
   getYear,
   getYearTotals,
@@ -44,7 +46,9 @@ import {
   type WorkoutSet,
   type YearTotal,
 } from '../../lib/workouts/db'
+import { buildExport } from '../../lib/workouts/exportWorkbook'
 import { nextSlot, repsOf } from '../../lib/workouts/grid'
+import { buildWorkbook } from '../../lib/workouts/xlsx'
 import YearGrid, { type GridActions } from './YearGrid'
 
 /**
@@ -69,6 +73,8 @@ interface View {
   hideEmpty: boolean
   /** Exercises whose columns are not drawn, by id. */
   hidden: string[]
+  /** The month in progress is cut down to the current week, from Monday. */
+  weekOnly: boolean
   /**
    * Months the reader has folded or unfolded by hand, "2026-10" -> open.
    *
@@ -82,10 +88,11 @@ interface View {
 function readView(): View {
   try {
     const raw = localStorage.getItem(VIEW_KEY)
-    if (!raw) return { hideEmpty: false, hidden: [], months: {} }
+    if (!raw) return { hideEmpty: false, hidden: [], weekOnly: false, months: {} }
     const parsed = JSON.parse(raw) as Partial<View>
     return {
       hideEmpty: parsed.hideEmpty === true,
+      weekOnly: parsed.weekOnly === true,
       hidden: Array.isArray(parsed.hidden)
         ? parsed.hidden.filter((id) => typeof id === 'string')
         : [],
@@ -95,7 +102,7 @@ function readView(): View {
   } catch {
     // Private browsing or unparseable storage: show everything, which
     // is the harmless direction to fail in.
-    return { hideEmpty: false, hidden: [], months: {} }
+    return { hideEmpty: false, hidden: [], weekOnly: false, months: {} }
   }
 }
 
@@ -108,7 +115,8 @@ function writeView(view: View): void {
 }
 
 export default function WorkoutsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = i18n.resolvedLanguage ?? i18n.language
   useDeclarePageChrome({ width: 'xl' })
 
   const today = useMemo(() => todayIso(), [])
@@ -129,6 +137,7 @@ export default function WorkoutsPage() {
   const [count, setCount] = useState('1')
   const [newExercise, setNewExercise] = useState('')
   const [managing, setManaging] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const [removing, setRemoving] = useState<Exercise | null>(null)
 
   const [view, setView] = useState<View>(readView)
@@ -262,6 +271,36 @@ export default function WorkoutsPage() {
     }
   }
 
+  /**
+   * The whole history as a workbook, for keeping somewhere else.
+   *
+   * Reads every year rather than the ones open on screen: a backup that
+   * silently held only what was loaded would be worse than no backup,
+   * because it would look like one.
+   */
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const all = await getAllSets()
+      const sheets = buildExport(all, exercises, locale)
+      const bytes = buildWorkbook(sheets)
+      const url = URL.createObjectURL(
+        new Blob([bytes], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        }),
+      )
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${t('workouts.title').toLowerCase()}-${today}.xlsx`
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch (caught) {
+      fail(caught)
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const handleAddExercise = async () => {
     const name = newExercise.trim()
     if (!name) return
@@ -364,6 +403,18 @@ export default function WorkoutsPage() {
           >
             {t('workouts.title')}
           </Typography>
+          <Tooltip title={t('workouts.exportHint')}>
+            <span>
+              <IconButton
+                size="small"
+                disabled={exporting || exercises.length === 0}
+                onClick={() => void handleExport()}
+                aria-label={t('workouts.export')}
+              >
+                <DownloadIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
           <Tooltip title={t('workouts.manage')}>
             <IconButton size="small" onClick={() => setManaging(true)} aria-label={t('workouts.manage')}>
               <TuneIcon fontSize="small" />
@@ -471,6 +522,20 @@ export default function WorkoutsPage() {
               control={
                 <Checkbox
                   size="small"
+                  checked={view.weekOnly}
+                  onChange={(event) => updateView({ weekOnly: event.target.checked })}
+                />
+              }
+              label={
+                <Typography variant="body2" color="text.secondary">
+                  {t('workouts.onlyThisWeek')}
+                </Typography>
+              }
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
                   checked={view.hideEmpty}
                   onChange={(event) => updateView({ hideEmpty: event.target.checked })}
                 />
@@ -493,6 +558,7 @@ export default function WorkoutsPage() {
             actions={actions}
             scrollToToday={loaded}
             hideEmpty={view.hideEmpty}
+            weekOnly={view.weekOnly}
             isMonthOpen={isMonthOpen}
             onToggleMonth={toggleMonth}
           />
@@ -522,6 +588,7 @@ export default function WorkoutsPage() {
                 today={today}
                 actions={actions}
                 hideEmpty={view.hideEmpty}
+                weekOnly={view.weekOnly}
                 isMonthOpen={isMonthOpen}
                 onToggleMonth={toggleMonth}
               />

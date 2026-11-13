@@ -303,7 +303,10 @@
     "deleteExerciseBody": "«{{name}}» буде видалено разом з усіма записаними підходами ({{count}}).",
     "hideEmptyDays": "Ховати порожні дні",
     "expand": "Розгорнути",
-    "collapse": "Згорнути"
+    "collapse": "Згорнути",
+    "onlyThisWeek": "Лише цей тиждень",
+    "export": "Експорт",
+    "exportHint": "Завантажити всю історію як таблицю (.xlsx)"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",

@@ -149,6 +149,15 @@ export async function getYearTotals(): Promise<YearTotal[]> {
  * two pages can disagree about the order and drop or repeat a row.
  */
 export async function getYear(year: number): Promise<WorkoutSet[]> {
+  return paged(`${year}-01-01`, `${year}-12-31`)
+}
+
+/** Everything, for the export. Same paging, no date bounds worth naming. */
+export async function getAllSets(): Promise<WorkoutSet[]> {
+  return paged('0001-01-01', '9999-12-31')
+}
+
+async function paged(fromDay: string, toDay: string): Promise<WorkoutSet[]> {
   const PAGE = 1000
   const all: WorkoutSet[] = []
   let total = Infinity
@@ -158,8 +167,8 @@ export async function getYear(year: number): Promise<WorkoutSet[]> {
     const { data, error, count } = await client()
       .from('workout_sets')
       .select('id, exercise_id, done_on, reps, sort_order', { count: 'exact' })
-      .gte('done_on', `${year}-01-01`)
-      .lte('done_on', `${year}-12-31`)
+      .gte('done_on', fromDay)
+      .lte('done_on', toDay)
       .order('done_on', { ascending: true })
       .order('sort_order', { ascending: true })
       .order('id', { ascending: true })

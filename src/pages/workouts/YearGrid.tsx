@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useRef, useState, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
-import { formatMonth, formatWeekdayDay } from '../../lib/formatDate'
+import { addDays, formatMonth, formatWeekdayDay } from '../../lib/formatDate'
 import type { Exercise, WorkoutSet } from '../../lib/workouts/db'
 import { buildYearGrid } from '../../lib/workouts/grid'
 
@@ -47,6 +47,7 @@ export default function YearGrid({
   actions,
   scrollToToday = false,
   hideEmpty = false,
+  weekOnly = false,
   isMonthOpen,
   onToggleMonth,
 }: {
@@ -57,6 +58,7 @@ export default function YearGrid({
   actions: GridActions
   scrollToToday?: boolean
   hideEmpty?: boolean
+  weekOnly?: boolean
   isMonthOpen(year: number, month: number): boolean
   onToggleMonth(year: number, month: number): void
 }) {
@@ -70,14 +72,29 @@ export default function YearGrid({
   // Today always stays, even with nothing on it: it is the row the next
   // set gets typed into, and hiding it would mean turning the filter
   // off again to log a workout.
+  // Monday to Sunday around today. getDay() calls Sunday 0, so it is
+  // rotated: a week that starts on Monday is the one being trained in.
+  const weekday = (new Date(`${today}T00:00:00`).getDay() + 6) % 7
+  const weekFrom = addDays(today, -weekday)
+  const weekTo = addDays(weekFrom, 6)
+  const currentMonth = Number(today.slice(5, 7))
+
   const visible = grid.months
-    .map((month) => ({
-      ...month,
-      days: hideEmpty
-        ? month.days.filter((row) => row.total > 0 || row.date === today)
-        : month.days,
-      open: isMonthOpen(year, month.month),
-    }))
+    .map((month) => {
+      // The week filter is about the month in progress. Earlier months
+      // are already a fold away, and a past year would otherwise empty
+      // itself entirely.
+      const thisMonth = year === Number(today.slice(0, 4)) && month.month === currentMonth
+
+      let days = month.days
+      if (weekOnly && thisMonth) {
+        days = days.filter((row) => row.date >= weekFrom && row.date <= weekTo)
+      }
+      if (hideEmpty) {
+        days = days.filter((row) => row.total > 0 || row.date === today)
+      }
+      return { ...month, days, open: isMonthOpen(year, month.month) }
+    })
     .filter((month) => month.days.length > 0)
 
   useEffect(() => {
@@ -135,18 +152,16 @@ export default function YearGrid({
                 {exercise.name}
               </Box>
             ))}
-            <Box component="th" sx={totalCell}>
-              {t('workouts.total')}
-            </Box>
           </Box>
 
           <Box component="tr">
+            {/* Deliberately blank. A single number for everything done
+                in a year is not a figure anyone acts on, and it sat at
+                the top of every column of real ones. */}
             <Box
               component="th"
               sx={{ ...totalCell, position: 'sticky', left: 0, zIndex: 2 }}
-            >
-              {grid.total}
-            </Box>
+            />
             {exercises.map((exercise) =>
               Array.from({ length: grid.width[exercise.id] ?? 0 }, (_ignored, slot) => (
                 <Box
@@ -162,7 +177,6 @@ export default function YearGrid({
                 </Box>,
               ),
             )}
-            <Box component="th" sx={totalCell} />
           </Box>
         </Box>
 
@@ -191,9 +205,6 @@ export default function YearGrid({
                     {month.totals[exercise.id] ?? 0}
                   </Box>
                 ))}
-                <Box component="td" sx={totalCell}>
-                  {month.total}
-                </Box>
               </Box>
 
               {month.open && month.days.map((row) => (
@@ -304,9 +315,6 @@ export default function YearGrid({
                     </Fragment>
                   ))}
 
-                  <Box component="td" sx={totalCell}>
-                    {row.total}
-                  </Box>
                 </Box>
             ))}
           </Box>
