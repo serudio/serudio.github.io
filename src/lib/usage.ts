@@ -122,6 +122,50 @@ export const localUsageStore: UsageStore = {
  * popular is not worth interrupting anyone over, and the caller is
  * usually mid-click on something else.
  */
+/** One stored entry, taken apart into the scope and key it belongs to. */
+export interface MergeEntry {
+  scope: string
+  key: string
+  count: number
+  last_at: string
+}
+
+/**
+ * This browser's counts, ready to be folded into an account.
+ *
+ * Undoes scopedKey: entries written before there was more than one
+ * counter have no prefix and belong to the home page, which is the only
+ * thing that was ever counted then.
+ */
+export function localEntriesForMerge(): MergeEntry[] {
+  return Object.values(read()).map((entry) => {
+    const colon = entry.id.indexOf(':')
+    return {
+      scope: colon === -1 ? USAGE_HOME : entry.id.slice(0, colon),
+      key: colon === -1 ? entry.id : entry.id.slice(colon + 1),
+      count: entry.count,
+      last_at: new Date(entry.lastAt || Date.now()).toISOString(),
+    }
+  })
+}
+
+/**
+ * Carries this browser's counts into the signed-in account, adding to
+ * whatever is already there rather than replacing it (migration 0021).
+ *
+ * Called once per browser. Two tabs opening at the same moment could
+ * both run it and double a count — which costs nothing worth guarding
+ * against, since the only thing these numbers decide is the order of a
+ * row of shortcuts.
+ */
+export async function mergeLocalIntoAccount(): Promise<void> {
+  const entries = localEntriesForMerge()
+  if (!supabase || entries.length === 0) return
+
+  const { error } = await supabase.rpc('usage_merge', { p_entries: entries })
+  if (error) throw error
+}
+
 export const remoteUsageStore: UsageStore = {
   record(scope, id) {
     void supabase?.rpc('usage_record', { p_scope: scope, p_key: id })
