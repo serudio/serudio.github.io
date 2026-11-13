@@ -46,6 +46,7 @@ export default function YearGrid({
   today,
   actions,
   scrollToToday = false,
+  hideEmpty = false,
 }: {
   year: number
   exercises: Exercise[]
@@ -53,6 +54,7 @@ export default function YearGrid({
   today: string
   actions: GridActions
   scrollToToday?: boolean
+  hideEmpty?: boolean
 }) {
   const { t, i18n } = useTranslation()
   const locale = i18n.resolvedLanguage ?? i18n.language
@@ -60,6 +62,18 @@ export default function YearGrid({
   const todayRow = useRef<HTMLTableRowElement | null>(null)
 
   const grid = buildYearGrid(sets, exercises, year, today)
+
+  // Today always stays, even with nothing on it: it is the row the next
+  // set gets typed into, and hiding it would mean turning the filter
+  // off again to log a workout.
+  const visible = grid.months
+    .map((month) => ({
+      ...month,
+      days: hideEmpty
+        ? month.days.filter((row) => row.total > 0 || row.date === today)
+        : month.days,
+    }))
+    .filter((month) => month.days.length > 0)
 
   useEffect(() => {
     // The year reads in its own order, January first, so today has to
@@ -87,7 +101,7 @@ export default function YearGrid({
       if (slot + 1 < width) setEditing({ day, exerciseId, slot: slot + 1 })
       return
     }
-    const days = grid.months.flatMap((month) => month.days.map((row) => row.date))
+    const days = visible.flatMap((month) => month.days.map((row) => row.date))
     const next = days[days.indexOf(day) + 1]
     if (next) setEditing({ day: next, exerciseId, slot })
   }
@@ -143,7 +157,7 @@ export default function YearGrid({
           </Box>
         </Box>
 
-        {grid.months.map((month) => (
+        {visible.map((month) => (
           <Box component="tbody" key={month.month}>
               <Box component="tr">
                 <Box

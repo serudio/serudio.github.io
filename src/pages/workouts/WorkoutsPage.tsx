@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Checkbox from '@mui/material/Checkbox'
+import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
 import Dialog from '@mui/material/Dialog'
@@ -11,6 +13,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
+import FormControlLabel from '@mui/material/FormControlLabel'
 import ListItemButton from '@mui/material/ListItemButton'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
@@ -59,6 +62,41 @@ import YearGrid, { type GridActions } from './YearGrid'
 
 const yearOf = (date: string) => Number(date.slice(0, 4))
 
+const VIEW_KEY = 'serudio_workouts_view'
+
+interface View {
+  /** Days with nothing on them are dropped from the grid. */
+  hideEmpty: boolean
+  /** Exercises whose columns are not drawn, by id. */
+  hidden: string[]
+}
+
+function readView(): View {
+  try {
+    const raw = localStorage.getItem(VIEW_KEY)
+    if (!raw) return { hideEmpty: false, hidden: [] }
+    const parsed = JSON.parse(raw) as Partial<View>
+    return {
+      hideEmpty: parsed.hideEmpty === true,
+      hidden: Array.isArray(parsed.hidden)
+        ? parsed.hidden.filter((id) => typeof id === 'string')
+        : [],
+    }
+  } catch {
+    // Private browsing or unparseable storage: show everything, which
+    // is the harmless direction to fail in.
+    return { hideEmpty: false, hidden: [] }
+  }
+}
+
+function writeView(view: View): void {
+  try {
+    localStorage.setItem(VIEW_KEY, JSON.stringify(view))
+  } catch {
+    // Nothing useful to do; the choice just will not survive a reload.
+  }
+}
+
 export default function WorkoutsPage() {
   const { t } = useTranslation()
   useDeclarePageChrome({ width: 'xl' })
@@ -82,6 +120,8 @@ export default function WorkoutsPage() {
   const [newExercise, setNewExercise] = useState('')
   const [managing, setManaging] = useState(false)
   const [removing, setRemoving] = useState<Exercise | null>(null)
+
+  const [view, setView] = useState<View>(readView)
 
   const [dayMenu, setDayMenu] = useState<
     { anchor: HTMLElement; day: string; exerciseId: string } | null
@@ -249,6 +289,20 @@ export default function WorkoutsPage() {
   const setsOfExercise = (exercise: Exercise) =>
     Object.values(byYear).flat().filter((row) => row.exerciseId === exercise.id).length
 
+  const updateView = (change: Partial<View>) =>
+    setView((previous) => {
+      const next = { ...previous, ...change }
+      writeView(next)
+      return next
+    })
+
+  /**
+   * The columns actually drawn. Every total in the grid is over these,
+   * so filtering down to two exercises gives their combined figures
+   * rather than the whole day's.
+   */
+  const shown = exercises.filter((exercise) => !view.hidden.includes(exercise.id))
+
   const pastYears = totals.filter((row) => row.year !== currentYear)
 
   if (loading && !loaded) {
@@ -354,14 +408,60 @@ export default function WorkoutsPage() {
           </Stack>
         )}
 
+        {exercises.length > 0 && (
+          <Stack
+            direction="row"
+            useFlexGap
+            flexWrap="wrap"
+            sx={{ gap: 1, alignItems: 'center', mb: 2 }}
+          >
+            {exercises.map((exercise) => {
+              const on = !view.hidden.includes(exercise.id)
+              return (
+                <Chip
+                  key={exercise.id}
+                  size="small"
+                  label={exercise.name}
+                  variant={on ? 'filled' : 'outlined'}
+                  color={on ? 'primary' : 'default'}
+                  onClick={() =>
+                    updateView({
+                      hidden: on
+                        ? [...view.hidden, exercise.id]
+                        : view.hidden.filter((id) => id !== exercise.id),
+                    })
+                  }
+                  sx={{ textTransform: 'lowercase', letterSpacing: '1.1px' }}
+                />
+              )
+            })}
+            <Box sx={{ flexGrow: 1 }} />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
+                  checked={view.hideEmpty}
+                  onChange={(event) => updateView({ hideEmpty: event.target.checked })}
+                />
+              }
+              label={
+                <Typography variant="body2" color="text.secondary">
+                  {t('workouts.hideEmptyDays')}
+                </Typography>
+              }
+            />
+          </Stack>
+        )}
+
         {open.includes(currentYear) && (
           <YearGrid
             year={currentYear}
-            exercises={exercises}
+            exercises={shown}
             sets={setsFor(currentYear)}
             today={today}
             actions={actions}
             scrollToToday={loaded}
+            hideEmpty={view.hideEmpty}
           />
         )}
 
@@ -384,10 +484,11 @@ export default function WorkoutsPage() {
             {open.includes(row.year) && byYear[row.year] && (
               <YearGrid
                 year={row.year}
-                exercises={exercises}
+                exercises={shown}
                 sets={setsFor(row.year)}
                 today={today}
                 actions={actions}
+                hideEmpty={view.hideEmpty}
               />
             )}
           </Box>

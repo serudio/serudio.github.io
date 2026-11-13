@@ -300,7 +300,8 @@
     "close": "Закрити",
     "delete": "Видалити",
     "deleteExerciseTitle": "Видалити вправу?",
-    "deleteExerciseBody": "«{{name}}» буде видалено разом з усіма записаними підходами ({{count}})."
+    "deleteExerciseBody": "«{{name}}» буде видалено разом з усіма записаними підходами ({{count}}).",
+    "hideEmptyDays": "Ховати порожні дні"
   },
   "fuelCalculator": {
     "placeholder": "Введіть значення...",
