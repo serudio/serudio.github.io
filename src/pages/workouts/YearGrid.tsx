@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState, type MouseEvent } from 'react'
+import { Fragment, useState, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
 import { addDays, formatMonth, formatWeekdayDay } from '../../lib/formatDate'
@@ -45,7 +45,6 @@ export default function YearGrid({
   sets,
   today,
   actions,
-  scrollToToday = false,
   hideEmpty = false,
   weekOnly = false,
   isMonthOpen,
@@ -56,7 +55,6 @@ export default function YearGrid({
   sets: WorkoutSet[]
   today: string
   actions: GridActions
-  scrollToToday?: boolean
   hideEmpty?: boolean
   weekOnly?: boolean
   isMonthOpen(year: number, month: number): boolean
@@ -65,7 +63,6 @@ export default function YearGrid({
   const { t, i18n } = useTranslation()
   const locale = i18n.resolvedLanguage ?? i18n.language
   const [editing, setEditing] = useState<Editing>(null)
-  const todayRow = useRef<HTMLTableRowElement | null>(null)
 
   const grid = buildYearGrid(sets, exercises, year, today)
 
@@ -96,12 +93,6 @@ export default function YearGrid({
       return { ...month, days, open: isMonthOpen(year, month.month) }
     })
     .filter((month) => month.days.length > 0)
-
-  useEffect(() => {
-    // The year reads in its own order, January first, so today has to
-    // be brought to the reader rather than the year turned around.
-    if (scrollToToday) todayRow.current?.scrollIntoView({ block: 'center' })
-  }, [scrollToToday])
 
   const commit = (day: string, exerciseId: string, slot: number, raw: string, existing?: WorkoutSet) => {
     setEditing(null)
@@ -211,7 +202,6 @@ export default function YearGrid({
                 <Box
                   component="tr"
                   key={row.date}
-                  ref={row.date === today ? todayRow : undefined}
                   sx={{
                     ...(row.date === today && { outline: '2px solid', outlineColor: 'primary.main' }),
                   }}

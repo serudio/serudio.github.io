@@ -105,9 +105,10 @@ export function buildYearGrid(
   let yearTotal = 0
   const months: MonthBlock[] = []
 
-  // Ascending, like the records they came from. The page scrolls to
-  // today rather than reversing the year, so the layout stays the one
-  // already in the reader's head.
+  // Ascending, like the records they came from — and the page does not
+  // jump anywhere on load. Only the month in progress starts unfolded,
+  // so today is near the top without the year having to be turned
+  // around or the reader having to be moved.
   for (const date of datesFor(sets, year, today)) {
     const month = Number(date.slice(5, 7))
     let block = months[months.length - 1]

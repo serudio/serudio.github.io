@@ -17,7 +17,18 @@
  * index from the format.
  */
 
-export type Cell = string | number | null
+/**
+ * A computed cell: the formula, plus the value it currently works out
+ * to. The cached value matters — a spreadsheet shows it until it
+ * recalculates, and some viewers never do, so a formula written without
+ * one opens as a sheet full of blanks.
+ */
+export interface Formula {
+  f: string
+  v?: number
+}
+
+export type Cell = string | number | null | Formula
 
 export interface Sheet {
   name: string
@@ -76,6 +87,10 @@ function sheetXml(rows: Cell[][]): string {
         .map((value, columnIndex) => {
           if (value === null || value === '') return ''
           const ref = `${columnName(columnIndex)}${r}`
+          if (typeof value === 'object') {
+            const cached = typeof value.v === 'number' ? `<v>${value.v}</v>` : ''
+            return `<c r="${ref}"><f>${escapeXml(value.f)}</f>${cached}</c>`
+          }
           if (typeof value === 'number') {
             return Number.isFinite(value) ? `<c r="${ref}"><v>${value}</v></c>` : ''
           }

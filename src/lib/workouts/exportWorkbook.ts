@@ -1,12 +1,22 @@
 import { formatMonth, formatWeekdayDay } from '../formatDate'
 import type { Exercise, WorkoutSet } from './db'
-import type { Cell, Sheet } from './xlsx'
+import { columnName, type Cell, type Sheet } from './xlsx'
 
 /**
  * The whole history as a workbook, one sheet per year, laid out the way
  * these records were kept before this site existed: days down,
  * exercises across, a day total beside each exercise and its month
  * total on the month's first row.
+ *
+ * EVERY TOTAL IS A FORMULA, not the number this app worked out. The
+ * point of the file is that it stays a spreadsheet: change a set in
+ * Drive and the day, month and year it belongs to follow. Exporting
+ * frozen numbers would produce something that looked identical and went
+ * wrong the first time it was edited — the totals would keep insisting
+ * on figures that no longer matched the cells above them.
+ *
+ * Each formula still carries the value it currently works out to, so
+ * the file reads correctly before anything recalculates.
  *
  * It exports everything, never what the grid happens to be showing. A
  * filtered column or a folded month is a way of reading the page; a
@@ -17,19 +27,33 @@ import type { Cell, Sheet } from './xlsx'
 interface Column {
   exercise: Exercise
   width: number
+  /** Zero-based index of this exercise's first set column. */
+  start: number
+  /** Where its day total sits, and its month total after that. */
+  dayCol: number
+  monthCol: number
 }
 
-function columnsFor(sets: WorkoutSet[], exercises: Exercise[]): Column[] {
+function layout(sets: WorkoutSet[], exercises: Exercise[]): Column[] {
   const used = new Map<string, number>()
   for (const set of sets) {
     used.set(set.exerciseId, Math.max(used.get(set.exerciseId) ?? 0, set.slot + 1))
   }
+
   // Only what that year actually contains: an exercise taken up in 2025
   // has no business adding empty columns to 2018.
+  let at = 2
   return exercises
     .filter((exercise) => (used.get(exercise.id) ?? 0) > 0)
-    .map((exercise) => ({ exercise, width: used.get(exercise.id) as number }))
+    .map((exercise) => {
+      const width = used.get(exercise.id) as number
+      const column = { exercise, width, start: at, dayCol: at + width, monthCol: at + width + 1 }
+      at += width + 2
+      return column
+    })
 }
+
+const ref = (column: number, row: number) => `${columnName(column)}${row}`
 
 function yearSheet(
   year: number,
@@ -37,7 +61,7 @@ function yearSheet(
   exercises: Exercise[],
   locale: string,
 ): Sheet {
-  const columns = columnsFor(sets, exercises)
+  const columns = layout(sets, exercises)
 
   const byDate = new Map<string, WorkoutSet[]>()
   for (const set of sets) {
@@ -47,31 +71,41 @@ function yearSheet(
   }
 
   const dates = [...byDate.keys()].sort()
-  const yearTotals = new Map<string, number>()
-  const monthTotals = new Map<string, Map<string, number>>()
+  // Data starts on row 3, under the two header rows.
+  const rowOf = new Map(dates.map((date, index) => [date, index + 3]))
+  const lastRow = dates.length + 2
 
-  for (const set of sets) {
-    yearTotals.set(set.exerciseId, (yearTotals.get(set.exerciseId) ?? 0) + set.reps)
-    const key = set.doneOn.slice(0, 7)
-    const forMonth = monthTotals.get(key) ?? new Map<string, number>()
-    forMonth.set(set.exerciseId, (forMonth.get(set.exerciseId) ?? 0) + set.reps)
-    monthTotals.set(key, forMonth)
+  // Which rows each month spans, so a month total can name its range.
+  const months = new Map<string, { first: number; last: number }>()
+  for (const date of dates) {
+    const key = date.slice(0, 7)
+    const row = rowOf.get(date) as number
+    const span = months.get(key)
+    if (span) span.last = row
+    else months.set(key, { first: row, last: row })
   }
 
-  // Headed exactly as the original workbook heads it: the exercise name
-  // over its first set column, the set numbers beneath, and the year
-  // total in the second summary column. Naming the two total columns
-  // would read better to someone meeting the file cold, and would also
-  // make it a different shape from the eight years of sheets this is a
-  // copy of — including to the parser that reads those.
   const header1: Cell[] = [year, null]
   const header2: Cell[] = [null, null]
   for (const column of columns) {
+    // Headed exactly as the original workbook heads it: the name over
+    // the first set column, the set numbers beneath, the year total in
+    // the second summary column, and nothing over the totals.
     header1.push(column.exercise.name)
     for (let i = 1; i < column.width + 2; i += 1) header1.push(null)
 
     for (let i = 0; i < column.width; i += 1) header2.push(i + 1)
-    header2.push(null, yearTotals.get(column.exercise.id) ?? 0)
+
+    const total = sets
+      .filter((set) => set.exerciseId === column.exercise.id)
+      .reduce((sum, set) => sum + set.reps, 0)
+    header2.push(null, {
+      // The year is the sum of its day totals, not of every set cell:
+      // one column instead of five, and it keeps meaning the same thing
+      // if a set column is ever added.
+      f: `SUM(${ref(column.dayCol, 3)}:${ref(column.dayCol, lastRow)})`,
+      v: total,
+    })
   }
 
   const rows: Cell[][] = [header1, header2]
@@ -81,6 +115,7 @@ function yearSheet(
     const month = date.slice(0, 7)
     const startsMonth = month !== lastMonth
     lastMonth = month
+    const r = rowOf.get(date) as number
 
     const row: Cell[] = [
       startsMonth ? formatMonth(year, Number(date.slice(5, 7)), locale) : null,
@@ -94,11 +129,27 @@ function yearSheet(
         const set = mine.find((candidate) => candidate.slot === slot)
         row.push(set ? set.reps : null)
       }
-      const dayTotal = mine.reduce((sum, set) => sum + set.reps, 0)
-      row.push(dayTotal > 0 ? dayTotal : null)
-      row.push(
-        startsMonth ? monthTotals.get(month)?.get(column.exercise.id) ?? 0 : null,
-      )
+
+      row.push({
+        f: `SUM(${ref(column.start, r)}:${ref(column.start + column.width - 1, r)})`,
+        v: mine.reduce((sum, set) => sum + set.reps, 0),
+      })
+
+      if (startsMonth) {
+        const span = months.get(month) as { first: number; last: number }
+        const total = sets
+          .filter(
+            (set) =>
+              set.exerciseId === column.exercise.id && set.doneOn.startsWith(month),
+          )
+          .reduce((sum, set) => sum + set.reps, 0)
+        row.push({
+          f: `SUM(${ref(column.dayCol, span.first)}:${ref(column.dayCol, span.last)})`,
+          v: total,
+        })
+      } else {
+        row.push(null)
+      }
     }
 
     rows.push(row)

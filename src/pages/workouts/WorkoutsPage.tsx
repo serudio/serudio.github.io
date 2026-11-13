@@ -556,7 +556,6 @@ export default function WorkoutsPage() {
             sets={setsFor(currentYear)}
             today={today}
             actions={actions}
-            scrollToToday={loaded}
             hideEmpty={view.hideEmpty}
             weekOnly={view.weekOnly}
             isMonthOpen={isMonthOpen}
