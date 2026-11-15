@@ -11,6 +11,7 @@ import BooksPage from "./pages/books/BooksPage";
 import QuotesPage from "./pages/quotes/QuotesPage";
 import GoalsPage from "./pages/goals/GoalsPage";
 import WorkoutsPage from "./pages/workouts/WorkoutsPage";
+import TodoPage from "./pages/todo/TodoPage";
 import TravelPage from "./pages/travel/TravelPage";
 import TravelTripPage from "./pages/travel/TravelTripPage";
 import TravelRecommendedPage from "./pages/travel/TravelRecommendedPage";
@@ -118,6 +119,16 @@ export default function App() {
           element={
             <RequireAuth>
               <WorkoutsPage />
+            </RequireAuth>
+          }
+        />
+        {/* "100 todo", same again: the account's own list, scoped to
+            auth.uid() in the database (migration 0022). */}
+        <Route
+          path="/100-todo"
+          element={
+            <RequireAuth>
+              <TodoPage />
             </RequireAuth>
           }
         />

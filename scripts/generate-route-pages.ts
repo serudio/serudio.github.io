@@ -208,6 +208,15 @@ const pages: RoutePage[] = [
     noIndex: true,
   },
   {
+    // Same as /goals and /workouts: a real file so a typed or bookmarked
+    // URL answers 200, and noindex because the page is one account's
+    // private list.
+    route: '/100-todo',
+    title: translate('todo.seoTitle'),
+    description: translate('todo.seoDescription'),
+    noIndex: true,
+  },
+  {
     route: '/quotes',
     title: translate('quotes.title'),
     description: translate('quotes.seoDescription'),

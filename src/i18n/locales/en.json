@@ -273,6 +273,31 @@
       "done": "Done"
     }
   },
+  "todo": {
+    "title": "100 todo",
+    "seoTitle": "100 todo",
+    "seoDescription": "A personal list of things worth doing.",
+    "addPlaceholder": "What do you want to do?",
+    "empty": "Nothing here yet. Write the first one in the field above.",
+    "counter": "{{n}} of {{target}}",
+    "rename": "Name",
+    "size": "Size",
+    "bigger": "Bigger",
+    "smaller": "Smaller",
+    "delete": "Delete",
+    "confirmDelete": "Delete",
+    "cancel": "Cancel",
+    "colors": {
+      "indigo": "Indigo",
+      "sky": "Sky",
+      "teal": "Teal",
+      "green": "Green",
+      "amber": "Amber",
+      "orange": "Orange",
+      "rose": "Rose",
+      "purple": "Purple"
+    }
+  },
   "workouts": {
     "title": "Workouts",
     "seoTitle": "Workouts",
