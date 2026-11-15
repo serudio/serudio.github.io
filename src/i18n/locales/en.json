@@ -277,6 +277,7 @@
     "title": "100 todo",
     "seoTitle": "100 todo",
     "seoDescription": "A personal list of things worth doing.",
+    "myList": "My 100 todo",
     "addPlaceholder": "What do you want to do?",
     "empty": "Nothing here yet. Write the first one in the field above.",
     "counter": "{{n}} of {{target}}",

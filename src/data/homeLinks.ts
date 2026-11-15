@@ -16,6 +16,7 @@ export type HomeLinkGroup =
   | 'converters'
   | 'travel'
   | 'goals'
+  | 'todo'
   | 'workouts'
   | 'quotes'
 
@@ -43,6 +44,7 @@ export const HOME_LINK_GROUPS: HomeLinkGroup[] = [
   'converters',
   'travel',
   'goals',
+  'todo',
   'workouts',
   'quotes',
 ]
@@ -53,6 +55,7 @@ export const GROUP_HEADING_KEYS: Record<HomeLinkGroup, string> = {
   converters: 'converters.heading',
   travel: 'travel.title',
   goals: 'goals.title',
+  todo: 'todo.title',
   workouts: 'workouts.title',
   // Named for what the section is for, not what it contains; the
   // /quotes page itself is still titled "Quotes".
@@ -101,6 +104,11 @@ const goalLinks: HomeLink[] = [
   { id: 'goals.index', labelKey: 'goals.myGoals', group: 'goals', to: '/goals' },
 ]
 
+const todoLinks: HomeLink[] = [
+  // Needs an account, like the goals; RequireAuth sorts that out.
+  { id: 'todo.index', labelKey: 'todo.myList', group: 'todo', to: '/100-todo' },
+]
+
 const workoutLinks: HomeLink[] = [
   // Needs an account, like the packing list and the goals.
   { id: 'workouts.index', labelKey: 'workouts.myWorkouts', group: 'workouts', to: '/workouts' },
@@ -117,6 +125,7 @@ export const homeLinks: HomeLink[] = [
   ...converterLinks,
   ...travelLinks,
   ...goalLinks,
+  ...todoLinks,
   ...workoutLinks,
   ...quoteLinks,
 ]
