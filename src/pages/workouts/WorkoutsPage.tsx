@@ -655,9 +655,37 @@ export default function WorkoutsPage() {
                 <ChevronRightIcon fontSize="small" sx={{ mr: 1 }} />
               )}
               <Typography sx={{ fontWeight: 700, mr: 2 }}>{row.year}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                {t('workouts.yearSummary', { reps: row.reps, sets: row.sets })}
-              </Typography>
+              {/* What the year's grid would say in its header, without
+                  opening the year: each exercise's total and its
+                  biggest single set. A rep count for the whole year
+                  mixed every exercise into one number, and the count of
+                  sets beside it was not a figure anyone acted on. */}
+              <Box
+                sx={{ display: 'flex', flexWrap: 'wrap', columnGap: 2, rowGap: 0.5, minWidth: 0 }}
+              >
+                {shown.map((exercise) => {
+                  const line = row.exercises.find((item) => item.exerciseId === exercise.id)
+                  // Nothing done that year: a column of zeroes would
+                  // push the exercises that were trained off the line.
+                  if (!line) return null
+                  return (
+                    <Typography
+                      key={exercise.id}
+                      component="span"
+                      variant="body2"
+                      color="text.secondary"
+                    >
+                      <Box component="span" sx={{ color: 'text.primary' }}>
+                        {exercise.name}
+                      </Box>{' '}
+                      {line.reps}{' '}
+                      <Box component="span" sx={{ opacity: 0.75 }} title={t('workouts.bestSetHint')}>
+                        {t('workouts.bestSet', { value: line.best })}
+                      </Box>
+                    </Typography>
+                  )
+                })}
+              </Box>
             </ListItemButton>
 
             {busyYear === row.year && <CircularProgress size={18} sx={{ m: 2 }} />}

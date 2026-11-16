@@ -28,10 +28,18 @@ export interface WorkoutSet {
   slot: number
 }
 
+export interface YearExerciseTotal {
+  exerciseId: string
+  /** That year's reps for this exercise. */
+  reps: number
+  /** The biggest single set of that year for this exercise. */
+  best: number
+}
+
 export interface YearTotal {
   year: number
-  reps: number
-  sets: number
+  /** Unordered: the page lays them out in its own column order. */
+  exercises: YearExerciseTotal[]
 }
 
 const REQUEST_TIMEOUT_MS = 8000
@@ -114,20 +122,35 @@ export async function deleteExercise(id: string) {
 /* -------------------------------------------------------------- sets */
 
 /**
- * One line per year, for the years that are not open.
+ * One line per year, for the years that are not open, broken down by
+ * exercise.
  *
  * Collapsed means not fetched — see the comment on the function in
- * migration 0020.
+ * migration 0024. The rows come back flat, one per year per exercise,
+ * and are gathered into years here so the page is handed the shape it
+ * draws.
  */
 export async function getYearTotals(): Promise<YearTotal[]> {
-  const { data, error } = await client().rpc('workout_year_totals')
+  const { data, error } = await client().rpc('workout_year_exercise_totals')
   if (error) throw error
 
-  return (data ?? []).map((row: Record<string, unknown>) => ({
-    year: row.year as number,
-    reps: Number(row.reps ?? 0),
-    sets: Number(row.sets ?? 0),
-  }))
+  // Insertion order, which is the order the function sorted by: newest
+  // year first.
+  const years = new Map<number, YearTotal>()
+  for (const row of (data ?? []) as Record<string, unknown>[]) {
+    const year = row.year as number
+    let found = years.get(year)
+    if (!found) {
+      found = { year, exercises: [] }
+      years.set(year, found)
+    }
+    found.exercises.push({
+      exerciseId: row.exercise_id as string,
+      reps: Number(row.reps ?? 0),
+      best: Number(row.best ?? 0),
+    })
+  }
+  return [...years.values()]
 }
 
 /**

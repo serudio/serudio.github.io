@@ -1,6 +1,7 @@
 import { Fragment, useState, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import Box from "@mui/material/Box";
+import { alpha } from "@mui/material/styles";
 import { addDays, formatMonth, formatWeekdayDay } from "../../lib/formatDate";
 import type { Exercise, WorkoutSet } from "../../lib/workouts/db";
 import { buildYearGrid } from "../../lib/workouts/grid";
@@ -321,6 +322,18 @@ export default function YearGrid({
                               ...cell,
                               minWidth: 34,
                               cursor: "cell",
+                              /* A cell with a set in it is tinted, so
+                                 the days that were trained stand out
+                                 from the empty grid around them at a
+                                 glance rather than by reading every
+                                 number. Faint on purpose: the figures
+                                 are the content, and a strong fill
+                                 across most of the page would compete
+                                 with them. */
+                              ...(set && {
+                                bgcolor: (theme) =>
+                                  alpha(theme.palette.primary.main, 0.1),
+                              }),
                               "&:hover": { bgcolor: "action.hover" },
                             }}
                           >
