@@ -1,6 +1,6 @@
 import { formatMonth, formatWeekdayDay } from '../formatDate'
 import type { Exercise, WorkoutSet } from './db'
-import { columnName, type Cell, type Sheet } from './xlsx'
+import { columnName, type Cell, type Sheet } from '../xlsx'
 
 /**
  * The whole history as a workbook, one sheet per year, laid out the way

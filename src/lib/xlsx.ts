@@ -245,3 +245,23 @@ export function buildWorkbook(sheets: Sheet[]): Uint8Array<ArrayBuffer> {
 
   return out
 }
+
+/**
+ * Hands the finished workbook to the browser as a download.
+ *
+ * Here rather than in each page: the Blob type string is the kind of
+ * detail that gets copied slightly wrong the second time, and a file
+ * saved with the wrong one opens as junk.
+ */
+export function downloadWorkbook(sheets: Sheet[], filename: string): void {
+  const url = URL.createObjectURL(
+    new Blob([buildWorkbook(sheets)], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }),
+  )
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(url)
+}

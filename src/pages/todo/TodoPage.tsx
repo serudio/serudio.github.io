@@ -14,6 +14,9 @@ import TextField from '@mui/material/TextField'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import DownloadIcon from '@mui/icons-material/Download'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked'
 import RemoveIcon from '@mui/icons-material/Remove'
 import AddIcon from '@mui/icons-material/Add'
 import { alpha, useTheme } from '@mui/material/styles'
@@ -28,6 +31,9 @@ import {
   updateItem,
   type TodoItem,
 } from '../../lib/todo/db'
+import { buildTodoExport } from '../../lib/todo/exportWorkbook'
+import { downloadWorkbook } from '../../lib/xlsx'
+import { todayIso } from '../../lib/formatDate'
 import TodoPill from './TodoPill'
 import { PALETTE, colorOf, nextColor } from './colors'
 
@@ -48,9 +54,6 @@ import { PALETTE, colorOf, nextColor } from './colors'
  * item by remembering where it sits.
  */
 
-/** What the name promises. Not a limit, just the number on the wall. */
-const TARGET = 100
-
 export default function TodoPage() {
   const { t } = useTranslation()
   const theme = useTheme()
@@ -68,6 +71,7 @@ export default function TodoPage() {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const [nameDraft, setNameDraft] = useState('')
   const [confirming, setConfirming] = useState(false)
+  const [exporting, setExporting] = useState(false)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -116,7 +120,9 @@ export default function TodoPage() {
       // at, so its id is real and the first click on it works.
       const created = await createItem({
         text,
-        weight: 3,
+        // Smallest. A new item has not earned its size yet, and growing
+        // the few that matter is less work than shrinking the rest.
+        weight: MIN_WEIGHT,
         color: nextColor(items),
         sortOrder: items.reduce((max, item) => Math.max(max, item.sortOrder), -1) + 1,
       })
@@ -158,6 +164,14 @@ export default function TodoPage() {
     )
   }
 
+  const toggleDone = (item: TodoItem) => {
+    const doneAt = item.doneAt ? null : new Date().toISOString()
+    optimistic(
+      () => patch(item.id, { doneAt }),
+      () => updateItem(item.id, { doneAt }),
+    )
+  }
+
   const recolor = (item: TodoItem, color: number) =>
     optimistic(
       () => patch(item.id, { color }),
@@ -172,6 +186,36 @@ export default function TodoPage() {
       () => setItems((previous) => previous.filter((other) => other.id !== item.id)),
       () => deleteItem(item.id),
     )
+  }
+
+  /**
+   * The list as a spreadsheet.
+   *
+   * Exports what is in hand, which here is the whole list: this page
+   * loads every item in one query and draws all of them, so there is no
+   * filtered or folded state for a file to quietly leave out.
+   */
+  const handleExport = () => {
+    setExporting(true)
+    try {
+      const sheets = buildTodoExport(
+        items,
+        {
+          title: t('todo.title'),
+          count: t('todo.count'),
+          item: t('todo.columnItem'),
+          size: t('todo.size'),
+          color: t('todo.columnColor'),
+          done: t('todo.columnDone'),
+        },
+        (index) => t(`todo.colors.${(PALETTE[index] ?? PALETTE[0]).key}`),
+      )
+      downloadWorkbook(sheets, `${t('todo.title').toLowerCase()}-${todayIso()}.xlsx`)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught))
+    } finally {
+      setExporting(false)
+    }
   }
 
   if (loading && !loaded) {
@@ -196,18 +240,30 @@ export default function TodoPage() {
       <Paper elevation={0} sx={{ p: { xs: 2.5, sm: 3 } }}>
         <Stack
           direction="row"
-          sx={{ alignItems: 'baseline', justifyContent: 'space-between', mb: 2, gap: 2 }}
+          sx={{ alignItems: 'baseline', mb: 2, gap: 1.5 }}
         >
           <Typography
             variant="h5"
             component="h1"
-            sx={{ textTransform: 'uppercase', letterSpacing: '1.2px' }}
+            sx={{ textTransform: 'uppercase', letterSpacing: '1.2px', flexGrow: 1 }}
           >
             {t('todo.title')}
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-            {t('todo.counter', { n: items.length, target: TARGET })}
+            {items.length}
           </Typography>
+          <Tooltip title={t('todo.exportHint')}>
+            <span>
+              <IconButton
+                size="small"
+                disabled={exporting || items.length === 0}
+                onClick={handleExport}
+                aria-label={t('todo.export')}
+              >
+                <DownloadIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
         </Stack>
 
         <TextField
@@ -288,6 +344,23 @@ export default function TodoPage() {
                   }
                 }}
               />
+
+              {/* First in the popover: crossing something off is the
+                  thing you came here to do most often. */}
+              <Button
+                size="small"
+                variant={editing.doneAt ? 'contained' : 'outlined'}
+                startIcon={
+                  editing.doneAt ? (
+                    <CheckCircleIcon fontSize="small" />
+                  ) : (
+                    <RadioButtonUncheckedIcon fontSize="small" />
+                  )
+                }
+                onClick={() => toggleDone(editing)}
+              >
+                {t(editing.doneAt ? 'todo.markUndone' : 'todo.markDone')}
+              </Button>
 
               <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
                 <Typography variant="caption" color="text.secondary" sx={{ flexGrow: 1 }}>

@@ -16,6 +16,8 @@ export interface TodoItem {
   weight: number
   /** Index into PALETTE in src/pages/todo/colors.ts. */
   color: number
+  /** When it was crossed off; null while it is still ahead of you. */
+  doneAt: string | null
   sortOrder: number
   createdAt: string
 }
@@ -45,7 +47,7 @@ async function currentUserId(): Promise<string> {
   return data.user.id
 }
 
-const COLUMNS = 'id, text, weight, color, sort_order, created_at'
+const COLUMNS = 'id, text, weight, color, done_at, sort_order, created_at'
 
 function toItem(row: Record<string, unknown>): TodoItem {
   return {
@@ -53,6 +55,7 @@ function toItem(row: Record<string, unknown>): TodoItem {
     text: row.text as string,
     weight: (row.weight as number) ?? 3,
     color: (row.color as number) ?? 0,
+    doneAt: (row.done_at as string | null) ?? null,
     sortOrder: (row.sort_order as number) ?? 0,
     createdAt: row.created_at as string,
   }
@@ -100,12 +103,15 @@ export async function createItem(input: {
 
 export async function updateItem(
   id: string,
-  input: { text?: string; weight?: number; color?: number },
+  input: { text?: string; weight?: number; color?: number; doneAt?: string | null },
 ) {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() }
   if (input.text !== undefined) patch.text = input.text.trim()
   if (input.weight !== undefined) patch.weight = input.weight
   if (input.color !== undefined) patch.color = input.color
+  // Explicitly, because null is the value that un-does an item: a
+  // truthiness check here would make "not done" impossible to say.
+  if (input.doneAt !== undefined) patch.done_at = input.doneAt
 
   const { error } = await client().from('todo_items').update(patch).eq('id', id)
   if (error) throw error

@@ -25,6 +25,7 @@ export default function TodoPill({
 }) {
   const theme = useTheme()
   const color = colorOf(item.color, theme.palette.mode === 'light' ? 'light' : 'dark')
+  const done = item.doneAt !== null
 
   return (
     <Box
@@ -42,6 +43,14 @@ export default function TodoPill({
         px: '0.6em',
         py: '0.25em',
         borderRadius: 999,
+        /*
+         * Crossed off rather than removed, and still its own colour.
+         * The wall is a record of what you wanted to do as much as a
+         * list of what is left, so a done item stays legible — faded
+         * enough to read past, not so far that it is gone.
+         */
+        textDecoration: done ? 'line-through' : 'none',
+        opacity: done ? 0.45 : 1,
         border: `1px solid ${alpha(color, selected ? 0.9 : 0.35)}`,
         backgroundColor: alpha(color, selected ? 0.22 : 0.1),
         transition: 'background-color 120ms, border-color 120ms, font-size 120ms',

@@ -48,7 +48,7 @@ import {
 } from '../../lib/workouts/db'
 import { buildExport } from '../../lib/workouts/exportWorkbook'
 import { nextSlot, repsOf } from '../../lib/workouts/grid'
-import { buildWorkbook } from '../../lib/workouts/xlsx'
+import { buildWorkbook } from '../../lib/xlsx'
 import YearGrid, { type GridActions } from './YearGrid'
 
 /**
