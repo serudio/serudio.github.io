@@ -404,6 +404,27 @@ export default function WorkoutsPage() {
 
   const pastYears = totals.filter((row) => row.year !== currentYear)
 
+  /**
+   * Per exercise, the biggest single set of any year — the figure a
+   * year's own best is worth marking for matching.
+   *
+   * Over every year, the open one included, so a year is only marked
+   * when nothing since has beaten it. The sets loaded on the page are
+   * folded in as well: the year summaries are fetched once, and a
+   * record set today should move the mark without a reload.
+   */
+  const allTimeBest = useMemo(() => {
+    const best: Record<string, number> = {}
+    const note = (exerciseId: string, reps: number) => {
+      best[exerciseId] = Math.max(best[exerciseId] ?? 0, reps)
+    }
+    for (const year of totals) {
+      for (const line of year.exercises) note(line.exerciseId, line.best)
+    }
+    for (const set of Object.values(byYear).flat()) note(set.exerciseId, set.reps)
+    return best
+  }, [totals, byYear])
+
   if (loading && !loaded) {
     return (
       <Container maxWidth="xl" disableGutters>
@@ -679,7 +700,25 @@ export default function WorkoutsPage() {
                         {exercise.name}
                       </Box>{' '}
                       {line.reps}{' '}
-                      <Box component="span" sx={{ opacity: 0.75 }} title={t('workouts.bestSetHint')}>
+                      {/* The year that holds the all-time best for this
+                          exercise is marked. More than one year can
+                          match: a record equalled is still the record,
+                          and quietly crediting only the earlier one
+                          would be a different claim than the numbers
+                          make. */}
+                      <Box
+                        component="span"
+                        sx={
+                          line.best === allTimeBest[exercise.id]
+                            ? { color: 'primary.main', fontWeight: 700 }
+                            : { opacity: 0.75 }
+                        }
+                        title={t(
+                          line.best === allTimeBest[exercise.id]
+                            ? 'workouts.bestEverHint'
+                            : 'workouts.bestSetHint',
+                        )}
+                      >
                         {t('workouts.bestSet', { value: line.best })}
                       </Box>
                     </Typography>

@@ -320,6 +320,7 @@
     "total": "Total",
     "bestSet": "max {{value}}",
     "bestSetHint": "Biggest single set of the year",
+    "bestEverHint": "Biggest single set of any year",
     "copyTo": "Copy to…",
     "copyToTitle": "Copy to another exercise",
     "copyToBody": "Sets: {{reps}}. They will be added to the exercise you pick, on the same day.",
