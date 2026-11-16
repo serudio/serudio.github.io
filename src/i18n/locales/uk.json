@@ -331,6 +331,7 @@
     "expand": "Розгорнути",
     "collapse": "Згорнути",
     "onlyThisWeek": "Лише цей тиждень",
+    "hidePastMonths": "Ховати минулі місяці",
     "export": "Експорт",
     "exportHint": "Завантажити всю історію як таблицю (.xlsx)",
     "fourColumns": "Лише 4 підходи",

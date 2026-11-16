@@ -82,6 +82,14 @@ interface View {
   /** Never draw more than four set columns, however many were done. */
   fourColumns: boolean
   /**
+   * Months already finished are left out of the current year.
+   *
+   * On by default, and the only option here that is: the page opens
+   * on the month being trained in, and ten folded headers above it
+   * are ten rows of nothing to read.
+   */
+  hidePastMonths: boolean
+  /**
    * Months the reader has folded or unfolded by hand, "2026-10" -> open.
    *
    * Only the exceptions are kept. Everything else follows the rule
@@ -91,17 +99,29 @@ interface View {
   months: Record<string, boolean>
 }
 
+const DEFAULTS: View = {
+  hideEmpty: false,
+  hidden: [],
+  weekOnly: false,
+  fourColumns: false,
+  hidePastMonths: true,
+  months: {},
+}
+
 function readView(): View {
   try {
     const raw = localStorage.getItem(VIEW_KEY)
     if (!raw) {
-      return { hideEmpty: false, hidden: [], weekOnly: false, fourColumns: false, months: {} }
+      return DEFAULTS
     }
     const parsed = JSON.parse(raw) as Partial<View>
     return {
       hideEmpty: parsed.hideEmpty === true,
       weekOnly: parsed.weekOnly === true,
       fourColumns: parsed.fourColumns === true,
+      // Compared against false, not true: this one defaults to on,
+      // so a view stored before it existed must come back on.
+      hidePastMonths: parsed.hidePastMonths !== false,
       hidden: Array.isArray(parsed.hidden)
         ? parsed.hidden.filter((id) => typeof id === 'string')
         : [],
@@ -111,7 +131,7 @@ function readView(): View {
   } catch {
     // Private browsing or unparseable storage: show everything, which
     // is the harmless direction to fail in.
-    return { hideEmpty: false, hidden: [], weekOnly: false, fourColumns: false, months: {} }
+    return DEFAULTS
   }
 }
 
@@ -569,6 +589,20 @@ export default function WorkoutsPage() {
               control={
                 <Checkbox
                   size="small"
+                  checked={view.hidePastMonths}
+                  onChange={(event) => updateView({ hidePastMonths: event.target.checked })}
+                />
+              }
+              label={
+                <Typography variant="body2" color="text.secondary">
+                  {t('workouts.hidePastMonths')}
+                </Typography>
+              }
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
                   checked={view.weekOnly}
                   onChange={(event) => updateView({ weekOnly: event.target.checked })}
                 />
@@ -605,6 +639,7 @@ export default function WorkoutsPage() {
             actions={actions}
             hideEmpty={view.hideEmpty}
             weekOnly={view.weekOnly}
+            hidePastMonths={view.hidePastMonths}
             columnCap={view.fourColumns ? 4 : undefined}
             isMonthOpen={isMonthOpen}
             onToggleMonth={toggleMonth}
@@ -636,6 +671,7 @@ export default function WorkoutsPage() {
                 actions={actions}
                 hideEmpty={view.hideEmpty}
                 weekOnly={view.weekOnly}
+                hidePastMonths={view.hidePastMonths}
                 columnCap={view.fourColumns ? 4 : undefined}
                 isMonthOpen={isMonthOpen}
                 onToggleMonth={toggleMonth}

@@ -325,6 +325,7 @@
     "expand": "Expand",
     "collapse": "Collapse",
     "onlyThisWeek": "Only this week",
+    "hidePastMonths": "Hide past months",
     "export": "Export",
     "exportHint": "Download the whole history as a spreadsheet (.xlsx)",
     "fourColumns": "Only 4 sets",

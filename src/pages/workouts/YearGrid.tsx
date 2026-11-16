@@ -47,6 +47,7 @@ export default function YearGrid({
   actions,
   hideEmpty = true,
   weekOnly = true,
+  hidePastMonths = false,
   columnCap,
   isMonthOpen,
   onToggleMonth,
@@ -58,6 +59,15 @@ export default function YearGrid({
   actions: GridActions;
   hideEmpty?: boolean;
   weekOnly?: boolean;
+  /**
+   * Months already finished are left out of the current year
+   * entirely, header and all.
+   *
+   * Only the current year: in a past year every month is a past
+   * month, and applying this there would make opening the year show
+   * nothing at all.
+   */
+  hidePastMonths?: boolean;
   /** Draw at most this many set columns per exercise. */
   columnCap?: number;
   isMonthOpen(year: number, month: number): boolean;
@@ -84,10 +94,13 @@ export default function YearGrid({
       // The week filter is about the month in progress. Earlier months
       // are already a fold away, and a past year would otherwise empty
       // itself entirely.
-      const thisMonth =
-        year === Number(today.slice(0, 4)) && month.month === currentMonth;
+      const thisYear = year === Number(today.slice(0, 4));
+      const thisMonth = thisYear && month.month === currentMonth;
 
       let days = month.days;
+      // Dropped outright rather than folded: see the prop's comment for
+      // why a past year is left alone.
+      if (hidePastMonths && thisYear && month.month < currentMonth) days = [];
       if (weekOnly && thisMonth) {
         days = days.filter((row) => row.date >= weekFrom && row.date <= weekTo);
       }
@@ -161,7 +174,17 @@ export default function YearGrid({
                 colSpan={(grid.width[exercise.id] ?? 0) + 1}
                 sx={{ ...cell, fontWeight: 700 }}
               >
-                {exercise.name}
+                {exercise.name}{" "}
+                {/* The year's total for THIS exercise, beside the name
+                    it belongs to. It used to sit above the day-total
+                    column, a row down, where it read as the heading of
+                    that column rather than as the exercise's figure. */}
+                <Box
+                  component="span"
+                  sx={{ fontWeight: 400, color: "text.secondary" }}
+                >
+                  {grid.totals[exercise.id] ?? 0}
+                </Box>
               </Box>
             ))}
           </Box>
@@ -187,9 +210,14 @@ export default function YearGrid({
                   </Box>
                 ),
               ).concat(
-                <Box component="th" key={`${exercise.id}-total`} sx={totalCell}>
-                  {grid.totals[exercise.id] ?? 0}
-                </Box>,
+                // Blank: the number moved up to the name. The cell
+                // stays so the day-total column still has a heading
+                // slot and the columns keep lining up.
+                <Box
+                  component="th"
+                  key={`${exercise.id}-total`}
+                  sx={totalCell}
+                />,
               ),
             )}
           </Box>
