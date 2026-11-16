@@ -124,9 +124,14 @@ export default function TodoPage() {
         // the few that matter is less work than shrinking the rest.
         weight: MIN_WEIGHT,
         color: nextColor(items),
-        sortOrder: items.reduce((max, item) => Math.max(max, item.sortOrder), -1) + 1,
+        // One below the lowest, so it lands at the front without
+        // renumbering everything behind it. The alternative — bumping
+        // every other row by one — is a write per item on every add,
+        // and any one of them failing leaves the wall in an order
+        // neither the page nor the database meant.
+        sortOrder: items.reduce((min, item) => Math.min(min, item.sortOrder), 1) - 1,
       })
-      setItems((previous) => [...previous, created])
+      setItems((previous) => [created, ...previous])
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught))
       setDraft(text)
