@@ -360,6 +360,28 @@ export default function YearGrid({
                                   color: "inherit",
                                   bgcolor: "transparent",
                                   "&:focus": { outline: "none" },
+                                  /*
+                                   * iOS Safari zooms the whole page in
+                                   * when a field smaller than 16px takes
+                                   * focus — and does not zoom back out
+                                   * when it loses focus, so one tap on a
+                                   * cell leaves the grid magnified and
+                                   * scrolled sideways.
+                                   *
+                                   * The field is 16px on touch devices
+                                   * instead. The usual fix, a
+                                   * maximum-scale on the viewport tag,
+                                   * would stop the browser zooming at
+                                   * all — including the pinch needed to
+                                   * read a grid this dense.
+                                   *
+                                   * Width stays 34px: three digits fit,
+                                   * and a wider field would shove the
+                                   * columns sideways on every tap.
+                                   */
+                                  "@media (pointer: coarse)": {
+                                    fontSize: "16px",
+                                  },
                                 }}
                               />
                             ) : (

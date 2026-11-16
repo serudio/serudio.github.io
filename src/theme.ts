@@ -79,6 +79,28 @@ export function createAppTheme(mode: ThemeMode): Theme {
       button: { textTransform: 'none', fontWeight: 600 },
     },
     components: {
+      MuiCssBaseline: {
+        styleOverrides: {
+          /*
+           * A net under the same iOS zoom trap: Safari magnifies the
+           * page when a field under 16px takes focus and never undoes
+           * it. MUI's own fields are already 16px, so this catches the
+           * plain <input> elements the app writes by hand — a grid cell
+           * editor, say — which otherwise inherit whatever small size
+           * their surroundings use.
+           *
+           * It cannot override MUI: a class selector beats a bare
+           * element one whatever the order. That is the intent; MUI
+           * needs no help here.
+           *
+           * Touch devices only. A mouse-driven browser never does this,
+           * and small fields are deliberate there.
+           */
+          '@media (pointer: coarse)': {
+            'input, textarea, select': { fontSize: '16px' },
+          },
+        },
+      },
       MuiPaper: {
         styleOverrides: {
           root: ({ theme }) => ({
