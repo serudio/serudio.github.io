@@ -43,22 +43,42 @@ export interface YearGrid {
   total: number
   /** How many set columns each exercise gets this year. */
   width: Record<string, number>
+  /**
+   * Per exercise, the biggest single set of the year.
+   *
+   * The year total says how much work was done; this says how much was
+   * done at once, which is the number that moves when someone is
+   * getting stronger rather than just turning up more often.
+   */
+  best: Record<string, number>
 }
 
-/** The usual day, and a ceiling so one odd day cannot stretch the page. */
-const MIN_COLUMNS = 4
+/**
+ * One column always, and a ceiling so one odd day cannot stretch the
+ * page.
+ *
+ * The floor is one rather than none so that every exercise keeps a cell
+ * to type into. With none, an exercise with no sets yet this year would
+ * draw only its total column, and the sole way to record anything
+ * against it would be the bar at the top — which only ever writes to
+ * today.
+ */
+const MIN_COLUMNS = 1
 const MAX_COLUMNS = 12
 
 /**
  * How wide each exercise's block of set columns is: as many as were
- * actually done that year, and never fewer than four.
+ * actually done that year, and no more.
  *
- * There used to be a spare column past the last one used, so the next
- * set always had somewhere to be typed. With four sets being the usual
- * day that meant a fifth empty column on every exercise — seven of them
- * across the page, carrying nothing, every day of the year. Adding a
- * fifth set goes through the bar at the top instead, and the column it
- * creates then stays for the rest of that year.
+ * It used to pad every exercise out to four columns on the grounds that
+ * four sets is the usual day. An exercise that is done once or twice a
+ * session carried two empty columns all year for it, and across seven
+ * exercises that is most of the width of the page spent on cells that
+ * were never going to hold anything.
+ *
+ * There is no spare column past the last one used either. Adding a set
+ * beyond the current width goes through the bar at the top, and the
+ * column it creates then stays for the rest of that year.
  */
 export function widthFor(
   sets: WorkoutSet[],
@@ -107,6 +127,14 @@ export function buildYearGrid(
   columnCap = MAX_COLUMNS,
 ): YearGrid {
   const width = widthFor(sets, exercises, columnCap)
+
+  // Every set of the year, drawn or not: a set past the last column is
+  // still a set that was done, and hiding it from the best would make
+  // the figure depend on how wide the page happens to be.
+  const best: Record<string, number> = {}
+  for (const set of sets) {
+    best[set.exerciseId] = Math.max(best[set.exerciseId] ?? 0, set.reps)
+  }
 
   const byDate = new Map<string, WorkoutSet[]>()
   for (const set of sets) {
@@ -163,7 +191,7 @@ export function buildYearGrid(
     }
   }
 
-  return { year, months, totals: yearTotals, total: yearTotal, width }
+  return { year, months, totals: yearTotals, total: yearTotal, width, best }
 }
 
 /** The next free column for an exercise on a day, for appending. */

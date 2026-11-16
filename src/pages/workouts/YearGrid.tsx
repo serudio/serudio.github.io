@@ -184,6 +184,21 @@ export default function YearGrid({
                   sx={{ fontWeight: 400, color: "text.secondary" }}
                 >
                   {grid.totals[exercise.id] ?? 0}
+                  {/* The biggest single set beside the year's total:
+                      how much at once, next to how much in all. Left
+                      out when there is nothing to report, so a fresh
+                      exercise does not carry a "max 0". */}
+                  {(grid.best[exercise.id] ?? 0) > 0 && (
+                    <Box
+                      component="span"
+                      title={t("workouts.bestSetHint")}
+                      sx={{ ml: 0.75, opacity: 0.75 }}
+                    >
+                      {t("workouts.bestSet", {
+                        value: grid.best[exercise.id],
+                      })}
+                    </Box>
+                  )}
                 </Box>
               </Box>
             ))}

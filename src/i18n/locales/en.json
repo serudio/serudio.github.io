@@ -318,6 +318,8 @@
     "newExercise": "New exercise",
     "addExercise": "Add",
     "total": "Total",
+    "bestSet": "max {{value}}",
+    "bestSetHint": "Biggest single set of the year",
     "yearSummary": "{{reps}} reps · {{sets}} sets",
     "copyTo": "Copy to…",
     "copyToTitle": "Copy to another exercise",
