@@ -40,6 +40,20 @@ const totalCell = {
   bgcolor: "action.hover",
 } as const;
 
+/**
+ * The line where one exercise's block of columns starts.
+ *
+ * Every cell carried the same hairline, so four columns of pull ups and
+ * four of push ups read as one run of eight and the eye had to go up to
+ * the header to find the join. This draws the join itself, on the first
+ * column of each exercise and on every row — header, month totals and
+ * days alike, or the line would stop at the top of the year.
+ */
+const groupEdge = {
+  borderLeftWidth: 2,
+  borderLeftColor: "text.disabled",
+} as const;
+
 export default function YearGrid({
   year,
   exercises,
@@ -173,7 +187,7 @@ export default function YearGrid({
                 component="th"
                 key={exercise.id}
                 colSpan={(grid.width[exercise.id] ?? 0) + 1}
-                sx={{ ...cell, fontWeight: 700 }}
+                sx={{ ...cell, ...groupEdge, fontWeight: 700 }}
               >
                 {exercise.name}{" "}
                 {/* The year's total for THIS exercise, beside the name
@@ -220,7 +234,12 @@ export default function YearGrid({
                   <Box
                     component="th"
                     key={`${exercise.id}-${slot}`}
-                    sx={{ ...cell, color: "text.secondary", fontWeight: 400 }}
+                    sx={{
+                      ...cell,
+                      ...(slot === 0 && groupEdge),
+                      color: "text.secondary",
+                      fontWeight: 400,
+                    }}
                   >
                     {slot + 1}
                   </Box>
@@ -265,7 +284,7 @@ export default function YearGrid({
                   component="td"
                   key={exercise.id}
                   colSpan={(grid.width[exercise.id] ?? 0) + 1}
-                  sx={totalCell}
+                  sx={{ ...totalCell, ...groupEdge }}
                 >
                   {month.totals[exercise.id] ?? 0}
                 </Box>
@@ -320,6 +339,7 @@ export default function YearGrid({
                             }
                             sx={{
                               ...cell,
+                              ...(slot === 0 && groupEdge),
                               minWidth: 34,
                               cursor: "cell",
                               /* A cell with a set in it is tinted, so
