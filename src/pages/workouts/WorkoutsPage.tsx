@@ -48,6 +48,7 @@ import {
 } from '../../lib/workouts/db'
 import { buildExport } from '../../lib/workouts/exportWorkbook'
 import { nextSlot, repsOf } from '../../lib/workouts/grid'
+import { noSpinners } from './numberField'
 import { buildWorkbook } from '../../lib/xlsx'
 import YearGrid, { type GridActions } from './YearGrid'
 
@@ -364,6 +365,31 @@ export default function WorkoutsPage() {
     }
   }
 
+  /**
+   * The two counts this exercise is most often done in that the presets
+   * do not already offer, newest training included.
+   *
+   * The presets are the round numbers most days are made of. What they
+   * miss is the count a particular exercise happens to come in — 21
+   * pull ups, 2 muscle ups — which is otherwise typed by hand every
+   * time. Read off the sets already loaded, so the pair follows the
+   * training instead of a list written once.
+   */
+  const favouriteReps = useMemo(() => {
+    const counted = new Map<number, number>()
+    for (const set of Object.values(byYear).flat()) {
+      if (set.exerciseId !== pickedExercise) continue
+      if (REP_PRESETS.includes(set.reps)) continue
+      counted.set(set.reps, (counted.get(set.reps) ?? 0) + 1)
+    }
+    return [...counted.entries()]
+      // Most used first, the larger count ahead on a tie, so the pair
+      // does not depend on which year happened to load first.
+      .sort((a, b) => b[1] - a[1] || b[0] - a[0])
+      .slice(0, 2)
+      .map(([value]) => value)
+  }, [byYear, pickedExercise])
+
   const setsOfExercise = (exercise: Exercise) =>
     Object.values(byYear).flat().filter((row) => row.exerciseId === exercise.id).length
 
@@ -516,7 +542,7 @@ export default function WorkoutsPage() {
               type="number"
               value={reps}
               label={t('workouts.reps')}
-              sx={{ width: 92 }}
+              sx={{ width: 92, '& input': noSpinners }}
               onChange={(event) => setReps(event.target.value)}
               onKeyDown={(event) => event.key === 'Enter' && void handleQuickAdd()}
             />
@@ -524,7 +550,10 @@ export default function WorkoutsPage() {
                 it: 12 and 17 happen, and typing them must stay as easy
                 as it was. */}
             <Stack direction="row" sx={{ gap: 0.5 }}>
-              {REP_PRESETS.map((value) => (
+              {/* This exercise's own counts first, then the round ones:
+                  the two that change with the exercise are worth the
+                  nearer reach, and they are the same chip to press. */}
+              {[...favouriteReps, ...REP_PRESETS].map((value) => (
                 <Chip
                   key={value}
                   size="small"

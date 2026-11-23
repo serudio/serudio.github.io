@@ -5,6 +5,7 @@ import { alpha } from "@mui/material/styles";
 import { addDays, formatMonth, formatWeekdayDay } from "../../lib/formatDate";
 import type { Exercise, WorkoutSet } from "../../lib/workouts/db";
 import { buildYearGrid } from "../../lib/workouts/grid";
+import { noSpinners } from "./numberField";
 
 /**
  * One year, days down and exercises across — the layout these records
@@ -400,6 +401,7 @@ export default function YearGrid({
                                   }
                                 }}
                                 sx={{
+                                  ...noSpinners,
                                   width: 34,
                                   border: 0,
                                   p: 0,
