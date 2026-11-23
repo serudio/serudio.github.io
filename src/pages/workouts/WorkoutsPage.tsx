@@ -34,6 +34,7 @@ import { todayIso } from '../../lib/formatDate'
 import {
   addSets,
   clearCell,
+  clearCells,
   copySets,
   createExercise,
   deleteExercise,
@@ -42,6 +43,7 @@ import {
   getYear,
   getYearTotals,
   setCell,
+  writeCells,
   type Exercise,
   type WorkoutSet,
   type YearTotal,
@@ -50,7 +52,7 @@ import { buildExport } from '../../lib/workouts/exportWorkbook'
 import { nextSlot, repsOf } from '../../lib/workouts/grid'
 import { noSpinners } from './numberField'
 import { buildWorkbook } from '../../lib/xlsx'
-import YearGrid, { type GridActions } from './YearGrid'
+import YearGrid, { type GridActions, type PastePlan } from './YearGrid'
 
 /**
  * Workouts: every set, laid out the way the records were already kept.
@@ -176,6 +178,7 @@ export default function WorkoutsPage() {
     { anchor: HTMLElement; day: string; exerciseId: string } | null
   >(null)
   const [copyFrom, setCopyFrom] = useState<{ day: string; exerciseId: string } | null>(null)
+  const [pendingPaste, setPendingPaste] = useState<PastePlan | null>(null)
 
   const fail = useCallback((caught: unknown) => {
     setError(caught instanceof Error ? caught.message : String(caught))
@@ -252,7 +255,48 @@ export default function WorkoutsPage() {
       void clearCell(set.id).catch(fail)
     },
 
+    paste: (plan) => {
+      // A paste onto empty days is just filling the grid in and goes
+      // straight through. One that replaces or empties records already
+      // there is asked about first: there is no undo here, and a block
+      // dropped one row off can wipe a week of training.
+      if (plan.overwrites > 0) setPendingPaste(plan)
+      else void applyPaste(plan)
+    },
+
     openDayMenu: (anchor, day, exerciseId) => setDayMenu({ anchor, day, exerciseId }),
+  }
+
+  const applyPaste = async (plan: PastePlan) => {
+    setPendingPaste(null)
+    try {
+      // Both halves in one go, so the grid does not show the cleared
+      // cells empty for a moment before the written ones arrive.
+      const [written] = await Promise.all([
+        writeCells(
+          plan.write.map((cell) => ({
+            exerciseId: cell.exerciseId,
+            doneOn: cell.day,
+            slot: cell.slot,
+            reps: cell.reps,
+          })),
+        ),
+        clearCells(plan.clear.map((set) => set.id)),
+      ])
+
+      const gone = new Set(plan.clear.map((set) => set.id))
+      setByYear((previous) =>
+        Object.fromEntries(
+          Object.entries(previous).map(([year, rows]) => [
+            year,
+            rows.filter((row) => !gone.has(row.id)),
+          ]),
+        ),
+      )
+      absorb(written)
+    } catch (caught) {
+      fail(caught)
+    }
   }
 
   const handleQuickAdd = async () => {
@@ -876,6 +920,27 @@ export default function WorkoutsPage() {
             <Button onClick={() => setRemoving(null)}>{t('workouts.cancel')}</Button>
             <Button color="error" onClick={() => void handleRemoveExercise()}>
               {t('workouts.delete')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Only ever opened by a paste that destroys something: the
+            count is of records replaced or emptied, not of cells
+            filled, because the cells that were empty cost nothing. */}
+        <Dialog open={pendingPaste !== null} onClose={() => setPendingPaste(null)}>
+          <DialogTitle>{t('workouts.pasteTitle')}</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              {t('workouts.pasteBody', { sets: pendingPaste?.overwrites ?? 0 })}
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setPendingPaste(null)}>{t('workouts.cancel')}</Button>
+            <Button
+              color="error"
+              onClick={() => pendingPaste && void applyPaste(pendingPaste)}
+            >
+              {t('workouts.pasteConfirm')}
             </Button>
           </DialogActions>
         </Dialog>

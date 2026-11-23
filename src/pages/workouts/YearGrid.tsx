@@ -1,11 +1,25 @@
-import { Fragment, useState, type MouseEvent } from "react";
+import {
+  Fragment,
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+} from "react";
 import { useTranslation } from "react-i18next";
 import Box from "@mui/material/Box";
 import { alpha } from "@mui/material/styles";
 import { addDays, formatMonth, formatWeekdayDay } from "../../lib/formatDate";
 import type { Exercise, WorkoutSet } from "../../lib/workouts/db";
 import { buildYearGrid } from "../../lib/workouts/grid";
+import {
+  planPaste,
+  toTsv,
+  type Block,
+  type PastePlan,
+} from "../../lib/workouts/clipboard";
 import { noSpinners } from "./numberField";
+
+export type { PastePlan };
 
 /**
  * One year, days down and exercises across — the layout these records
@@ -20,10 +34,19 @@ import { noSpinners } from "./numberField";
 export interface GridActions {
   write(day: string, exerciseId: string, slot: number, reps: number): void;
   clear(set: WorkoutSet): void;
+  paste(plan: PastePlan): void;
   openDayMenu(anchor: HTMLElement, day: string, exerciseId: string): void;
 }
 
 type Editing = { day: string; exerciseId: string; slot: number } | null;
+
+/** Where a cell sits among the set columns. Both zero-based. */
+interface Pos {
+  row: number;
+  col: number;
+}
+
+
 
 const cell = {
   border: "1px solid",
@@ -93,6 +116,19 @@ export default function YearGrid({
   const locale = i18n.resolvedLanguage ?? i18n.language;
   const [editing, setEditing] = useState<Editing>(null);
 
+  /**
+   * A rectangle of cells, for copying out and pasting in.
+   *
+   * Held as the two corners the mouse drew rather than as a list of
+   * cells: dragging only moves the second one, and the rectangle
+   * between them is what is drawn and what is copied.
+   */
+  const [selection, setSelection] = useState<{
+    anchor: Pos;
+    focus: Pos;
+  } | null>(null);
+  const dragging = useRef(false);
+
   const grid = buildYearGrid(sets, exercises, year, today, columnCap);
 
   // Today always stays, even with nothing on it: it is the row the next
@@ -126,6 +162,98 @@ export default function YearGrid({
       return { ...month, days, open: isMonthOpen(year, month.month) };
     })
     .filter((month) => month.days.length > 0);
+
+  /**
+   * The set columns left to right, and the day rows top to bottom, as
+   * they are on screen.
+   *
+   * Selection, copy and paste all work in these coordinates. The
+   * day-total columns are left out: they are arithmetic, not cells
+   * anyone can type into, and a copied block with totals wedged into
+   * every fifth column would paste back as nonsense. Folded months are
+   * left out for the same reason the Enter key skips them — what is
+   * not on screen cannot be dragged across.
+   */
+  const columns = exercises.flatMap((exercise) =>
+    Array.from({ length: grid.width[exercise.id] ?? 0 }, (_ignored, slot) => ({
+      exerciseId: exercise.id,
+      slot,
+    })),
+  );
+  const columnOf = new Map(
+    columns.map((column, index) => [`${column.exerciseId}:${column.slot}`, index]),
+  );
+  const rows = visible.filter((month) => month.open).flatMap((month) => month.days);
+  const rowOf = new Map(rows.map((row, index) => [row.date, index]));
+
+  const block: Block | null = selection && {
+    top: Math.min(selection.anchor.row, selection.focus.row),
+    bottom: Math.max(selection.anchor.row, selection.focus.row),
+    left: Math.min(selection.anchor.col, selection.focus.col),
+    right: Math.max(selection.anchor.col, selection.focus.col),
+  };
+  const selected = (row: number, col: number) =>
+    block !== null &&
+    row >= block.top &&
+    row <= block.bottom &&
+    col >= block.left &&
+    col <= block.right;
+
+  /*
+   * The clipboard handlers are hung on the document once and read the
+   * current grid through this, rather than being torn down and hung up
+   * again on every render — which is what a dependency list of freshly
+   * built arrays would do.
+   */
+  const latest = useRef({ block, rows, columns, editing, actions });
+  latest.current = { block, rows, columns, editing, actions };
+
+  useEffect(() => {
+    const stop = () => {
+      dragging.current = false;
+    };
+
+    const onCopy = (event: ClipboardEvent) => {
+      const { block: area, rows: days, columns: cols, editing: open } = latest.current;
+      if (!area || open) return;
+
+      event.clipboardData?.setData("text/plain", toTsv(area, days, cols));
+      event.preventDefault();
+    };
+
+    const onPaste = (event: ClipboardEvent) => {
+      const {
+        block: area,
+        rows: days,
+        columns: cols,
+        editing: open,
+        actions: act,
+      } = latest.current;
+      if (!area || open) return;
+
+      const text = event.clipboardData?.getData("text/plain") ?? "";
+      if (text === "") return;
+      event.preventDefault();
+
+      const plan = planPaste(text, area, days, cols);
+      if (plan.write.length > 0 || plan.clear.length > 0) act.paste(plan);
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !latest.current.editing) setSelection(null);
+    };
+
+    window.addEventListener("mouseup", stop);
+    document.addEventListener("copy", onCopy);
+    document.addEventListener("paste", onPaste);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("mouseup", stop);
+      document.removeEventListener("copy", onCopy);
+      document.removeEventListener("paste", onPaste);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
 
   const commit = (
     day: string,
@@ -327,17 +455,44 @@ export default function YearGrid({
                           editing.exerciseId === exercise.id &&
                           editing.slot === slot;
 
+                        const here: Pos = {
+                          row: rowOf.get(row.date) ?? -1,
+                          col: columnOf.get(`${exercise.id}:${slot}`) ?? -1,
+                        };
+                        const isSelected = selected(here.row, here.col);
+
                         return (
                           <Box
                             component="td"
                             key={slot}
-                            onClick={() =>
+                            onMouseDown={(event: MouseEvent<HTMLElement>) => {
+                              // Without this the browser paints its own
+                              // text selection across the cells as the
+                              // drag moves.
+                              event.preventDefault();
+                              dragging.current = true;
+                              setSelection((previous) =>
+                                event.shiftKey && previous
+                                  ? { ...previous, focus: here }
+                                  : { anchor: here, focus: here },
+                              );
+                            }}
+                            onMouseEnter={() => {
+                              if (!dragging.current) return;
+                              setSelection((previous) =>
+                                previous ? { ...previous, focus: here } : previous,
+                              );
+                            }}
+                            onClick={(event: MouseEvent<HTMLElement>) => {
+                              // Shift is for growing the selection, not
+                              // for opening the cell it lands on.
+                              if (event.shiftKey) return;
                               setEditing({
                                 day: row.date,
                                 exerciseId: exercise.id,
                                 slot,
-                              })
-                            }
+                              });
+                            }}
                             sx={{
                               ...cell,
                               ...(slot === 0 && groupEdge),
@@ -356,6 +511,19 @@ export default function YearGrid({
                                   alpha(theme.palette.primary.main, 0.1),
                               }),
                               "&:hover": { bgcolor: "action.hover" },
+                              /* After the hover rule on purpose: a
+                                 selected cell stays selected-looking
+                                 under the pointer, or the cell being
+                                 dragged over would be the one cell that
+                                 does not show it is in the block. */
+                              ...(isSelected && {
+                                bgcolor: (theme) =>
+                                  alpha(theme.palette.primary.main, 0.32),
+                                "&:hover": {
+                                  bgcolor: (theme) =>
+                                    alpha(theme.palette.primary.main, 0.32),
+                                },
+                              }),
                             }}
                           >
                             {isEditing ? (

@@ -247,6 +247,43 @@ export async function setCell(input: {
   return toSet(data as Record<string, unknown>)
 }
 
+/**
+ * A block of cells at once, for a paste.
+ *
+ * One request rather than one per cell: a pasted block is routinely
+ * thirty cells, and thirty round trips would fill the grid in visibly,
+ * a few cells at a time, with no way to tell a slow network from a
+ * stuck one. Upserts on the slot, like setCell, so landing on a cell
+ * that already has a set replaces it rather than failing.
+ */
+export async function writeCells(
+  cells: { exerciseId: string; doneOn: string; slot: number; reps: number }[],
+): Promise<WorkoutSet[]> {
+  if (cells.length === 0) return []
+  const userId = await currentUserId()
+  const rows = cells.map((cell) => ({
+    user_id: userId,
+    exercise_id: cell.exerciseId,
+    done_on: cell.doneOn,
+    reps: cell.reps,
+    sort_order: cell.slot,
+  }))
+
+  const { data, error } = await client()
+    .from('workout_sets')
+    .upsert(rows, { onConflict: SLOT_CONFLICT })
+    .select('id, exercise_id, done_on, reps, sort_order')
+  if (error) throw error
+  return (data ?? []).map((row) => toSet(row as Record<string, unknown>))
+}
+
+/** The same, for the cells a paste leaves empty. */
+export async function clearCells(ids: string[]): Promise<void> {
+  if (ids.length === 0) return
+  const { error } = await client().from('workout_sets').delete().in('id', ids)
+  if (error) throw error
+}
+
 export async function clearCell(id: string) {
   const { error } = await client().from('workout_sets').delete().eq('id', id)
   if (error) throw error
