@@ -66,6 +66,24 @@ export function toTsv(block: Block, rows: DayRow[], columns: Column[]): string {
   return lines.join('\n')
 }
 
+/**
+ * Every set the selection covers.
+ *
+ * What emptying the block would delete — counted here rather than in
+ * the component so the page can say how many records are at stake
+ * before anything is deleted.
+ */
+export function setsIn(block: Block, rows: DayRow[], columns: Column[]): WorkoutSet[] {
+  const found: WorkoutSet[] = []
+  for (let row = block.top; row <= block.bottom; row += 1) {
+    for (let col = block.left; col <= block.right; col += 1) {
+      const set = at(rows, columns, row, col)
+      if (set) found.push(set)
+    }
+  }
+  return found
+}
+
 /** Pasted text as a grid of strings, however the source ended its lines. */
 function parse(text: string): string[][] {
   return text

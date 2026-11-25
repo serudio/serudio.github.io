@@ -13,6 +13,7 @@ import type { Exercise, WorkoutSet } from "../../lib/workouts/db";
 import { buildYearGrid } from "../../lib/workouts/grid";
 import {
   planPaste,
+  setsIn,
   toTsv,
   type Block,
   type PastePlan,
@@ -34,6 +35,8 @@ export type { PastePlan };
 export interface GridActions {
   write(day: string, exerciseId: string, slot: number, reps: number): void;
   clear(set: WorkoutSet): void;
+  /** Empty every cell of a selection at once. */
+  clearBlock(sets: WorkoutSet[]): void;
   paste(plan: PastePlan): void;
   openDayMenu(anchor: HTMLElement, day: string, exerciseId: string): void;
 }
@@ -243,7 +246,21 @@ export default function YearGrid({
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !latest.current.editing) setSelection(null);
+      const { block: area, rows: days, columns: cols, editing: open } = latest.current;
+      if (open) return;
+      if (event.key === "Escape") setSelection(null);
+
+      /*
+       * Delete empties the selection, as it would in a spreadsheet.
+       * Backspace does the same, and is kept from walking the page
+       * back a step while a block is lit.
+       */
+      if (event.key === "Delete" || event.key === "Backspace") {
+        if (!area) return;
+        event.preventDefault();
+        const sets = setsIn(area, days, cols);
+        if (sets.length > 0) latest.current.actions.clearBlock(sets);
+      }
     };
 
     /*

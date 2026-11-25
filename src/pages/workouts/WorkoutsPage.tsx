@@ -179,6 +179,7 @@ export default function WorkoutsPage() {
   >(null)
   const [copyFrom, setCopyFrom] = useState<{ day: string; exerciseId: string } | null>(null)
   const [pendingPaste, setPendingPaste] = useState<PastePlan | null>(null)
+  const [pendingClear, setPendingClear] = useState<WorkoutSet[] | null>(null)
 
   const fail = useCallback((caught: unknown) => {
     setError(caught instanceof Error ? caught.message : String(caught))
@@ -255,6 +256,8 @@ export default function WorkoutsPage() {
       void clearCell(set.id).catch(fail)
     },
 
+    clearBlock: (sets) => setPendingClear(sets),
+
     paste: (plan) => {
       // A paste onto empty days is just filling the grid in and goes
       // straight through. One that replaces or empties records already
@@ -265,6 +268,35 @@ export default function WorkoutsPage() {
     },
 
     openDayMenu: (anchor, day, exerciseId) => setDayMenu({ anchor, day, exerciseId }),
+  }
+
+  /** Drop deleted sets from the grid without waiting for a refetch. */
+  const forget = (sets: WorkoutSet[]) => {
+    const gone = new Set(sets.map((set) => set.id))
+    setByYear((previous) =>
+      Object.fromEntries(
+        Object.entries(previous).map(([year, rows]) => [
+          year,
+          rows.filter((row) => !gone.has(row.id)),
+        ]),
+      ),
+    )
+  }
+
+  /**
+   * Empty a selection.
+   *
+   * Always asked about first: unlike a paste, there is nothing here
+   * that is not a record being deleted, and there is no undo.
+   */
+  const applyClear = async (sets: WorkoutSet[]) => {
+    setPendingClear(null)
+    try {
+      await clearCells(sets.map((set) => set.id))
+      forget(sets)
+    } catch (caught) {
+      fail(caught)
+    }
   }
 
   const applyPaste = async (plan: PastePlan) => {
@@ -284,15 +316,7 @@ export default function WorkoutsPage() {
         clearCells(plan.clear.map((set) => set.id)),
       ])
 
-      const gone = new Set(plan.clear.map((set) => set.id))
-      setByYear((previous) =>
-        Object.fromEntries(
-          Object.entries(previous).map(([year, rows]) => [
-            year,
-            rows.filter((row) => !gone.has(row.id)),
-          ]),
-        ),
-      )
+      forget(plan.clear)
       absorb(written)
     } catch (caught) {
       fail(caught)
@@ -928,6 +952,24 @@ export default function WorkoutsPage() {
         {/* Only ever opened by a paste that destroys something: the
             count is of records replaced or emptied, not of cells
             filled, because the cells that were empty cost nothing. */}
+        <Dialog open={pendingClear !== null} onClose={() => setPendingClear(null)}>
+          <DialogTitle>{t('workouts.clearTitle')}</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              {t('workouts.clearBody', { sets: pendingClear?.length ?? 0 })}
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setPendingClear(null)}>{t('workouts.cancel')}</Button>
+            <Button
+              color="error"
+              onClick={() => pendingClear && void applyClear(pendingClear)}
+            >
+              {t('workouts.clearConfirm')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         <Dialog open={pendingPaste !== null} onClose={() => setPendingPaste(null)}>
           <DialogTitle>{t('workouts.pasteTitle')}</DialogTitle>
           <DialogContent>
