@@ -208,6 +208,9 @@ export default function YearGrid({
   const latest = useRef({ block, rows, columns, editing, actions });
   latest.current = { block, rows, columns, editing, actions };
 
+  /* The table itself, to tell a press on a cell from a press away. */
+  const area = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const stop = () => {
       dragging.current = false;
@@ -243,12 +246,29 @@ export default function YearGrid({
       if (event.key === "Escape" && !latest.current.editing) setSelection(null);
     };
 
+    /*
+     * A press anywhere else drops the selection, the way a spreadsheet
+     * does — otherwise a block stays lit long after the eye has moved
+     * on, and the next copy takes cells nobody meant. The grid's own
+     * dialog is drawn in a portal outside the table, so pressing its
+     * buttons is not clicking away.
+     */
+    const onMouseDown = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (area.current?.contains(target)) return;
+      if (target instanceof Element && target.closest('[role="dialog"]')) return;
+      setSelection(null);
+    };
+
     window.addEventListener("mouseup", stop);
+    document.addEventListener("mousedown", onMouseDown);
     document.addEventListener("copy", onCopy);
     document.addEventListener("paste", onPaste);
     document.addEventListener("keydown", onKeyDown);
     return () => {
       window.removeEventListener("mouseup", stop);
+      document.removeEventListener("mousedown", onMouseDown);
       document.removeEventListener("copy", onCopy);
       document.removeEventListener("paste", onPaste);
       document.removeEventListener("keydown", onKeyDown);
@@ -298,7 +318,7 @@ export default function YearGrid({
   if (exercises.length === 0) return null;
 
   return (
-    <Box sx={{ overflowX: "auto", mb: 3 }}>
+    <Box ref={area} sx={{ overflowX: "auto", mb: 3 }}>
       <Box
         component="table"
         sx={{ borderCollapse: "collapse", width: "max-content" }}
