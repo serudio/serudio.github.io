@@ -607,7 +607,28 @@ export default function YearGrid({
                                 }}
                                 sx={{
                                   ...noSpinners,
-                                  width: 34,
+                                  /*
+                                   * The field takes the cell it is in
+                                   * rather than bringing a width of its
+                                   * own: a field wider than the cell
+                                   * pushed the column out by ten pixels
+                                   * and shoved every column to the
+                                   * right of it sideways, so the grid
+                                   * jumped under the pointer on every
+                                   * click. 32px less the 8px of
+                                   * negative margin is exactly the
+                                   * cell's content box, so the field
+                                   * borrows the cell's own padding to
+                                   * type in and the column does not
+                                   * move. A percentage width cannot do
+                                   * this: inside an auto-laid-out
+                                   * table it resolves against the cell
+                                   * it is itself widening.
+                                   */
+                                  display: "block",
+                                  width: 32,
+                                  minWidth: 0,
+                                  mx: "-4px",
                                   border: 0,
                                   p: 0,
                                   textAlign: "center",
@@ -630,9 +651,8 @@ export default function YearGrid({
                                    * all — including the pinch needed to
                                    * read a grid this dense.
                                    *
-                                   * Width stays 34px: three digits fit,
-                                   * and a wider field would shove the
-                                   * columns sideways on every tap.
+                                   * The width is the cell's, so nothing
+                                   * moves on a tap.
                                    */
                                   "@media (pointer: coarse)": {
                                     fontSize: "16px",
