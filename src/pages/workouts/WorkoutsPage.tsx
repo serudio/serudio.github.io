@@ -410,29 +410,30 @@ export default function WorkoutsPage() {
   }
 
   /**
-   * The two counts this exercise is most often done in that the presets
-   * do not already offer, newest training included.
+   * The two counts this exercise is most often done in this year that
+   * the presets do not already offer.
    *
    * The presets are the round numbers most days are made of. What they
    * miss is the count a particular exercise happens to come in — 21
    * pull ups, 2 muscle ups — which is otherwise typed by hand every
-   * time. Read off the sets already loaded, so the pair follows the
-   * training instead of a list written once.
+   * time. Counted one set at a time over this year alone: what was
+   * typed often in 2021 is not what the hands reach for now, and
+   * opening an old year to look at it must not change the chips.
    */
   const favouriteReps = useMemo(() => {
     const counted = new Map<number, number>()
-    for (const set of Object.values(byYear).flat()) {
+    for (const set of byYear[currentYear] ?? []) {
       if (set.exerciseId !== pickedExercise) continue
       if (REP_PRESETS.includes(set.reps)) continue
       counted.set(set.reps, (counted.get(set.reps) ?? 0) + 1)
     }
     return [...counted.entries()]
       // Most used first, the larger count ahead on a tie, so the pair
-      // does not depend on which year happened to load first.
+      // is the same whichever order the sets came back in.
       .sort((a, b) => b[1] - a[1] || b[0] - a[0])
       .slice(0, 2)
       .map(([value]) => value)
-  }, [byYear, pickedExercise])
+  }, [byYear, currentYear, pickedExercise])
 
   const setsOfExercise = (exercise: Exercise) =>
     Object.values(byYear).flat().filter((row) => row.exerciseId === exercise.id).length
